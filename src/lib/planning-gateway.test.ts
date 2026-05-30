@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * planning-gateway tests — exercise the full dispatch path over a mocked
  * `fetch`, with no network. This is the integration test the ROADMAP calls for:

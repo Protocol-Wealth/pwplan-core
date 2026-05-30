@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 import { ScenarioForm } from "./components/ScenarioForm";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { GlidePathForm, GlidePathResults } from "./components/GlidePathTool";

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * planning-gateway — backend-agnostic transport to the planning engine.
  *

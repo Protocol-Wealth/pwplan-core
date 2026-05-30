@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 import { describe, it, expect } from "vitest";
 import { validateGlidePath, validateTaxWithdrawal } from "./tool-validation";
 import type { GlidePathInputs, TaxWithdrawalInputs } from "../store/scenario";

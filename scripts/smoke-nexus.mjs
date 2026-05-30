@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * smoke-nexus — opt-in live smoke test against the public nexus-core MCP engine.
  *

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * pw-planner ⇄ nexus-core PLANNING CONTRACT
  * ----------------------------------------------------------------------------

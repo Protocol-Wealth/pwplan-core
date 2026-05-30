@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * scenario store — client-side plan state. Holds the inputs and latest engine
  * result for each planning tool (Monte Carlo, glide path, tax withdrawal). No

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 import { useScenario, type GlidePathShape } from "../store/scenario";
 import { planning } from "../lib/planning-gateway";
 import { validateGlidePath } from "./tool-validation";

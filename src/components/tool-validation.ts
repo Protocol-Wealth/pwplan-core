@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * tool-validation — pure, UI-side request-shape validation for the glide-path
  * and tax-withdrawal tools. Like scenario-validation, this answers "is this a

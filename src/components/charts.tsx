@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * charts — shared, dependency-free chart components built on the pure geometry
  * helpers in results-viz.ts. Presentation only; no quant logic. Hand-rolled SVG

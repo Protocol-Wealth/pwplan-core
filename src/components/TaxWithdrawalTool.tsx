@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 import { useScenario } from "../store/scenario";
 import { planning } from "../lib/planning-gateway";
 import { validateTaxWithdrawal } from "./tool-validation";

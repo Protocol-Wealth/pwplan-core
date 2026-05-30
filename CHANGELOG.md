@@ -7,6 +7,14 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Added
+
+- SPDX Apache-2.0 license headers on every first-party source file
+  (`// SPDX-License-Identifier: Apache-2.0` + copyright), matching the rest of the
+  `-core` family. Covers all `src/**` TS/TSX, the one CSS file, `scripts/*.mjs`
+  (after the shebang), and the root `vite.config.ts` / `eslint.config.js`. The
+  `NOTICE` patent application number remains a `<PATENT_APP_NO>` placeholder.
+
 ### Changed
 
 - **Repositioned as demo / case-study tooling.** This OSS repo now runs against

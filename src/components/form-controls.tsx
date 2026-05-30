@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * form-controls — shared, presentational form primitives reused across the
  * planning tool forms (Monte Carlo, glide path, tax withdrawal). No logic of

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 import { describe, it, expect } from "vitest";
 import { SCENARIO_PRESETS, findPreset } from "./scenario-presets";
 import { validateScenario } from "./scenario-validation";

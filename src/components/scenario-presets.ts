@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * scenario-presets — built-in, PII-free example scenarios for demos and
  * case-study variations. Each preset is a full ScenarioSnapshot (the same shape

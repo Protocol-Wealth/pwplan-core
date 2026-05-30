@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * scenario-io — pure, dependency-free serialize/parse for plan inputs.
  *

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Protocol Wealth, LLC
+
 /**
  * result-shell — shared error / running / empty framing for every tool's
  * results panel, so the three panels stay consistent. Presentation only.
