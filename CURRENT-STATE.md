@@ -4,8 +4,8 @@ _Last updated: 2026-05-29 (glide-path + tax-withdrawal tools). Session-start sna
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 57 tests
-pass, build succeeds (~218 kB / ~68 kB gzip). The pwos-core compliance packages
+Verified green locally: typecheck clean, lint clean, prettier clean, 58 tests
+pass, build succeeds (~225 kB / ~69 kB gzip). The pwos-core compliance packages
 and the nexus-core planning engine are **not yet wired**; the app runs in UI-dev
 mode with `VITE_COMPLIANCE_NOOP=1`. The UI now exposes three tools via a tab bar
 (Monte Carlo, Glide path, Tax withdrawal), each wired to its gateway method with
