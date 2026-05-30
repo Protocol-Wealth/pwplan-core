@@ -31,9 +31,9 @@ Semantic Versioning. The planning wire contract is versioned separately as
 - Results visualization in `ResultsPanel`: a median-balance-by-year line/area
   chart (age-labelled, peak annotated), a terminal-value percentile bar chart
   (worst-path footnote), and a regime-path strip with a legend when the engine
-  returns `regimePathSummary`. All hand-rolled inline SVG/CSS — no chart library,
-  bundle stays lean (~214 kB / ~67 kB gzip). Charts carry `role="img"` +
-  `aria-label`/`title` for screen readers.
+  returns `regimePathSummary`. All hand-rolled inline SVG/CSS — no chart library;
+  the whole Unreleased block keeps the bundle lean (~225 kB / ~69 kB gzip, no new
+  deps). Charts carry `role="img"` + `aria-label`/`title` for screen readers.
 - `results-viz.ts` — pure, dependency-free geometry helpers (`seriesGeometry`,
   `percentileBars`, `regimeRuns`) that map an engine result to SVG/CSS
   coordinates. Presentation math only; no quant logic (thin-shell intact).

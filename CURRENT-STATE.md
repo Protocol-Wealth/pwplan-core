@@ -1,6 +1,6 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-05-29 (glide-path + tax-withdrawal tools). Session-start snapshot; maintain it._
+_Last updated: 2026-05-30 (glide-path + tax-withdrawal tools). Session-start snapshot; maintain it._
 
 ## Status
 
@@ -16,7 +16,11 @@ library). Accounts/asset classes are a single shared portfolio.
 
 Thin UI → `planning-gateway` → (`nexus-mcp` | `pw-api`). Wire contract v0.1.0,
 PII-free and enforced by test. Compliance is a fail-closed tripwire (stubbed).
-See README.md for the two-deployment diagram.
+See README.md for the two-deployment diagram. The UI exposes three tools behind a
+tab bar (Monte Carlo, Glide path, Tax withdrawal), each wired to its gateway
+method (`planning.monteCarlo` / `glidePath` / `taxWithdrawal`); the remaining two
+contract tools (correlation_matrix, regime_return_generator) are in the contract
+but not yet surfaced as their own UI.
 
 ## File inventory
 
@@ -24,14 +28,16 @@ See README.md for the two-deployment diagram.
 - `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
 - `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export.
 - `src/lib/compliance.ts` — assertNoPII tripwire + auditCall; pwos-core peer-dep impls commented.
-- `src/store/scenario.ts` — Zustand scenario state; DEFAULT_INPUTS seeded with a valid balanced scenario.
-- `src/components/ScenarioForm.tsx` — full scenario editor: plan params, asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income, filing status; Run disabled with inline reasons until valid.
-- `src/components/scenario-validation.ts` — pure request-shape validation (allocation-sums-to-1, unique ids, known-id refs). No quant logic.
-- `src/components/scenario-validation.test.ts` — 15 unit tests (incl. float-tolerance band boundaries).
-- `src/components/ResultsPanel.tsx` — success probability + 3 hand-rolled charts: median-balance line/area, terminal-value percentile bars, regime-path strip (when present). Inline SVG/CSS, no chart lib.
-- `src/components/results-viz.ts` — pure geometry helpers (seriesGeometry, percentileBars, regimeRuns). Presentation math only; no quant logic.
-- `src/components/results-viz.test.ts` — 15 unit tests (SVG coords, percentile bars, regime runs).
-- `src/App.tsx`, `src/main.tsx`, `src/index.css`, `index.html` — shell.
+- `src/store/scenario.ts` — Zustand store: active `tool` + per-tool inputs (scenario / glidePath / tax) and result slots; accounts/asset classes are one shared portfolio. Seeded valid defaults.
+- `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params, asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income, filing status; Run gated on validity.
+- `src/components/GlidePathTool.tsx` — glide-path form + equity-weight-by-age line chart (fixed 0–1 axis).
+- `src/components/TaxWithdrawalTool.tsx` — tax form over the shared portfolio + withdrawals-by-account table (total tax, effective rate, RMD indicator).
+- `src/components/scenario-validation.ts` / `.test.ts` — pure scenario request-shape validation (allocation-sums-to-1, unique ids, known-id refs); 15 tests. No quant logic.
+- `src/components/tool-validation.ts` / `.test.ts` — pure glide-path + tax request-shape validation (ranges, age ordering, portfolio presence); 10 tests. No quant logic.
+- `src/components/ResultsPanel.tsx` — Monte Carlo results: success probability + 3 hand-rolled charts (median-balance line/area, terminal percentile bars, regime strip when present). Inline SVG/CSS, no chart lib.
+- `src/components/results-viz.ts` / `.test.ts` — pure geometry helpers (seriesGeometry incl. forcedMax, percentileBars, regimeRuns, ageWeightSeries); 20 tests. Presentation math only.
+- `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
+- `src/App.tsx` (tool tab bar), `src/main.tsx`, `src/index.css`, `index.html` — shell.
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.
 - CI: `.github/workflows/ci.yml` (8 jobs).
 - `LICENSE` (Apache-2.0), `NOTICE` (patent TODO), `README.md`, `CONTRIBUTING.md`.
