@@ -17,6 +17,15 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Changed
 
+- `docs/nexus-core-requirements.md`: pinned the two former "gaps" into contract
+  **`0.1.0` (now 6 tools)** rather than a future bump — the `capital_market_assumptions`
+  tool (§3.6, the "real data, fake clients" capability) and the optional
+  `pathCacheKey` field on `monte_carlo_decumulation` (§3.1). The engine is
+  pre-first-release, so amending `0.1.0` is non-breaking, and a bump would break
+  the client's exact-match version check against an engine shipping `0.1.0`. The
+  contract types themselves (`src/contract/planning.ts`) are unchanged in this
+  commit — they will be added in a follow-up so client and engine land at `0.1.0`
+  together; the doc is the agreed spec for the nexus-core build.
 - Accessibility contrast: every `text-stone-400` body/micro-text span (footers,
   empty states, table headers, captions, the remove-button glyph) raised to
   `text-stone-500` (≈4.6:1 on white) across 9 components, clearing WCAG AA for

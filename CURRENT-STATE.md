@@ -92,6 +92,11 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   `MonteCarloRequest` and a `capital_market_assumptions` tool, folded into v0.1.0
   with NO version bump (the nexus-core engine is pre-first-release, so amending
   0.1.0 is not breaking; bumping would break the exact-match `ContractMismatchError`
-  against an engine shipping 0.1.0). See `docs/nexus-core-requirements.md` §6.
+  against an engine shipping 0.1.0). The spec is **finalized and pinned to 0.1.0**
+  in `docs/nexus-core-requirements.md` (§3.1 `pathCacheKey`, §3.6
+  `capital_market_assumptions`) and handed to nexus-core for the server build;
+  what remains here is adding the matching types to `src/contract/planning.ts` +
+  the `planning.*` gateway method + tests, so client and engine land at 0.1.0
+  together.
 - **Theming** to the `-core` family visual language (needs a design reference).
 - **NOTICE patent number** when issued.
