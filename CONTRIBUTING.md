@@ -6,6 +6,9 @@
   compliance logic belongs in pwos-core. PRs that move math or PII handling
   into this repo will be declined. The right move is usually a PR to the
   engine or a compliance package, plus a contract bump here.
+- Every first-party source file carries an SPDX Apache-2.0 header
+  (`// SPDX-License-Identifier: Apache-2.0` + copyright; `/* … */` for CSS,
+  after the shebang for scripts). Add one to any new source file you create.
 - All checks in `.github/workflows/ci.yml` must be green.
 
 ## Cross-repo contract
