@@ -1,11 +1,11 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-05-30 (demo reframe: stripped production compliance layer). Session-start snapshot; maintain it._
+_Last updated: 2026-05-30 (nexus-core requirements doc + gateway integration test). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 67 tests
-pass, build succeeds (~220 kB / ~68 kB gzip). **This repo is now positioned as
+Verified green locally: typecheck clean, lint clean, prettier clean, 76 tests
+pass, build succeeds (~225 kB / ~69 kB gzip). **This repo is now positioned as
 demo / case-study tooling**: it runs
 against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
 `.env` needed) with de-identified / fake client data. The production compliance
@@ -32,6 +32,7 @@ regime_return_generator) are in the contract but not yet surfaced as their own U
 - `src/contract/planning.ts` — wire contract v0.1.0; 5 tools; PII-free invariant.
 - `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
 - `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export.
+- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 5 tools, pw-api seam; 9 tests.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
 - `src/store/scenario.ts` — Zustand store: active `tool` + per-tool inputs (scenario / glidePath / tax) and result slots; accounts/asset classes are one shared portfolio. Seeded valid defaults.
 - `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params, asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income, filing status; Run gated on validity.
@@ -43,6 +44,8 @@ regime_return_generator) are in the contract but not yet surfaced as their own U
 - `src/components/results-viz.ts` / `.test.ts` — pure geometry helpers (seriesGeometry incl. forcedMax, percentileBars, regimeRuns, ageWeightSeries); 20 tests. Presentation math only.
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
 - `src/App.tsx` (tool tab bar), `src/main.tsx`, `src/index.css`, `index.html` — shell.
+- `scripts/smoke-nexus.mjs` — opt-in live round-trip against nexusmcp.site (PII-free default scenario); not in the gate suite, never in CI.
+- `docs/nexus-core-requirements.md` — consumer-side spec of what the nexus-core MCP server must provide (5 tools, enums, CORS/determinism, demo capabilities, contract gaps).
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.
 - CI: `.github/workflows/ci.yml` (7 jobs).
 - `LICENSE` (Apache-2.0), `NOTICE` (patent TODO), `README.md`, `CONTRIBUTING.md`.
@@ -66,5 +69,8 @@ regime_return_generator) are in the contract but not yet surfaced as their own U
   eye / typecheck only.
 - Form validation is request-shape only (allocations sum to 1, known ids, etc.);
   it intentionally does not validate financial sanity (that is the engine's job).
-- No automated integration test against `nexusmcp.site` yet (manual demo only).
+- The gateway dispatch path has offline integration coverage
+  (`planning-gateway.test.ts`, fetch mocked). There is no automated test against
+  the *live* `nexusmcp.site` (deliberate — a flaky external engine must not gate
+  CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
 - `NOTICE` patent application number is a placeholder.

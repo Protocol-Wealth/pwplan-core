@@ -16,8 +16,11 @@ on completion and note the version in CHANGELOG.md._
 - [x] Glide-path and tax-withdrawal views; wire the existing gateway methods to UI.
       _(done 2026-05-29: tab bar + GlidePathTool/TaxWithdrawalTool; shared portfolio;
       pure `tool-validation.ts`; equity-weight line chart + withdrawals table; 15 new tests.)_
-- [ ] Integration test against `nexusmcp.site` (or a local `nexus-mcp` gateway);
-      cover the ContractMismatchError and PiiTripwireError paths.
+- [x] Integration test against `nexusmcp.site` (or a local `nexus-mcp` gateway);
+      cover the ContractMismatchError and PiiTripwireError paths. _(done 2026-05-30:
+      offline `planning-gateway.test.ts` mocks fetch and covers both error paths
+      plus tool-id/path/header wiring and the pw-api seam, 9 tests; opt-in live
+      round-trip in `scripts/smoke-nexus.mjs`, never in CI.)_
 - [ ] Fill the `NOTICE` patent application number (supplied by maintainer).
 
 ### Out of scope here (private fork only)

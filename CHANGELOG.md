@@ -31,6 +31,22 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- `docs/nexus-core-requirements.md` — consumer-side spec for the nexus-core MCP
+  server (the 5 planning tools' request/response shapes, shared enums/objects,
+  transport + CORS + determinism rules, the "real data, fake clients" demo
+  capability, and the additive contract gaps to coordinate: `pathCacheKey`, a
+  capital-market-assumptions endpoint). Derived from the v0.1.0 contract and the
+  gateway/store/results consumers; handed to nexus-core to drive the server build.
+- `src/lib/planning-gateway.test.ts` — offline integration test for the gateway
+  dispatch path (fetch mocked; no network). Covers the PiiTripwireError
+  (fail-closed before dispatch) and ContractMismatchError (version drift) paths,
+  tool-id → path mapping for all 5 tools, contract-version injection, the audit /
+  contract-version / subjectRef headers, verbatim non-OK error surfacing, and the
+  `pw-api` backend seam. 9 tests (suite now 76).
+- `scripts/smoke-nexus.mjs` — opt-in live round-trip against `nexusmcp.site`
+  using the PII-free default scenario; validates the response carries the
+  UI's load-bearing fields. Not in the gate suite and never run in CI (the public
+  engine must not gate this repo).
 - Glide-path and tax-withdrawal tools, wiring the existing
   `planning.glidePath` / `planning.taxWithdrawal` gateway methods to the UI. A
   tab bar in `App.tsx` switches between Monte Carlo, Glide path, and Tax
