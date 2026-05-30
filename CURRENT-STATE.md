@@ -71,6 +71,6 @@ regime_return_generator) are in the contract but not yet surfaced as their own U
   it intentionally does not validate financial sanity (that is the engine's job).
 - The gateway dispatch path has offline integration coverage
   (`planning-gateway.test.ts`, fetch mocked). There is no automated test against
-  the *live* `nexusmcp.site` (deliberate — a flaky external engine must not gate
+  the _live_ `nexusmcp.site` (deliberate — a flaky external engine must not gate
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
 - `NOTICE` patent application number is a placeholder.
