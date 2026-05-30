@@ -343,7 +343,7 @@ export function ScenarioForm() {
                   Allocation
                 </span>
                 {inputs.assetClasses.length === 0 ? (
-                  <p className="font-mono text-[0.65rem] text-stone-400">
+                  <p className="font-mono text-[0.65rem] text-stone-500">
                     Add asset classes to allocate.
                   </p>
                 ) : (

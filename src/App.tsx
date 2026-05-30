@@ -90,7 +90,7 @@ export default function App() {
       </div>
 
       <footer className="mt-16 border-t border-stone-200 pt-4">
-        <p className="font-mono text-[0.65rem] leading-relaxed text-stone-400">
+        <p className="font-mono text-[0.65rem] leading-relaxed text-stone-500">
           Software, not investment advice. Outputs are projections, not
           guarantees. Not affiliated with, and does not endorse, any third-party
           tool. Apache-2.0 · defensive patent.

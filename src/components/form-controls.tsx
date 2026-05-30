@@ -126,7 +126,7 @@ export function Card({
         type="button"
         onClick={onRemove}
         aria-label="Remove"
-        className="absolute right-2 top-2 font-mono text-sm leading-none text-stone-400 hover:text-red-600"
+        className="absolute right-2 top-2 font-mono text-sm leading-none text-stone-500 hover:text-red-600"
       >
         ×
       </button>
@@ -137,7 +137,7 @@ export function Card({
 
 export function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="border border-dashed border-stone-300 p-3 font-mono text-[0.65rem] text-stone-400">
+    <p className="border border-dashed border-stone-300 p-3 font-mono text-[0.65rem] text-stone-500">
       {children}
     </p>
   );

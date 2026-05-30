@@ -58,7 +58,7 @@ export function LineChart({
         />
       </svg>
       {footer && (
-        <div className="mt-2 flex justify-between font-mono text-[0.6rem] tabular-nums text-stone-400">
+        <div className="mt-2 flex justify-between font-mono text-[0.6rem] tabular-nums text-stone-500">
           <span>{footer.left}</span>
           <span>{footer.center}</span>
           <span>{footer.right}</span>

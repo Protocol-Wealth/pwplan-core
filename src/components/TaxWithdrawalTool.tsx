@@ -117,7 +117,7 @@ export function TaxWithdrawalForm() {
           Portfolio (from Monte Carlo tab)
         </span>
         {inputs.accounts.length === 0 ? (
-          <p className="font-mono text-[0.65rem] text-stone-400">
+          <p className="font-mono text-[0.65rem] text-stone-500">
             No accounts configured.
           </p>
         ) : (
@@ -171,7 +171,7 @@ function TaxTable({ result }: { result: TaxWithdrawalResult }) {
 
       <div className="grid grid-cols-2 gap-px bg-stone-200">
         <div className="bg-white p-3">
-          <div className="font-mono text-[0.6rem] uppercase tracking-wider text-stone-400">
+          <div className="font-mono text-[0.6rem] uppercase tracking-wider text-stone-500">
             Total tax
           </div>
           <div className="font-mono text-lg tabular-nums text-stone-900">
@@ -179,7 +179,7 @@ function TaxTable({ result }: { result: TaxWithdrawalResult }) {
           </div>
         </div>
         <div className="bg-white p-3">
-          <div className="font-mono text-[0.6rem] uppercase tracking-wider text-stone-400">
+          <div className="font-mono text-[0.6rem] uppercase tracking-wider text-stone-500">
             Effective rate
           </div>
           <div className="font-mono text-lg tabular-nums text-stone-900">
@@ -194,7 +194,7 @@ function TaxTable({ result }: { result: TaxWithdrawalResult }) {
         </h3>
         <table className="w-full border border-stone-200 font-mono text-[0.7rem] tabular-nums">
           <thead>
-            <tr className="border-b border-stone-200 text-stone-400">
+            <tr className="border-b border-stone-200 text-stone-500">
               <th className="px-2 py-1 text-left font-normal uppercase tracking-wider">
                 Account
               </th>

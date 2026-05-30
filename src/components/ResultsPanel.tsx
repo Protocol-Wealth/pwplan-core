@@ -77,7 +77,7 @@ function MonteCarloResultView({
         <RegimePath runs={runs} totalYears={result.regimePathSummary!.length} />
       )}
 
-      <p className="font-mono text-[0.65rem] text-stone-400">
+      <p className="font-mono text-[0.65rem] text-stone-500">
         seed {result.seedUsed} · contract {result.contractVersion}
       </p>
     </section>
@@ -138,13 +138,13 @@ function TerminalDistribution({
                 role="img"
                 aria-label={`${b.key} terminal value ${usd(b.value)}`}
               />
-              <span className="mt-1 font-mono text-[0.55rem] uppercase text-stone-400">
+              <span className="mt-1 font-mono text-[0.55rem] uppercase text-stone-500">
                 {b.key}
               </span>
             </div>
           ))}
         </div>
-        <p className="mt-2 font-mono text-[0.6rem] tabular-nums text-stone-400">
+        <p className="mt-2 font-mono text-[0.6rem] tabular-nums text-stone-500">
           worst path {usd(worst)}
         </p>
       </div>

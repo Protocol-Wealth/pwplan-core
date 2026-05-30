@@ -17,6 +17,10 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Changed
 
+- Accessibility contrast: every `text-stone-400` body/micro-text span (footers,
+  empty states, table headers, captions, the remove-button glyph) raised to
+  `text-stone-500` (≈4.6:1 on white) across 9 components, clearing WCAG AA for
+  normal text and completing the accessibility-pass ROADMAP item.
 - **Repositioned as demo / case-study tooling.** This OSS repo now runs against
   the public nexus-core MCP engine (`https://nexusmcp.site` by default — a fresh
   clone needs no `.env`) with de-identified / fake client data, and no longer

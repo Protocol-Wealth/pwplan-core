@@ -151,7 +151,7 @@ function GlidePathChart({
         <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-stone-500">
           Result
         </h2>
-        <p className="font-mono text-sm text-stone-400">
+        <p className="font-mono text-sm text-stone-500">
           The engine returned an empty glide path.
         </p>
       </section>
@@ -183,7 +183,7 @@ function GlidePathChart({
         />
       </div>
 
-      <p className="font-mono text-[0.65rem] text-stone-400">
+      <p className="font-mono text-[0.65rem] text-stone-500">
         contract {contractVersion}
       </p>
     </section>

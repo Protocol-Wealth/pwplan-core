@@ -40,11 +40,15 @@ on completion and note the version in CHANGELOG.md._
 - [x] Built-in case-study presets (accumulator / near-retiree / crisis-stress)
       loadable from the UI. _(done 2026-05-30: `scenario-presets.ts`; 15 tests
       assert each preset passes the real validators and round-trips.)_
-- [~] Accessibility pass (keyboard, labels, contrast). _(done 2026-05-30:
-  keyboard focus-visible rings restored where the outline was removed, valid
-  `aria-current`, deduped `<head>`; labels/role=img already in place.
-  **Remaining:** contrast tuning of the `stone-400` micro-text.)_
+- [x] Accessibility pass (keyboard, labels, contrast). _(done 2026-05-30:
+      keyboard focus-visible rings restored where the outline was removed, valid
+      `aria-current`, deduped `<head>`; labels/role=img already in place; contrast
+      tuning — all `stone-400` body/micro-text raised to `stone-500` (≈4.6:1, WCAG AA
+      on white) across 9 components.)_
 - [ ] Theming to match the `-core` family visual language.
+- [ ] Contract additive changes: `pathCacheKey?` on `MonteCarloRequest` + a
+      capital-market-assumptions tool, folded into v0.1.0 (no bump; engine is
+      pre-first-release). Coordinate with the nexus-core server build.
 
 ## Dependency on other repos (track, do not build here)
 

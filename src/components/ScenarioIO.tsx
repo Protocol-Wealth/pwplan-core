@@ -141,7 +141,7 @@ export function ScenarioIO() {
         </p>
       )}
 
-      <p className="font-mono text-[0.55rem] leading-relaxed text-stone-400">
+      <p className="font-mono text-[0.55rem] leading-relaxed text-stone-500">
         Scenarios save de-identified planning inputs only (ages, balances,
         allocations) — never names, dates of birth, or any identifying detail.
       </p>
