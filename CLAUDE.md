@@ -39,7 +39,7 @@ the conflict rather than working around it.
 
 - React 19, Vite 6, Tailwind v4, TypeScript (strict), Zustand. npm, Node 22.
 - ESLint flat config; Prettier with `semi: true`, double quotes, `trailingComma:
-  "all"`. Run `npm run format` before committing.
+"all"`. Run `npm run format` before committing.
 - Module boundaries: `contract/` (wire types, no logic) · `lib/` (gateway +
   compliance adapters) · `store/` (Zustand) · `components/` (UI). Keep them clean.
 - No browser `localStorage` / `sessionStorage` in app code.
