@@ -1,6 +1,11 @@
 /**
- * scenario store — client-side plan state. Holds inputs and the latest engine
- * result. No PII leaves this store without passing through compliance.
+ * scenario store — client-side plan state. Holds the inputs and latest engine
+ * result for each planning tool (Monte Carlo, glide path, tax withdrawal). No
+ * PII leaves this store without passing through compliance.
+ *
+ * Accounts and asset classes are a single shared portfolio: both the Monte
+ * Carlo and tax-withdrawal requests take the contract's `Account[]`, so they
+ * read the same `inputs.accounts` rather than re-collecting them.
  */
 
 import { create } from "zustand";
@@ -8,10 +13,19 @@ import type {
   Account,
   AssetClass,
   FilingStatus,
+  GlidePathRequest,
+  GlidePathResult,
   GuaranteedIncome,
   MonteCarloResult,
   ReturnModel,
+  TaxWithdrawalResult,
 } from "../contract/planning";
+
+/** Which planning tool the UI is currently showing. */
+export type PlanningTool = "monte_carlo" | "glide_path" | "tax_withdrawal";
+
+/** Glide-path shape, derived from the wire contract (no new wire type). */
+export type GlidePathShape = GlidePathRequest["shape"];
 
 export interface ScenarioInputs {
   currentAge: number;
@@ -27,13 +41,44 @@ export interface ScenarioInputs {
   paths: number;
 }
 
+export interface GlidePathInputs {
+  currentAge: number;
+  retirementAge: number;
+  horizonAge: number;
+  startEquityWeight: number;
+  endEquityWeight: number;
+  shape: GlidePathShape;
+}
+
+export interface TaxWithdrawalInputs {
+  year: number;
+  age: number;
+  filingStatus: FilingStatus;
+  grossNeed: number;
+  otherTaxableIncome: number;
+}
+
 interface ScenarioState {
+  tool: PlanningTool;
+
   inputs: ScenarioInputs;
+  glidePathInputs: GlidePathInputs;
+  taxInputs: TaxWithdrawalInputs;
+
   result: MonteCarloResult | null;
+  glidePathResult: GlidePathResult | null;
+  taxResult: TaxWithdrawalResult | null;
+
   running: boolean;
   error: string | null;
+
+  setTool: (tool: PlanningTool) => void;
   setInputs: (patch: Partial<ScenarioInputs>) => void;
+  setGlidePathInputs: (patch: Partial<GlidePathInputs>) => void;
+  setTaxInputs: (patch: Partial<TaxWithdrawalInputs>) => void;
   setResult: (r: MonteCarloResult | null) => void;
+  setGlidePathResult: (r: GlidePathResult | null) => void;
+  setTaxResult: (r: TaxWithdrawalResult | null) => void;
   setRunning: (b: boolean) => void;
   setError: (e: string | null) => void;
 }
@@ -87,13 +132,48 @@ const DEFAULT_INPUTS: ScenarioInputs = {
   paths: 10_000,
 };
 
+const DEFAULT_GLIDE_PATH: GlidePathInputs = {
+  currentAge: 45,
+  retirementAge: 65,
+  horizonAge: 95,
+  startEquityWeight: 0.7,
+  endEquityWeight: 0.3,
+  shape: "linear",
+};
+
+const DEFAULT_TAX: TaxWithdrawalInputs = {
+  year: 2026,
+  age: 65,
+  filingStatus: "married_joint",
+  grossNeed: 120_000,
+  otherTaxableIncome: 0,
+};
+
 export const useScenario = create<ScenarioState>((set) => ({
+  tool: "monte_carlo",
+
   inputs: DEFAULT_INPUTS,
+  glidePathInputs: DEFAULT_GLIDE_PATH,
+  taxInputs: DEFAULT_TAX,
+
   result: null,
+  glidePathResult: null,
+  taxResult: null,
+
   running: false,
   error: null,
+
+  // Switching tools clears any stale error so a failure from one tool does not
+  // bleed into another's panel. Each tool keeps its own result slot.
+  setTool: (tool) => set({ tool, error: null }),
   setInputs: (patch) => set((s) => ({ inputs: { ...s.inputs, ...patch } })),
+  setGlidePathInputs: (patch) =>
+    set((s) => ({ glidePathInputs: { ...s.glidePathInputs, ...patch } })),
+  setTaxInputs: (patch) =>
+    set((s) => ({ taxInputs: { ...s.taxInputs, ...patch } })),
   setResult: (result) => set({ result }),
+  setGlidePathResult: (glidePathResult) => set({ glidePathResult }),
+  setTaxResult: (taxResult) => set({ taxResult }),
   setRunning: (running) => set({ running }),
   setError: (error) => set({ error }),
 }));

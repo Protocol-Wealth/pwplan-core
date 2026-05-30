@@ -13,12 +13,14 @@ on completion and note the version in CHANGELOG.md._
       distribution (percentile bars), regime path summary when present. Keep the
       bundle lean. _(done 2026-05-29: hand-rolled SVG/CSS charts in ResultsPanel +
       pure `results-viz.ts` helpers; no chart lib; 15 tests.)_
+- [x] Glide-path and tax-withdrawal views; wire the existing gateway methods to UI.
+      _(done 2026-05-29: tab bar + GlidePathTool/TaxWithdrawalTool; shared portfolio;
+      pure `tool-validation.ts`; equity-weight line chart + withdrawals table; 15 new tests.)_
 - [ ] Wire `@protocolwealthos/pii-guard` + `@protocolwealthos/audit-log` once
       published; replace the commented stubs in `compliance.ts`; flip the default
       away from no-op.
 - [ ] Integration test against a local `nexus-mcp` gateway; cover the
       ContractMismatchError and PiiTripwireError paths.
-- [ ] Glide-path and tax-withdrawal views; wire the existing gateway methods to UI.
 - [ ] Fill the `NOTICE` patent application number (supplied by maintainer).
 
 ## Next

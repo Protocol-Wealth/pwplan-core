@@ -37,11 +37,17 @@ export interface SeriesGeometry {
  * is 0-based for non-negative data (the honest baseline for a balance that can
  * deplete to zero); it extends below zero only if the data does. Origin is
  * top-left (SVG convention), so larger values sit higher (smaller y).
+ *
+ * `forcedMax` pins the top of the Y domain (e.g. 1 for a 0–1 weight series) so
+ * the chart shows the value against a fixed scale rather than its own peak. The
+ * caller is responsible for passing data that does not exceed it; a value above
+ * `forcedMax` simply maps above the box (negative y).
  */
 export function seriesGeometry(
   values: number[],
   width: number,
   height: number,
+  forcedMax?: number,
 ): SeriesGeometry {
   if (values.length === 0) {
     return {
@@ -49,10 +55,10 @@ export function seriesGeometry(
       polyline: "",
       areaPath: "",
       domainMin: 0,
-      domainMax: 0,
+      domainMax: forcedMax ?? 0,
     };
   }
-  const domainMax = Math.max(...values);
+  const domainMax = forcedMax ?? Math.max(...values);
   const domainMin = Math.min(0, ...values);
   const span = domainMax - domainMin || 1;
   const n = values.length;
@@ -131,4 +137,29 @@ export function regimeRuns(path: Regime[]): RegimeRun[] {
     }
   }
   return runs;
+}
+
+export interface AgeWeightSeries {
+  /** Ages in ascending numeric order. */
+  ages: number[];
+  /** Weights aligned to `ages` (same index). */
+  weights: number[];
+}
+
+/**
+ * Turn a `{ "65": 0.6, "66": 0.58, … }` age→weight map (e.g. a glide path's
+ * equityWeightByAge) into ascending-by-age parallel arrays. Keys that are not
+ * finite numbers are ignored. Sorts numerically, so "9" precedes "10".
+ */
+export function ageWeightSeries(
+  byAge: Record<string, number>,
+): AgeWeightSeries {
+  const entries = Object.entries(byAge)
+    .map(([age, weight]) => [Number(age), weight] as const)
+    .filter(([age]) => Number.isFinite(age))
+    .sort((a, b) => a[0] - b[0]);
+  return {
+    ages: entries.map((e) => e[0]),
+    weights: entries.map((e) => e[1]),
+  };
 }

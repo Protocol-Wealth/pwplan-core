@@ -1,6 +1,68 @@
 import { ScenarioForm } from "./components/ScenarioForm";
 import { ResultsPanel } from "./components/ResultsPanel";
+import { GlidePathForm, GlidePathResults } from "./components/GlidePathTool";
+import {
+  TaxWithdrawalForm,
+  TaxWithdrawalResults,
+} from "./components/TaxWithdrawalTool";
+import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
+
+const TOOLS: { value: PlanningTool; label: string }[] = [
+  { value: "monte_carlo", label: "Monte Carlo" },
+  { value: "glide_path", label: "Glide path" },
+  { value: "tax_withdrawal", label: "Tax withdrawal" },
+];
+
+function ToolTabs() {
+  const { tool, setTool } = useScenario();
+  return (
+    <nav className="mb-8 flex gap-px border border-stone-300 bg-stone-200">
+      {TOOLS.map((t) => (
+        <button
+          key={t.value}
+          type="button"
+          onClick={() => setTool(t.value)}
+          aria-current={tool === t.value}
+          className={`flex-1 px-4 py-2 font-mono text-xs uppercase tracking-wider transition ${
+            tool === t.value
+              ? "bg-stone-900 text-stone-50"
+              : "bg-white text-stone-600 hover:bg-stone-100"
+          }`}
+        >
+          {t.label}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function ActiveTool() {
+  const tool = useScenario((s) => s.tool);
+  switch (tool) {
+    case "glide_path":
+      return (
+        <>
+          <GlidePathForm />
+          <GlidePathResults />
+        </>
+      );
+    case "tax_withdrawal":
+      return (
+        <>
+          <TaxWithdrawalForm />
+          <TaxWithdrawalResults />
+        </>
+      );
+    case "monte_carlo":
+      return (
+        <>
+          <ScenarioForm />
+          <ResultsPanel />
+        </>
+      );
+  }
+}
 
 export default function App() {
   return (
@@ -15,9 +77,10 @@ export default function App() {
         </p>
       </header>
 
+      <ToolTabs />
+
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
-        <ScenarioForm />
-        <ResultsPanel />
+        <ActiveTool />
       </div>
 
       <footer className="mt-16 border-t border-stone-200 pt-4">

@@ -1,29 +1,14 @@
 import { useScenario } from "../store/scenario";
 import {
-  seriesGeometry,
   percentileBars,
   regimeRuns,
   type PercentileBar,
   type RegimeRun,
 } from "./results-viz";
+import { ChartHeading, LineChart } from "./charts";
+import { ResultShell } from "./result-shell";
+import { usd, usdCompact, pct } from "./format";
 import type { MonteCarloResult, Regime } from "../contract/planning";
-
-const usd = (n: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-
-const usdCompact = (n: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(n);
-
-const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
 /** Muted palette + display label per EMF regime. */
 const REGIME_META: Record<Regime, { label: string; color: string }> = {
@@ -37,35 +22,27 @@ const REGIME_META: Record<Regime, { label: string; color: string }> = {
 export function ResultsPanel() {
   const { result, error, running, inputs } = useScenario();
 
-  if (error) {
-    return (
-      <section className="border border-red-300 bg-red-50 p-4">
-        <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-red-600">
-          Engine error
-        </h2>
-        <p className="mt-2 font-mono text-sm text-red-800">{error}</p>
-      </section>
-    );
-  }
+  return (
+    <ResultShell
+      error={error}
+      running={running}
+      hasResult={result !== null}
+      emptyText="No result yet. Configure a scenario and run the simulation."
+    >
+      {result && (
+        <MonteCarloResultView result={result} startAge={inputs.currentAge} />
+      )}
+    </ResultShell>
+  );
+}
 
-  if (running) {
-    return (
-      <section className="border border-stone-200 p-4">
-        <p className="font-mono text-sm text-stone-500">Awaiting nexus-core…</p>
-      </section>
-    );
-  }
-
-  if (!result) {
-    return (
-      <section className="border border-dashed border-stone-300 p-4">
-        <p className="font-mono text-sm text-stone-400">
-          No result yet. Configure a scenario and run the simulation.
-        </p>
-      </section>
-    );
-  }
-
+function MonteCarloResultView({
+  result,
+  startAge,
+}: {
+  result: MonteCarloResult;
+  startAge: number;
+}) {
   const bars = percentileBars(result.terminalValues);
   const runs = result.regimePathSummary
     ? regimeRuns(result.regimePathSummary)
@@ -88,7 +65,7 @@ export function ResultsPanel() {
 
       <MedianBalanceChart
         series={result.medianBalanceByYear}
-        startAge={inputs.currentAge}
+        startAge={startAge}
       />
 
       <TerminalDistribution bars={bars} worst={result.worstPathTerminal} />
@@ -104,14 +81,6 @@ export function ResultsPanel() {
   );
 }
 
-function ChartHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-stone-500">
-      {children}
-    </h3>
-  );
-}
-
 function MedianBalanceChart({
   series,
   startAge,
@@ -121,38 +90,21 @@ function MedianBalanceChart({
 }) {
   if (series.length === 0) return null;
 
-  const W = 300;
-  const H = 120;
-  const geo = seriesGeometry(series, W, H);
-  const peak = geo.domainMax;
+  const peak = Math.max(...series);
   const endAge = startAge + series.length - 1;
 
   return (
     <div className="space-y-2">
       <ChartHeading>Median balance by year</ChartHeading>
-      <div className="border border-stone-200 p-3">
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          className="h-auto w-full"
-          preserveAspectRatio="none"
-          role="img"
-          aria-label={`Median portfolio balance from age ${startAge} to ${endAge}, peaking at ${usd(peak)}.`}
-        >
-          <path d={geo.areaPath} fill="#1c1917" fillOpacity={0.06} />
-          <polyline
-            points={geo.polyline}
-            fill="none"
-            stroke="#1c1917"
-            strokeWidth={1.5}
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-        <div className="mt-2 flex justify-between font-mono text-[0.6rem] tabular-nums text-stone-400">
-          <span>age {startAge}</span>
-          <span>peak {usdCompact(peak)}</span>
-          <span>age {endAge}</span>
-        </div>
-      </div>
+      <LineChart
+        values={series}
+        ariaLabel={`Median portfolio balance from age ${startAge} to ${endAge}, peaking at ${usd(peak)}.`}
+        footer={{
+          left: `age ${startAge}`,
+          center: `peak ${usdCompact(peak)}`,
+          right: `age ${endAge}`,
+        }}
+      />
     </div>
   );
 }

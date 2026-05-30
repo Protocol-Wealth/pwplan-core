@@ -9,6 +9,25 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- Glide-path and tax-withdrawal tools, wiring the existing
+  `planning.glidePath` / `planning.taxWithdrawal` gateway methods to the UI. A
+  tab bar in `App.tsx` switches between Monte Carlo, Glide path, and Tax
+  withdrawal; each tool keeps its own input + result slot in the store, and
+  accounts are a single shared portfolio (the contract shares `Account[]`).
+  - `GlidePathTool.tsx` — form (ages, start/end equity weight, shape) + an
+    equity-weight-by-age line chart on a fixed 0–1 axis.
+  - `TaxWithdrawalTool.tsx` — form (year, age, gross need, other income, filing
+    status) over the shared portfolio + a withdrawals-by-account table with
+    total tax, effective rate, and an RMD-satisfied indicator.
+  - `tool-validation.ts` — pure request-shape validation (`validateGlidePath`,
+    `validateTaxWithdrawal`); no quant logic. 10 unit tests.
+  - `results-viz.ts` gains `ageWeightSeries` (sort age→weight map) and a
+    `forcedMax` option on `seriesGeometry` (fixed-top Y domain). 5 unit tests.
+- Shared, extracted presentational modules to keep the three tools DRY:
+  `format.ts` (currency/pct), `form-controls.tsx` (Field/NumberInput/Select/
+  Card/IssueList/RunButton/…), `charts.tsx` (`ChartHeading` + generic
+  `LineChart`), `result-shell.tsx` (error/running/empty framing). `ScenarioForm`
+  and `ResultsPanel` were refactored onto these with no behavior change.
 - Results visualization in `ResultsPanel`: a median-balance-by-year line/area
   chart (age-labelled, peak annotated), a terminal-value percentile bar chart
   (worst-path footnote), and a regime-path strip with a legend when the engine

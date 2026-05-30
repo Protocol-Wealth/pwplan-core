@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { seriesGeometry, percentileBars, regimeRuns } from "./results-viz";
+import {
+  seriesGeometry,
+  percentileBars,
+  regimeRuns,
+  ageWeightSeries,
+} from "./results-viz";
 import type { Regime } from "../contract/planning";
 
 describe("seriesGeometry", () => {
@@ -109,5 +114,38 @@ describe("regimeRuns", () => {
     const path: Regime[] = [E, C, C, E, E, E];
     const total = regimeRuns(path).reduce((s, r) => s + r.years, 0);
     expect(total).toBe(path.length);
+  });
+});
+
+describe("seriesGeometry forcedMax", () => {
+  it("pins the top of the domain to forcedMax", () => {
+    // Weights 0..0.5 against a fixed 0..1 domain: 0.5 sits at the vertical
+    // midpoint (y=50 in a height-100 box), not at the top.
+    const g = seriesGeometry([0, 0.5], 100, 100, 1);
+    expect(g.domainMax).toBe(1);
+    expect(g.points[0].y).toBe(100);
+    expect(g.points[1].y).toBe(50);
+  });
+
+  it("reports forcedMax even for an empty series", () => {
+    expect(seriesGeometry([], 100, 100, 1).domainMax).toBe(1);
+  });
+});
+
+describe("ageWeightSeries", () => {
+  it("sorts numerically by age and aligns weights", () => {
+    const s = ageWeightSeries({ "65": 0.6, "9": 0.9, "10": 0.8 });
+    expect(s.ages).toEqual([9, 10, 65]);
+    expect(s.weights).toEqual([0.9, 0.8, 0.6]);
+  });
+
+  it("ignores non-numeric keys", () => {
+    const s = ageWeightSeries({ "65": 0.6, asOf: 0.1 });
+    expect(s.ages).toEqual([65]);
+    expect(s.weights).toEqual([0.6]);
+  });
+
+  it("returns empty arrays for an empty map", () => {
+    expect(ageWeightSeries({})).toEqual({ ages: [], weights: [] });
   });
 });

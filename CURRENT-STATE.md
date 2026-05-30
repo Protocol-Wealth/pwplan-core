@@ -1,16 +1,16 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-05-29 (results visualization). Session-start snapshot; maintain it._
+_Last updated: 2026-05-29 (glide-path + tax-withdrawal tools). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 43 tests
-pass, build succeeds (~214 kB / ~67 kB gzip). The pwos-core compliance packages
+Verified green locally: typecheck clean, lint clean, prettier clean, 57 tests
+pass, build succeeds (~218 kB / ~68 kB gzip). The pwos-core compliance packages
 and the nexus-core planning engine are **not yet wired**; the app runs in UI-dev
-mode with `VITE_COMPLIANCE_NOOP=1`. The scenario form captures the full
-`MonteCarloRequest` (accounts, asset classes with λ, allocations, guaranteed
-income) with client-side request-shape validation; ResultsPanel renders the
-engine result as hand-rolled SVG/CSS charts (no chart library).
+mode with `VITE_COMPLIANCE_NOOP=1`. The UI now exposes three tools via a tab bar
+(Monte Carlo, Glide path, Tax withdrawal), each wired to its gateway method with
+client-side request-shape validation and hand-rolled SVG/CSS results (no chart
+library). Accounts/asset classes are a single shared portfolio.
 
 ## Architecture as built
 
