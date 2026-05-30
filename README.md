@@ -49,23 +49,43 @@ OPEN REFERENCE (anyone)                   PW PRODUCTION (private)
 ```
 
 - **nexus-mcp** — browser talks directly to the nexus-core MCP gateway. No
-  client to protect; you bring your own de-identified data. The self-host path.
-- **pw-api** — Protocol Wealth production. Requests route through authenticated
-  pw-api, which holds client context and the pseudonym→identity mapping and
-  calls nexus server-to-server. Client planning requests never touch the public
-  MCP surface.
+  client to protect; you bring your own de-identified data. The self-host /
+  demo path, and all this OSS repo ever uses.
+- **pw-api** — Protocol Wealth production, implemented in a **private fork** of
+  this repo (not this codebase). Requests route through authenticated pw-api,
+  which holds client context and the pseudonym→identity mapping and calls nexus
+  server-to-server. Shown here only to explain why the gateway is
+  backend-agnostic; the open build never targets it.
 
-Client↔run correlation (required for Reg S-P / Rule 17a-4 books-and-records)
-uses an opaque `subjectRef` carried as a transport header, never derived from
-identity and never in the math payload. pw-api maps it back to a client behind
-auth; pwplan-core and nexus only ever see the token.
+Client↔run correlation uses an opaque `subjectRef` carried as a transport
+header, never derived from identity and never in the math payload. In the open
+demo it is just an optional token; in the private fork, pw-api maps it back to a
+client behind auth (for Reg S-P / Rule 17a-4 books-and-records). pwplan-core and
+nexus only ever see the token, never an identity.
 
-## Compliance is a tripwire, not a redactor
+## Compliance scope (read this)
 
-Since the contract can't carry PII, `@protocolwealthos/pii-guard` runs
-fail-closed: if identity data ever appears in an outbound payload (an upstream
-de-identification bug), the call throws instead of silently scrubbing. Every
-engine call is appended to the `@protocolwealthos/audit-log` hash chain first.
+**This open-source repo is demo / case-study tooling.** It is built to be pointed
+at the public nexus-core engine with **de-identified or fully fake client data**:
+enter ages, balances, and allocations — never names, DOB, SSNs, emails, phones, or
+addresses. Two things keep that safe:
+
+- **PII-free contract by construction** — there is no field anywhere in
+  [`src/contract/planning.ts`](src/contract/planning.ts) that can carry identity;
+  `planning.test.ts` fails the build if one is added.
+- **A structural tripwire** — `assertNoPII`
+  ([`src/lib/compliance.ts`](src/lib/compliance.ts)) is a small, always-on,
+  dependency-free guard that throws if an identity-shaped key ever reaches the
+  dispatch path. It never redacts, transforms, or stores anything.
+
+**Out of scope for this repo:** real PII de-identification, books-and-records
+audit logging, and any pw-api integration. Those belong to a **private fork**
+that syncs into pw-api and integrates the pwos-core compliance packages. If you
+are wiring this into a regulated production environment, that is a separate
+exercise — follow the [`pwos-core`](https://github.com/Protocol-Wealth)
+guidelines; this repo intentionally ships none of it. The `pw-api` value of
+`VITE_PLANNING_BACKEND` exists only so that private fork stays a low-diff sync;
+this OSS build never reaches pw-api.
 
 ## Quickstart
 
@@ -73,11 +93,10 @@ engine call is appended to the `@protocolwealthos/audit-log` hash chain first.
 git clone https://github.com/Protocol-Wealth/pwplan-core.git
 cd pwplan-core
 npm install
-cp .env.example .env.local
-# VITE_PLANNING_BACKEND=nexus-mcp
-# VITE_PLANNING_GATEWAY_URL=https://nexusmcp.site   (or http://localhost:8787)
-# VITE_COMPLIANCE_NOOP=1   # local UI dev ONLY; never ship
 npm run dev
+# Runs against the public nexus-core MCP demo (https://nexusmcp.site) out of the
+# box — no .env needed. Bring de-identified / fake-client data only.
+# To point elsewhere: cp .env.example .env.local and set VITE_PLANNING_GATEWAY_URL.
 ```
 
 ## Engine contract

@@ -16,12 +16,17 @@ on completion and note the version in CHANGELOG.md._
 - [x] Glide-path and tax-withdrawal views; wire the existing gateway methods to UI.
       _(done 2026-05-29: tab bar + GlidePathTool/TaxWithdrawalTool; shared portfolio;
       pure `tool-validation.ts`; equity-weight line chart + withdrawals table; 15 new tests.)_
-- [ ] Wire `@protocolwealthos/pii-guard` + `@protocolwealthos/audit-log` once
-      published; replace the commented stubs in `compliance.ts`; flip the default
-      away from no-op.
-- [ ] Integration test against a local `nexus-mcp` gateway; cover the
-      ContractMismatchError and PiiTripwireError paths.
+- [ ] Integration test against `nexusmcp.site` (or a local `nexus-mcp` gateway);
+      cover the ContractMismatchError and PiiTripwireError paths.
 - [ ] Fill the `NOTICE` patent application number (supplied by maintainer).
+
+### Out of scope here (private fork only)
+
+- Production compliance — real PII de-identification + books-and-records audit
+  log via pwos-core, and the pw-api edge — lives in a **private fork** of this
+  repo, not in OSS. This repo keeps only the structural PII tripwire + the
+  `auditCall` / `pw-api` seams so the fork stays a low-diff sync. See pwos-core
+  for integration guidelines.
 
 ## Next
 
@@ -33,8 +38,9 @@ on completion and note the version in CHANGELOG.md._
 ## Dependency on other repos (track, do not build here)
 
 - **nexus-core:** implement the server side of contract v0.1.0 (the 5 planning
-  MCP tools). pwplan-core is inert until this exists.
-- **pwos-core:** publish the pii-guard + audit-log packages.
+  MCP tools) at nexusmcp.site so the open demo has a live engine.
+- **pwos-core:** PII-guard + audit-log packages — consumed by the private fork,
+  not by this OSS repo.
 
 ## Deferred — private side (not this repo)
 

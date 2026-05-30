@@ -1,33 +1,38 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-05-30 (glide-path + tax-withdrawal tools). Session-start snapshot; maintain it._
+_Last updated: 2026-05-30 (demo reframe: stripped production compliance layer). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 58 tests
-pass, build succeeds (~225 kB / ~69 kB gzip). The pwos-core compliance packages
-and the nexus-core planning engine are **not yet wired**; the app runs in UI-dev
-mode with `VITE_COMPLIANCE_NOOP=1`. The UI now exposes three tools via a tab bar
-(Monte Carlo, Glide path, Tax withdrawal), each wired to its gateway method with
-client-side request-shape validation and hand-rolled SVG/CSS results (no chart
-library). Accounts/asset classes are a single shared portfolio.
+Verified green locally: typecheck clean, lint clean, prettier clean, 67 tests
+pass, build succeeds (~220 kB / ~68 kB gzip). **This repo is now positioned as
+demo / case-study tooling**: it runs
+against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
+`.env` needed) with de-identified / fake client data. The production compliance
+stack (pwos-core PII de-identification + audit log) and any pw-api integration
+have been **removed from this OSS repo** and live only in a private fork; the
+`pw-api` gateway seam is kept so that fork stays a low-diff sync. The UI exposes
+three tools via a tab bar (Monte Carlo, Glide path, Tax withdrawal), each wired
+to its gateway method with client-side request-shape validation and hand-rolled
+SVG/CSS results (no chart library). Accounts/asset classes are a shared portfolio.
 
 ## Architecture as built
 
-Thin UI → `planning-gateway` → (`nexus-mcp` | `pw-api`). Wire contract v0.1.0,
-PII-free and enforced by test. Compliance is a fail-closed tripwire (stubbed).
-See README.md for the two-deployment diagram. The UI exposes three tools behind a
-tab bar (Monte Carlo, Glide path, Tax withdrawal), each wired to its gateway
-method (`planning.monteCarlo` / `glidePath` / `taxWithdrawal`); the remaining two
-contract tools (correlation_matrix, regime_return_generator) are in the contract
-but not yet surfaced as their own UI.
+Thin UI → `planning-gateway` → `nexus-mcp` (open; the only backend this repo
+uses) | `pw-api` (private-fork seam). Wire contract v0.1.0, PII-free and enforced
+by test. `assertNoPII` is a small, always-on, dependency-free structural tripwire
+(`src/lib/compliance.ts`); `auditCall` is a no-op seam (writes nothing). See
+README.md "Compliance scope". The UI exposes three tools behind a tab bar, each
+wired to its gateway method (`planning.monteCarlo` / `glidePath` /
+`taxWithdrawal`); the remaining two contract tools (correlation_matrix,
+regime_return_generator) are in the contract but not yet surfaced as their own UI.
 
 ## File inventory
 
 - `src/contract/planning.ts` — wire contract v0.1.0; 5 tools; PII-free invariant.
 - `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
 - `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export.
-- `src/lib/compliance.ts` — assertNoPII tripwire + auditCall; pwos-core peer-dep impls commented.
+- `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
 - `src/store/scenario.ts` — Zustand store: active `tool` + per-tool inputs (scenario / glidePath / tax) and result slots; accounts/asset classes are one shared portfolio. Seeded valid defaults.
 - `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params, asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income, filing status; Run gated on validity.
 - `src/components/GlidePathTool.tsx` — glide-path form + equity-weight-by-age line chart (fixed 0–1 axis).
@@ -39,16 +44,19 @@ but not yet surfaced as their own UI.
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
 - `src/App.tsx` (tool tab bar), `src/main.tsx`, `src/index.css`, `index.html` — shell.
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.
-- CI: `.github/workflows/ci.yml` (8 jobs).
+- CI: `.github/workflows/ci.yml` (7 jobs).
 - `LICENSE` (Apache-2.0), `NOTICE` (patent TODO), `README.md`, `CONTRIBUTING.md`.
 - Governance: `CLAUDE.md`, `CURRENT-STATE.md`, `CHANGELOG.md`, `ROADMAP.md`.
 
 ## Wired vs stubbed
 
-- **Wired:** contract, gateway transport, store, UI, CI, tests.
-- **Stubbed:** pwos-core pii-guard / audit-log (commented; no-op in dev).
-  nexus-core planning tools (server side) do not exist yet, so the gateway will
-  404 until a backend is running.
+- **Wired:** contract, gateway transport, PII tripwire (always-on, dep-free),
+  store, UI, CI, tests.
+- **Seam / no-op:** `auditCall` writes nothing here; the `pw-api` backend branch
+  exists for the private fork. Production compliance (pwos-core) is intentionally
+  absent — out of scope for this OSS repo.
+- nexus-core MCP serves the contract at `nexusmcp.site` for demos; a local engine
+  is optional.
 
 ## Known gaps
 
@@ -58,6 +66,5 @@ but not yet surfaced as their own UI.
   eye / typecheck only.
 - Form validation is request-shape only (allocations sum to 1, known ids, etc.);
   it intentionally does not validate financial sanity (that is the engine's job).
-- No live backend to integration-test against, so charts are unexercised against
-  real engine output (only the seeded happy path + unit-tested geometry).
+- No automated integration test against `nexusmcp.site` yet (manual demo only).
 - `NOTICE` patent application number is a placeholder.

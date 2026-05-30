@@ -7,6 +7,28 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Changed
+
+- **Repositioned as demo / case-study tooling.** This OSS repo now runs against
+  the public nexus-core MCP engine (`https://nexusmcp.site` by default — a fresh
+  clone needs no `.env`) with de-identified / fake client data, and no longer
+  carries the production compliance stack.
+  - `src/lib/compliance.ts` rewritten: `assertNoPII` is now a small, always-on,
+    **dependency-free structural tripwire** (`findIdentityKey` walks the payload
+    and throws on any identity-shaped key) instead of a stub gated behind
+    `VITE_COMPLIANCE_NOOP`. `auditCall` is an explicit no-op seam (writes
+    nothing). Added `compliance.test.ts` (9 tests).
+  - Removed the `@protocolwealthos/pii-guard` + `@protocolwealthos/audit-log`
+    peer deps, the `VITE_COMPLIANCE_NOOP` flag, and the `compliance-present` CI
+    job (CI is now 7 jobs). The `pw-api` gateway seam and `auditCall` seam are
+    kept so the private production fork stays a low-diff sync.
+  - Default `VITE_PLANNING_GATEWAY_URL` is now `https://nexusmcp.site`.
+  - Docs (README, CONTRIBUTING, CLAUDE.md, NOTICE) reframed: production PII
+    de-identification, audit logging, and pw-api integration are **out of scope**
+    here and live only in a private fork integrating pwos-core. Invariant #4
+    reworded from "fail-closed compliance tripwire" to "structural, always-on,
+    dep-free PII tripwire".
+
 ### Added
 
 - Glide-path and tax-withdrawal tools, wiring the existing

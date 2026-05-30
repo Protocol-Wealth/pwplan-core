@@ -73,15 +73,3 @@ jobs:
           test -f LICENSE && test -f NOTICE
           grep -q "Apache License" LICENSE
           grep -q "Protocol Wealth" NOTICE
-
-  compliance-present:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: fail if compliance no-op committed
-        run: |
-          if grep -rE "VITE_COMPLIANCE_NOOP=1" .env* 2>/dev/null; then
-            echo "::error::VITE_COMPLIANCE_NOOP=1 must not be committed."
-            exit 1
-          fi
-          echo "ok: compliance no-op not enabled."
