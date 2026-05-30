@@ -42,8 +42,8 @@ the conflict rather than working around it.
    (`src/lib/compliance.ts`) throws on any identity-shaped key in the dispatch
    path; never downgrade it to silent redaction, gate it behind a flag, add a
    dependency to it, or bypass it (or the `auditCall` no-op seam) in the gateway.
-   It is NOT the production compliance stack — that is out of scope (private fork
-   - pwos-core). `compliance.test.ts` covers it; keep it green.
+   It is NOT the production compliance stack — that is out of scope (it lives in
+   the private fork via pwos-core). `compliance.test.ts` covers it; keep it green.
 5. **The contract version is a wire contract.** Bump `PLANNING_CONTRACT_VERSION`
    per CONTRIBUTING.md semver rules; never loosen `ContractMismatchError` to force
    a release through.
