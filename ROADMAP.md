@@ -5,9 +5,10 @@ on completion and note the version in CHANGELOG.md._
 
 ## Now — open-source pwplan-core
 
-- [ ] Expand ScenarioForm: accounts (taxable / traditional / roth), asset classes
+- [x] Expand ScenarioForm: accounts (taxable / traditional / roth), asset classes
       with λ, allocations, guaranteed income (Social Security / pension + COLA).
-      Validate allocations sum to 1 per account.
+      Validate allocations sum to 1 per account. _(done 2026-05-29: editors +
+      `scenario-validation.ts`; Run gated on validity; 15 tests.)_
 - [ ] Results visualization: median balance by year (line), terminal value
       distribution (percentile bars), regime path summary when present. Keep the
       bundle lean.

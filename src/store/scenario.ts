@@ -45,9 +45,44 @@ const DEFAULT_INPUTS: ScenarioInputs = {
   filingStatus: "married_joint",
   annualSpend: 120_000,
   spendColaRate: 0.025,
-  accounts: [],
-  assetClasses: [],
-  guaranteedIncome: [],
+  // Seeded with a valid, balanced scenario so the expanded form is usable out
+  // of the box and the allocation invariant (weights sum to 1) holds initially.
+  assetClasses: [
+    {
+      id: "us_equity",
+      label: "US Equity",
+      expectedReturn: 0.07,
+      volatility: 0.16,
+      lambda: 0.35,
+    },
+    {
+      id: "us_bonds",
+      label: "US Bonds",
+      expectedReturn: 0.03,
+      volatility: 0.05,
+      lambda: 0.1,
+    },
+  ],
+  accounts: [
+    {
+      type: "traditional",
+      balance: 1_200_000,
+      allocation: { us_equity: 0.6, us_bonds: 0.4 },
+    },
+    {
+      type: "roth",
+      balance: 300_000,
+      allocation: { us_equity: 0.8, us_bonds: 0.2 },
+    },
+  ],
+  guaranteedIncome: [
+    {
+      label: "Social Security",
+      annualAmount: 42_000,
+      startAge: 67,
+      colaRate: 0.02,
+    },
+  ],
   returnModel: "emf_regime",
   paths: 10_000,
 };
