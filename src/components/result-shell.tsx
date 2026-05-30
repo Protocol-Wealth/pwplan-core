@@ -41,7 +41,7 @@ export function ResultShell({
   if (!hasResult) {
     return (
       <section className="border border-dashed border-stone-300 p-4">
-        <p className="font-mono text-sm text-stone-400">{emptyText}</p>
+        <p className="font-mono text-sm text-stone-500">{emptyText}</p>
       </section>
     );
   }
