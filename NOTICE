@@ -1,0 +1,39 @@
+pw-planner
+Copyright 2026 Protocol Wealth, LLC
+
+This product includes software developed by Protocol Wealth, LLC
+(https://github.com/Protocol-Wealth).
+
+Licensed under the Apache License, Version 2.0 (the "License").
+
+------------------------------------------------------------------------------
+Defensive patent posture
+------------------------------------------------------------------------------
+Protocol Wealth pursues a defensive patent strategy. Architectures relied on
+by this project (including the pwos-core multi-layer PII guard pipeline and the
+append-only audit hash chain) are the subject of one or more United States
+patent applications and are published as Apache-2.0 prior art.
+
+  USPTO Application No.: <PATENT_APP_NO>   # TODO(nrygiel): insert verified no.
+
+The Apache-2.0 patent grant (Section 3) confers an automatic, perpetual,
+royalty-free patent license to all users, with a retaliation clause that
+terminates that grant for any party initiating patent litigation over the Work.
+
+Protocol Wealth is a member of the Open Invention Network (OIN).
+
+------------------------------------------------------------------------------
+Third-party engine dependency
+------------------------------------------------------------------------------
+pw-planner is a UI shell. All quantitative computation is performed by the
+nexus-core planning engine (separate repository, Apache-2.0), which in turn
+relies on QuantLib, FinancePy, Zipline-Reloaded, Alphalens, NumPy, and SciPy.
+See nexus-core's NOTICE for those attributions. pw-planner ships none of that
+code; it communicates with the engine over the network.
+
+------------------------------------------------------------------------------
+Not investment advice
+------------------------------------------------------------------------------
+This software produces projections, not guarantees, and does not constitute
+investment, tax, or legal advice. It is not affiliated with, and does not
+endorse, any third-party product referenced in documentation.
