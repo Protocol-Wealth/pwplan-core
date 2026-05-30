@@ -97,6 +97,8 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   `capital_market_assumptions`) and handed to nexus-core for the server build;
   what remains here is adding the matching types to `src/contract/planning.ts` +
   the `planning.*` gateway method + tests, so client and engine land at 0.1.0
-  together.
+  together. **Trigger + ready-to-run prompt:** `NEXT-PROMPT.md` at repo root — run
+  it once nexus-core's 6-tool server is live at `0.1.0` (its step 1 verifies via
+  `scripts/smoke-nexus.mjs`).
 - **Theming** to the `-core` family visual language (needs a design reference).
 - **NOTICE patent number** when issued.

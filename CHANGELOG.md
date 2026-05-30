@@ -9,6 +9,10 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- `NEXT-PROMPT.md` — committed session hand-off: the copy-paste prompt to resume
+  the contract-additive work (add the `0.1.0` `pathCacheKey` + `capital_market_assumptions`
+  client types) once nexus-core's 6-tool MCP server is live at `0.1.0`. Its step 1
+  verifies the engine via `scripts/smoke-nexus.mjs` before any coding.
 - SPDX Apache-2.0 license headers on every first-party source file
   (`// SPDX-License-Identifier: Apache-2.0` + copyright), matching the rest of the
   `-core` family. Covers all `src/**` TS/TSX, the one CSS file, `scripts/*.mjs`
