@@ -5,6 +5,7 @@ import {
   TaxWithdrawalForm,
   TaxWithdrawalResults,
 } from "./components/TaxWithdrawalTool";
+import { ScenarioIO } from "./components/ScenarioIO";
 import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
 
@@ -23,8 +24,8 @@ function ToolTabs() {
           key={t.value}
           type="button"
           onClick={() => setTool(t.value)}
-          aria-current={tool === t.value}
-          className={`flex-1 px-4 py-2 font-mono text-xs uppercase tracking-wider transition ${
+          aria-current={tool === t.value ? "page" : undefined}
+          className={`flex-1 px-4 py-2 font-mono text-xs uppercase tracking-wider transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-900 ${
             tool === t.value
               ? "bg-stone-900 text-stone-50"
               : "bg-white text-stone-600 hover:bg-stone-100"
@@ -78,6 +79,8 @@ export default function App() {
       </header>
 
       <ToolTabs />
+
+      <ScenarioIO />
 
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
         <ActiveTool />

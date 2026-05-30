@@ -73,6 +73,14 @@ interface ScenarioState {
   error: string | null;
 
   setTool: (tool: PlanningTool) => void;
+  /** Replace all plan inputs at once (e.g. loading a saved scenario or a
+   *  preset). Clears stale results + error so panels do not show a prior run. */
+  loadSnapshot: (snapshot: {
+    tool: PlanningTool;
+    inputs: ScenarioInputs;
+    glidePathInputs: GlidePathInputs;
+    taxInputs: TaxWithdrawalInputs;
+  }) => void;
   setInputs: (patch: Partial<ScenarioInputs>) => void;
   setGlidePathInputs: (patch: Partial<GlidePathInputs>) => void;
   setTaxInputs: (patch: Partial<TaxWithdrawalInputs>) => void;
@@ -166,6 +174,18 @@ export const useScenario = create<ScenarioState>((set) => ({
   // Switching tools clears any stale error so a failure from one tool does not
   // bleed into another's panel. Each tool keeps its own result slot.
   setTool: (tool) => set({ tool, error: null }),
+  loadSnapshot: (snapshot) =>
+    set({
+      tool: snapshot.tool,
+      inputs: snapshot.inputs,
+      glidePathInputs: snapshot.glidePathInputs,
+      taxInputs: snapshot.taxInputs,
+      result: null,
+      glidePathResult: null,
+      taxResult: null,
+      error: null,
+      running: false,
+    }),
   setInputs: (patch) => set((s) => ({ inputs: { ...s.inputs, ...patch } })),
   setGlidePathInputs: (patch) =>
     set((s) => ({ glidePathInputs: { ...s.glidePathInputs, ...patch } })),
