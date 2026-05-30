@@ -1,12 +1,12 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-05-30 (nexus-core requirements doc + gateway integration test). Session-start snapshot; maintain it._
+_Last updated: 2026-05-30 (save/load + presets + a11y + SPDX headers; PR #1 merged to main). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 76 tests
-pass, build succeeds (~225 kB / ~69 kB gzip). **This repo is now positioned as
-demo / case-study tooling**: it runs
+Verified green locally: typecheck clean, lint clean, prettier clean, 104 tests
+pass (8 test files), build succeeds (~235 kB / ~72 kB gzip). **This repo is now
+positioned as demo / case-study tooling**: it runs
 against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
 `.env` needed) with de-identified / fake client data. The production compliance
 stack (pwos-core PII de-identification + audit log) and any pw-api integration
@@ -15,6 +15,10 @@ have been **removed from this OSS repo** and live only in a private fork; the
 three tools via a tab bar (Monte Carlo, Glide path, Tax withdrawal), each wired
 to its gateway method with client-side request-shape validation and hand-rolled
 SVG/CSS results (no chart library). Accounts/asset classes are a shared portfolio.
+Plan inputs can be saved/loaded as PII-free JSON and seeded from built-in
+case-study presets. Every first-party source file carries an SPDX Apache-2.0
+header. The demo-reframe work shipped via PR #1 (CCO + CTO/CISO approved) and is
+merged to `main`; `main` is the live line again.
 
 ## Architecture as built
 
@@ -28,6 +32,8 @@ wired to its gateway method (`planning.monteCarlo` / `glidePath` /
 regime_return_generator) are in the contract but not yet surfaced as their own UI.
 
 ## File inventory
+
+_(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 
 - `src/contract/planning.ts` — wire contract v0.1.0; 5 tools; PII-free invariant.
 - `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
@@ -76,4 +82,16 @@ regime_return_generator) are in the contract but not yet surfaced as their own U
   (`planning-gateway.test.ts`, fetch mocked). There is no automated test against
   the _live_ `nexusmcp.site` (deliberate — a flaky external engine must not gate
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
-- `NOTICE` patent application number is a placeholder.
+- `NOTICE` patent application number is a placeholder (blocked on the maintainer).
+- The two contract tools `correlation_matrix` and `regime_return_generator` have
+  contract types + gateway methods but no dedicated UI yet.
+
+## Next planned work
+
+- **Contract additive changes (next up):** add `pathCacheKey?` to
+  `MonteCarloRequest` and a `capital_market_assumptions` tool, folded into v0.1.0
+  with NO version bump (the nexus-core engine is pre-first-release, so amending
+  0.1.0 is not breaking; bumping would break the exact-match `ContractMismatchError`
+  against an engine shipping 0.1.0). See `docs/nexus-core-requirements.md` §6.
+- **Theming** to the `-core` family visual language (needs a design reference).
+- **NOTICE patent number** when issued.
