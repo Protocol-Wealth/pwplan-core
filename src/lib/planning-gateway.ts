@@ -13,8 +13,12 @@
  *                the public MCP endpoint.
  *
  * In both cases the payload that crosses the wire is PII-free by construction
- * (see contract/planning.ts). assertNoPII is a fail-closed tripwire, not the
- * primary mechanism: if identity data ever appears, the call throws.
+ * (see contract/planning.ts). assertNoPII is a fail-closed structural tripwire,
+ * not the primary mechanism: if identity data ever appears, the call throws.
+ *
+ * NOTE: in this OSS repo `auditCall` is a no-op seam (it writes nothing). Real
+ * books-and-records audit logging is out of scope here; it lives in the private
+ * fork that integrates pwos-core. See src/lib/compliance.ts.
  */
 
 import {
@@ -38,8 +42,10 @@ type Backend = "nexus-mcp" | "pw-api";
 
 const BACKEND = (import.meta.env.VITE_PLANNING_BACKEND ??
   "nexus-mcp") as Backend;
+// Defaults to the public nexus-core MCP demo endpoint so a fresh clone runs
+// against the real engine (bring de-identified / fake-client data) with no env.
 const GATEWAY_URL =
-  import.meta.env.VITE_PLANNING_GATEWAY_URL ?? "http://localhost:8787";
+  import.meta.env.VITE_PLANNING_GATEWAY_URL ?? "https://nexusmcp.site";
 
 /** Same tool ids, different backend path conventions. */
 function toolPath(tool: PlanningToolName): string {
@@ -73,10 +79,11 @@ async function callTool<TReq extends { contractVersion: string }, TRes>(
   payload: TReq,
   opts: CallOptions = {},
 ): Promise<TRes> {
-  // 1. Fail-closed tripwire: the contract is PII-free; prove it before dispatch.
+  // 1. Fail-closed structural tripwire: the contract is PII-free; prove it
+  //    before dispatch.
   const safe = assertNoPII(payload);
 
-  // 2. Append to the audit hash chain BEFORE the call leaves.
+  // 2. Audit seam (no-op in OSS; real audit-log lives in the private fork).
   const auditId = await auditCall({
     tool,
     contractVersion: payload.contractVersion,

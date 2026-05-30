@@ -23,25 +23,30 @@ single most fragile surface in this repo.
 4. The client refuses to run against a mismatched engine version by design.
    Do not "loosen" the check to make a release work.
 
-## Compliance
+## Compliance scope
+
+This OSS repo is demo / case-study tooling; full production compliance is **out
+of scope** here (it lives in a private fork that integrates pwos-core and syncs
+into pw-api). What this repo DOES enforce:
 
 - The engine contract is **PII-free by construction**. Never add a field that
   could carry identity (name, DOB, SSN, email, phone, address). `planning.test.ts`
   enforces this and will fail your PR. Use derived variables (age, not DOB).
-- Client↔run correlation uses an opaque `subjectRef` header set by pw-api, never
-  an identity-derived value and never in the payload.
-
-- Never bypass `redactOutbound` or `auditCall` in `src/lib/nexus-client.ts`.
-- `VITE_COMPLIANCE_NOOP=1` is for local UI development only. The
-  `compliance-present` CI job fails any build that ships with it enabled.
-- Client-facing changes are gated. Anything that alters what an end client
-  sees or how advice is framed requires CCO review before merge.
+- `assertNoPII` in `src/lib/compliance.ts` is a small, always-on, dependency-free
+  structural tripwire over the dispatch path. Never weaken it to a redactor or
+  gate it behind a flag; never bypass it (or the `auditCall` seam) in
+  `src/lib/planning-gateway.ts`. It is covered by `compliance.test.ts`.
+- Client↔run correlation uses an opaque `subjectRef` header, never an
+  identity-derived value and never in the payload.
+- Do not add real PII de-identification, audit-log persistence, or pw-api wiring
+  here — those belong to the private fork. See the pwos-core repo for guidelines.
+- Client-facing changes are gated. Anything that alters what an end client sees
+  or how advice is framed requires CCO review before merge.
 
 ## Local dev
 
 ```bash
 npm install
-cp .env.example .env.local   # set VITE_COMPLIANCE_NOOP=1 for UI-only work
-npm run dev
+npm run dev   # runs against https://nexusmcp.site by default; fake-client data only
 npm run typecheck && npm run lint && npm run format:check && npm test
 ```

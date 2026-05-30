@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": false,
   "license": "Apache-2.0",
-  "description": "Open-source, regime-adaptive financial planning thin UI. PII-free engine contract; targets nexus-core MCP (open) or pw-api (private). Part of the -core family with pwos-core and nexus-core.",
+  "description": "Open-source, regime-adaptive financial planning thin UI. PII-free engine contract; targets nexus-core MCP (open). Part of the -core family with pwos-core and nexus-core.",
   "type": "module",
   "homepage": "https://github.com/Protocol-Wealth/pwplan-core",
   "repository": {
@@ -24,18 +24,6 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zustand": "^5.0.3"
-  },
-  "peerDependencies": {
-    "@protocolwealthos/audit-log": "*",
-    "@protocolwealthos/pii-guard": "*"
-  },
-  "peerDependenciesMeta": {
-    "@protocolwealthos/pii-guard": {
-      "optional": true
-    },
-    "@protocolwealthos/audit-log": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.0",

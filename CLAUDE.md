@@ -8,29 +8,42 @@ touching anything.
 
 pwplan-core is the open-source, regime-adaptive financial planning **thin UI**;
 the third member of the `-core` family with pwos-core and nexus-core. Apache-2.0
-with a defensive patent posture. It ships **zero quantitative logic and zero
-compliance logic of its own**.
+with a defensive patent posture. It ships **zero quantitative logic of its own**,
+and only a lightweight structural PII tripwire — no production compliance stack.
+
+It is **demo / case-study tooling**: pointed at the public nexus-core engine with
+de-identified or fake client data. Production compliance (real PII
+de-identification, books-and-records audit logging, pw-api integration) is **out
+of scope** and lives only in a **private fork** that syncs into pw-api and
+integrates pwos-core. Do not bring that machinery into this repo.
 
 ## Non-negotiable invariants
 
 Load-bearing. Do not violate; if a task seems to require it, stop and surface
 the conflict rather than working around it.
 
-1. **Thin shell.** Quant math lives in nexus-core; compliance lives in the
-   pwos-core packages. Never implement Monte Carlo, tax, correlation, glide-path,
-   PII, or audit logic in this repo. The correct move is a PR to the engine or a
-   compliance package, plus a contract change here.
+1. **Thin shell.** Quant math lives in nexus-core; production compliance lives in
+   pwos-core (via the private fork). Never implement Monte Carlo, tax,
+   correlation, glide-path, or real PII-de-identification / audit-log logic in
+   this repo. The correct move is a PR to the engine or a compliance package,
+   plus a contract change here. (Pure request-shape validation and presentation
+   math in `components/` are fine — they are not quant or compliance logic.)
 2. **PII-free contract by construction.** `src/contract/planning.ts` must never
    declare a field carrying identity (name, dob, dateOfBirth, ssn, email, phone,
    address). Age, not DOB. `src/contract/planning.test.ts` enforces this; keep it
    green. Client-to-run correlation uses the opaque `subjectRef` transport header
    only, never an identity-derived value, never in the payload.
 3. **Backend-agnostic gateway.** `src/lib/planning-gateway.ts` targets
-   `nexus-mcp` (open) or `pw-api` (private) via `VITE_PLANNING_BACKEND`. Do not
-   hardcode a backend or bypass the gateway.
-4. **Compliance is a fail-closed tripwire.** `assertNoPII` throws on identity
-   leakage; never downgrade it to silent redaction, and never bypass it or
-   `auditCall` in the dispatch path.
+   `nexus-mcp` (open, the only backend this repo uses) or `pw-api` (private-fork
+   seam) via `VITE_PLANNING_BACKEND`. Do not hardcode a backend or bypass the
+   gateway. Keep the `pw-api` seam intact so the private fork stays a low-diff
+   sync — but never add code here that actually depends on pw-api.
+4. **PII tripwire stays a structural, always-on, dep-free guard.** `assertNoPII`
+   (`src/lib/compliance.ts`) throws on any identity-shaped key in the dispatch
+   path; never downgrade it to silent redaction, gate it behind a flag, add a
+   dependency to it, or bypass it (or the `auditCall` no-op seam) in the gateway.
+   It is NOT the production compliance stack — that is out of scope (it lives in
+   the private fork via pwos-core). `compliance.test.ts` covers it; keep it green.
 5. **The contract version is a wire contract.** Bump `PLANNING_CONTRACT_VERSION`
    per CONTRIBUTING.md semver rules; never loosen `ContractMismatchError` to force
    a release through.
@@ -41,7 +54,8 @@ the conflict rather than working around it.
 - ESLint flat config; Prettier with `semi: true`, double quotes, `trailingComma:
 "all"`. Run `npm run format` before committing.
 - Module boundaries: `contract/` (wire types, no logic) · `lib/` (gateway +
-  compliance adapters) · `store/` (Zustand) · `components/` (UI). Keep them clean.
+  PII tripwire) · `store/` (Zustand) · `components/` (UI + pure validation /
+  presentation helpers). Keep them clean.
 - No browser `localStorage` / `sessionStorage` in app code.
 - No heavy dependencies; this repo stays light. Numerical deps belong in
   nexus-core, not here.
@@ -65,23 +79,23 @@ CURRENT-STATE.md; (5) commit.
 
 ## Before every commit
 
-Run and keep green (mirrors the 8 CI jobs):
+Run and keep green (mirrors the 7 CI jobs):
 
 ```bash
 npm run typecheck && npm run lint && npm run format:check && npm test && npm run build
 ```
 
 Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`).
-Never commit `VITE_COMPLIANCE_NOOP=1` in any `.env*` file; the
-`compliance-present` CI job fails the build.
 
 ## Compliance / RIA guardrails
 
 Protocol Wealth is an SEC-registered RIA. This is a developer tool, not
 client-facing advice, but: keep the "software, not investment advice" disclaimer
 in README, NOTICE, and the UI; any change that alters what an end client would
-see or how advice is framed is HITL Tier 2 and requires CCO (Adam) review before
-publication; do not add client-facing marketing copy in this repo.
+see or how advice is framed — **or that changes this repo's public privacy /
+compliance posture** — is HITL Tier 2 and requires CCO (Adam) review before
+publication; do not add client-facing marketing copy in this repo. Production
+PII / audit / pw-api work is out of scope here (private fork + pwos-core).
 
 ## Defensive patent
 

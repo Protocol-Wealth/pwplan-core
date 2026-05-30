@@ -9,9 +9,10 @@ Licensed under the Apache License, Version 2.0 (the "License").
 ------------------------------------------------------------------------------
 Defensive patent posture
 ------------------------------------------------------------------------------
-Protocol Wealth pursues a defensive patent strategy. Architectures relied on
-by this project (including the pwos-core multi-layer PII guard pipeline and the
-append-only audit hash chain) are the subject of one or more United States
+Protocol Wealth pursues a defensive patent strategy. Architectures in the
+`-core` family — including the pwos-core multi-layer PII guard pipeline and the
+append-only audit hash chain (used by Protocol Wealth's private deployment, not
+shipped in this open-source repo) — are the subject of one or more United States
 patent applications and are published as Apache-2.0 prior art.
 
   USPTO Application No.: <PATENT_APP_NO>   # TODO(nrygiel): insert verified no.
@@ -30,6 +31,12 @@ nexus-core planning engine (separate repository, Apache-2.0), which in turn
 relies on QuantLib, FinancePy, Zipline-Reloaded, Alphalens, NumPy, and SciPy.
 See nexus-core's NOTICE for those attributions. pw-planner ships none of that
 code; it communicates with the engine over the network.
+
+This open-source repo is demo / case-study tooling and carries only a
+lightweight structural PII tripwire. Production compliance (real PII
+de-identification, books-and-records audit logging) and any pw-api integration
+are out of scope here; they live in a private deployment that integrates
+pwos-core. Use this software with de-identified or fake client data only.
 
 ------------------------------------------------------------------------------
 Not investment advice

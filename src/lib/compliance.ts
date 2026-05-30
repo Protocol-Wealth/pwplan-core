@@ -1,72 +1,98 @@
 /**
- * compliance — pwplan-core's seam into the pwos-core compliance packages.
+ * compliance — pwplan-core's lightweight, dependency-free PII tripwire.
+ *
+ * SCOPE NOTE (open-source repo): this file is NOT the production compliance
+ * stack. Real PII de-identification (DOB→age, name stripping), books-and-records
+ * audit logging, and the pwos-core integration are OUT OF SCOPE for this OSS repo.
+ * They live only in the private fork that syncs into pw-api; integrators should
+ * follow the pwos-core repo's guidelines. See README "Compliance scope" + NOTICE.
  *
  * Because the planning contract is PII-free BY CONSTRUCTION (contract/planning.ts),
- * pii-guard's job here is not redaction — it is a FAIL-CLOSED TRIPWIRE. If client
- * identity data ever appears in an outbound payload (an upstream transform bug),
- * the call throws rather than silently scrubbing. The structural guarantee is the
- * primary defense; this is the second layer.
- *
- * Identity→planning-variable transformation (DOB→age, strip names) happens
- * UPSTREAM, in pw-api, never in this repo. pwplan-core never receives PII to scrub.
- *
- * @protocolwealthos/* are optional peer deps. The no-op fallbacks keep the app
- * runnable for local UI dev ONLY (VITE_COMPLIANCE_NOOP=1); CI fails any build
- * that commits the no-op flag.
+ * `assertNoPII` here is a structural, always-on, fail-closed tripwire — the second
+ * layer behind the contract. It refuses (throws) any outbound payload that carries
+ * an identity-shaped key; it never redacts, transforms, or stores anything. This
+ * makes the open demo safe for real engine data + fake/de-identified clients.
  */
 
-// Real implementations (peer dependencies):
-//   import { Scanner } from "@protocolwealthos/pii-guard";
-//   import { AuditLogger } from "@protocolwealthos/audit-log";
+/** Identity-shaped keys, normalized (lowercased, separators removed). Mirrors the
+ *  forbidden field list enforced on the contract by contract/planning.test.ts. */
+const FORBIDDEN_IDENTITY_KEYS = new Set([
+  "name",
+  "firstname",
+  "lastname",
+  "fullname",
+  "dob",
+  "dateofbirth",
+  "ssn",
+  "socialsecuritynumber",
+  "email",
+  "phone",
+  "phonenumber",
+  "address",
+  "streetaddress",
+]);
 
-type AuditEntry = { tool: string; contractVersion: string };
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[\s_-]/g, "");
+}
 
-const DEV_NOOP = import.meta.env.VITE_COMPLIANCE_NOOP === "1";
+/**
+ * Depth-first search for the first identity-shaped key in a payload. Returns the
+ * dotted path to the offending key, or null if the payload is clean.
+ */
+export function findIdentityKey(
+  value: unknown,
+  path: string[] = [],
+): string | null {
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      const hit = findIdentityKey(value[i], [...path, String(i)]);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (value !== null && typeof value === "object") {
+    for (const [key, child] of Object.entries(value)) {
+      if (FORBIDDEN_IDENTITY_KEYS.has(normalizeKey(key))) {
+        return [...path, key].join(".");
+      }
+      const hit = findIdentityKey(child, [...path, key]);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
 
 export class PiiTripwireError extends Error {
-  constructor(detail: string) {
+  constructor(keyPath: string) {
     super(
-      `PII tripwire: identity data found in a PII-free planning payload (${detail}). ` +
-        `The upstream de-identification in pw-api is broken; refusing to dispatch.`,
+      `PII tripwire: identity-shaped key "${keyPath}" found in a PII-free planning ` +
+        `payload. The contract carries no identity by construction; refusing to ` +
+        `dispatch. De-identify upstream (age, not DOB; no name/SSN/email/phone/address).`,
     );
     this.name = "PiiTripwireError";
   }
 }
 
 /**
- * Assert an outbound payload carries no PII, then return it unchanged.
- * Throws PiiTripwireError if pii-guard detects identity data.
+ * Assert an outbound payload carries no identity-shaped fields, then return it
+ * unchanged. Always on (no env flag, no dependency). Throws PiiTripwireError on
+ * the first offending key. This is a tripwire, never a redactor.
  */
 export function assertNoPII<T>(payload: T): T {
-  if (DEV_NOOP) {
-    console.warn(
-      "[pwplan-core] COMPLIANCE NO-OP: pii tripwire disabled. Local dev only.",
-    );
-    return payload;
-  }
-  // const scanner = new Scanner();
-  // const findings = scanner.scan(payload);
-  // if (findings.length) throw new PiiTripwireError(findings.map((f) => f.kind).join(","));
-  // return payload;
-  throw new Error(
-    "pii-guard not wired. Install @protocolwealthos/pii-guard or set " +
-      "VITE_COMPLIANCE_NOOP=1 for local UI dev.",
-  );
+  const hit = findIdentityKey(payload);
+  if (hit) throw new PiiTripwireError(hit);
+  return payload;
 }
 
+type AuditEntry = { tool: string; contractVersion: string };
+
 /**
- * Append an entry to the pwos-core audit-log hash chain and return its id.
- * The id is forwarded to the engine so engine-side and client-side audit
- * trails reconcile during an SEC examination.
+ * No-op audit seam. This OSS repo keeps NO books-and-records audit trail; it
+ * returns a local, non-persisted id only so the dispatch path is byte-identical
+ * to the private (pw-api) build, which swaps in the real pwos-core AuditLogger
+ * here. Nothing is written or transmitted by this function.
  */
 export async function auditCall(entry: AuditEntry): Promise<string> {
-  if (DEV_NOOP) {
-    return `dev-${entry.tool}-${crypto.randomUUID()}`;
-  }
-  // const logger = new AuditLogger();
-  // return logger.append({ kind: "engine_call", ...entry });
-  throw new Error(
-    "audit-log not wired. Install @protocolwealthos/audit-log or set " +
-      "VITE_COMPLIANCE_NOOP=1 for local UI dev.",
-  );
+  return `local-${entry.tool}-${crypto.randomUUID()}`;
 }
