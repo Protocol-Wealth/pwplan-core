@@ -31,6 +31,25 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- Scenario save / load and built-in case-study presets, so demos can show
+  variations instantly.
+  - `scenario-io.ts` — a pure, versioned, PII-free JSON envelope for plan inputs
+    (Monte Carlo + glide-path + tax). `assertNoPII` runs fail-closed on both
+    serialize and load: a file that smuggled an identity-shaped key is refused
+    with an error (checked on the raw input before field-whitelisting could
+    silently drop it), never loaded. No browser storage (CLAUDE.md). 13 tests.
+  - `scenario-presets.ts` — three case studies (accumulator age 35, near-retiree
+    age 62, crisis-stress age 70 with RMDs), each a full snapshot with
+    allocations summing to 1. Demo numbers only, not PW capital-market
+    assumptions. 15 tests assert each passes the real scenario / glide / tax
+    validators and round-trips through serialize/parse. (Suite now 104.)
+  - `ScenarioIO.tsx` — Save (Blob download), Load (file input through the
+    fail-closed parser), and a preset picker; store gains `loadSnapshot`.
+- Accessibility pass: keyboard focus-visible rings restored across inputs,
+  buttons, tabs, and the save/load/preset controls (WCAG 2.4.7); `aria-current`
+  now emits `"page"`/omitted instead of `"false"`; `index.html` head deduped and
+  given a real meta description. (Contrast tuning of `stone-400` micro-text is a
+  tracked follow-up.)
 - `docs/nexus-core-requirements.md` — consumer-side spec for the nexus-core MCP
   server (the 5 planning tools' request/response shapes, shared enums/objects,
   transport + CORS + determinism rules, the "real data, fake clients" demo
@@ -70,7 +89,7 @@ Semantic Versioning. The planning wire contract is versioned separately as
   chart (age-labelled, peak annotated), a terminal-value percentile bar chart
   (worst-path footnote), and a regime-path strip with a legend when the engine
   returns `regimePathSummary`. All hand-rolled inline SVG/CSS — no chart library;
-  the whole Unreleased block keeps the bundle lean (~225 kB / ~69 kB gzip, no new
+  the whole Unreleased block keeps the bundle lean (~235 kB / ~72 kB gzip, no new
   deps). Charts carry `role="img"` + `aria-label`/`title` for screen readers.
 - `results-viz.ts` — pure, dependency-free geometry helpers (`seriesGeometry`,
   `percentileBars`, `regimeRuns`) that map an engine result to SVG/CSS

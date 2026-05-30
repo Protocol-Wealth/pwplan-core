@@ -38,12 +38,15 @@ regime_return_generator) are in the contract but not yet surfaced as their own U
 - `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params, asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income, filing status; Run gated on validity.
 - `src/components/GlidePathTool.tsx` — glide-path form + equity-weight-by-age line chart (fixed 0–1 axis).
 - `src/components/TaxWithdrawalTool.tsx` — tax form over the shared portfolio + withdrawals-by-account table (total tax, effective rate, RMD indicator).
+- `src/components/scenario-io.ts` / `.test.ts` — pure, versioned, PII-free serialize/parse for plan inputs (fail-closed `assertNoPII` on save + on the raw input at load); 13 tests. No browser storage.
+- `src/components/scenario-presets.ts` / `.test.ts` — three built-in case-study snapshots (accumulator / near-retiree / crisis-stress), each validator-clean and round-trip-safe; 15 tests.
+- `src/components/ScenarioIO.tsx` — Save (Blob download) / Load (file input) / preset picker; uses the store's `loadSnapshot`.
 - `src/components/scenario-validation.ts` / `.test.ts` — pure scenario request-shape validation (allocation-sums-to-1, unique ids, known-id refs); 15 tests. No quant logic.
 - `src/components/tool-validation.ts` / `.test.ts` — pure glide-path + tax request-shape validation (ranges, age ordering, portfolio presence); 10 tests. No quant logic.
 - `src/components/ResultsPanel.tsx` — Monte Carlo results: success probability + 3 hand-rolled charts (median-balance line/area, terminal percentile bars, regime strip when present). Inline SVG/CSS, no chart lib.
 - `src/components/results-viz.ts` / `.test.ts` — pure geometry helpers (seriesGeometry incl. forcedMax, percentileBars, regimeRuns, ageWeightSeries); 20 tests. Presentation math only.
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
-- `src/App.tsx` (tool tab bar), `src/main.tsx`, `src/index.css`, `index.html` — shell.
+- `src/App.tsx` (tool tab bar + ScenarioIO), `src/main.tsx`, `src/index.css`, `index.html` — shell.
 - `scripts/smoke-nexus.mjs` — opt-in live round-trip against nexusmcp.site (PII-free default scenario); not in the gate suite, never in CI.
 - `docs/nexus-core-requirements.md` — consumer-side spec of what the nexus-core MCP server must provide (5 tools, enums, CORS/determinism, demo capabilities, contract gaps).
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.

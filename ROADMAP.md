@@ -33,9 +33,17 @@ on completion and note the version in CHANGELOG.md._
 
 ## Next
 
-- [ ] De-identified scenario persistence: save / load plan inputs as JSON (no PII
-      by contract).
-- [ ] Accessibility pass (keyboard, labels, contrast).
+- [x] De-identified scenario persistence: save / load plan inputs as JSON (no PII
+      by contract). _(done 2026-05-30: `scenario-io.ts` versioned, fail-closed
+      envelope + `ScenarioIO` save/load UI via Blob download + file input, no
+      browser storage; 13 tests.)_
+- [x] Built-in case-study presets (accumulator / near-retiree / crisis-stress)
+      loadable from the UI. _(done 2026-05-30: `scenario-presets.ts`; 15 tests
+      assert each preset passes the real validators and round-trips.)_
+- [~] Accessibility pass (keyboard, labels, contrast). _(done 2026-05-30:
+  keyboard focus-visible rings restored where the outline was removed, valid
+  `aria-current`, deduped `<head>`; labels/role=img already in place.
+  **Remaining:** contrast tuning of the `stone-400` micro-text.)_
 - [ ] Theming to match the `-core` family visual language.
 
 ## Dependency on other repos (track, do not build here)
