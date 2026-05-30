@@ -9,9 +9,10 @@ on completion and note the version in CHANGELOG.md._
       with λ, allocations, guaranteed income (Social Security / pension + COLA).
       Validate allocations sum to 1 per account. _(done 2026-05-29: editors +
       `scenario-validation.ts`; Run gated on validity; 15 tests.)_
-- [ ] Results visualization: median balance by year (line), terminal value
+- [x] Results visualization: median balance by year (line), terminal value
       distribution (percentile bars), regime path summary when present. Keep the
-      bundle lean.
+      bundle lean. _(done 2026-05-29: hand-rolled SVG/CSS charts in ResultsPanel +
+      pure `results-viz.ts` helpers; no chart lib; 15 tests.)_
 - [ ] Wire `@protocolwealthos/pii-guard` + `@protocolwealthos/audit-log` once
       published; replace the commented stubs in `compliance.ts`; flip the default
       away from no-op.

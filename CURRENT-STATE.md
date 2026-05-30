@@ -1,15 +1,16 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-05-29 (ScenarioForm expansion). Session-start snapshot; maintain it._
+_Last updated: 2026-05-29 (results visualization). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 28 tests
-pass, build succeeds (~210 kB / ~66 kB gzip). The pwos-core compliance packages
+Verified green locally: typecheck clean, lint clean, prettier clean, 43 tests
+pass, build succeeds (~214 kB / ~67 kB gzip). The pwos-core compliance packages
 and the nexus-core planning engine are **not yet wired**; the app runs in UI-dev
-mode with `VITE_COMPLIANCE_NOOP=1`. The scenario form now captures the full
+mode with `VITE_COMPLIANCE_NOOP=1`. The scenario form captures the full
 `MonteCarloRequest` (accounts, asset classes with λ, allocations, guaranteed
-income) with client-side request-shape validation.
+income) with client-side request-shape validation; ResultsPanel renders the
+engine result as hand-rolled SVG/CSS charts (no chart library).
 
 ## Architecture as built
 
@@ -27,7 +28,9 @@ See README.md for the two-deployment diagram.
 - `src/components/ScenarioForm.tsx` — full scenario editor: plan params, asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income, filing status; Run disabled with inline reasons until valid.
 - `src/components/scenario-validation.ts` — pure request-shape validation (allocation-sums-to-1, unique ids, known-id refs). No quant logic.
 - `src/components/scenario-validation.test.ts` — 15 unit tests (incl. float-tolerance band boundaries).
-- `src/components/ResultsPanel.tsx` — tabular results (success prob, terminal percentiles).
+- `src/components/ResultsPanel.tsx` — success probability + 3 hand-rolled charts: median-balance line/area, terminal-value percentile bars, regime-path strip (when present). Inline SVG/CSS, no chart lib.
+- `src/components/results-viz.ts` — pure geometry helpers (seriesGeometry, percentileBars, regimeRuns). Presentation math only; no quant logic.
+- `src/components/results-viz.test.ts` — 15 unit tests (SVG coords, percentile bars, regime runs).
 - `src/App.tsx`, `src/main.tsx`, `src/index.css`, `index.html` — shell.
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.
 - CI: `.github/workflows/ci.yml` (8 jobs).
@@ -43,9 +46,12 @@ See README.md for the two-deployment diagram.
 
 ## Known gaps
 
-- ResultsPanel is tabular; no charts (median-balance line, terminal-value
-  percentile bars, regime path summary). This is the next ROADMAP item.
+- Charts have no automated render test (no React Testing Library — adding one
+  would pull in a heavy dev dep, against repo rules). The pure geometry helpers
+  in `results-viz.ts` are unit-tested; `ResultsPanel` composition is verified by
+  eye / typecheck only.
 - Form validation is request-shape only (allocations sum to 1, known ids, etc.);
   it intentionally does not validate financial sanity (that is the engine's job).
-- No live backend to integration-test against.
+- No live backend to integration-test against, so charts are unexercised against
+  real engine output (only the seeded happy path + unit-tested geometry).
 - `NOTICE` patent application number is a placeholder.

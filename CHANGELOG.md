@@ -9,6 +9,19 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- Results visualization in `ResultsPanel`: a median-balance-by-year line/area
+  chart (age-labelled, peak annotated), a terminal-value percentile bar chart
+  (worst-path footnote), and a regime-path strip with a legend when the engine
+  returns `regimePathSummary`. All hand-rolled inline SVG/CSS — no chart library,
+  bundle stays lean (~214 kB / ~67 kB gzip). Charts carry `role="img"` +
+  `aria-label`/`title` for screen readers.
+- `results-viz.ts` — pure, dependency-free geometry helpers (`seriesGeometry`,
+  `percentileBars`, `regimeRuns`) that map an engine result to SVG/CSS
+  coordinates. Presentation math only; no quant logic (thin-shell intact).
+- `results-viz.test.ts` — 15 unit tests (SVG y-inversion, 0-based vs negative
+  domain, single-point centering, flat-series safety, percentile ordering /
+  normalization / zero + decimal-key + key-filtering, regime run-collapsing /
+  single-regime / length).
 - ScenarioForm now collects the full `MonteCarloRequest` shape: asset classes
   (id, label, expected return, volatility, λ), accounts (taxable / traditional /
   roth) with per-asset-class allocation weights, guaranteed income (Social
