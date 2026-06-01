@@ -29,6 +29,7 @@ const TOOL = "monte_carlo_decumulation";
 const payload = {
   contractVersion: CONTRACT_VERSION,
   currentAge: 45,
+  retirementAge: 65,
   horizonAge: 95,
   accounts: [
     {

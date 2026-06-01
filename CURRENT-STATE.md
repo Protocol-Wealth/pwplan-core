@@ -1,6 +1,6 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-05-30 (save/load + presets + a11y + SPDX headers; PR #1 merged to main). Session-start snapshot; maintain it._
+_Last updated: 2026-06-01 (added optional `retirementAge?` to `MonteCarloRequest`, additive into contract 0.1.0; browser UI seeds 65). Session-start snapshot; maintain it._
 
 ## Status
 
@@ -36,6 +36,8 @@ regime_return_generator) are in the contract but not yet surfaced as their own U
 _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 
 - `src/contract/planning.ts` — wire contract v0.1.0; 5 tools; PII-free invariant.
+  `MonteCarloRequest` carries an optional `retirementAge?` (additive; the UI seeds
+  65, the engine draws from `currentAge` when omitted).
 - `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
 - `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export.
 - `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 5 tools, pw-api seam; 9 tests.

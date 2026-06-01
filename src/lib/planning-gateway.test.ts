@@ -33,6 +33,7 @@ import {
 
 const mcReq: Omit<MonteCarloRequest, "contractVersion"> = {
   currentAge: 45,
+  retirementAge: 65,
   horizonAge: 95,
   accounts: [],
   assetClasses: [],
@@ -126,6 +127,8 @@ describe("planning gateway dispatch", () => {
     const sent = JSON.parse(init.body);
     expect(sent.contractVersion).toBe(PLANNING_CONTRACT_VERSION);
     expect(sent.currentAge).toBe(45);
+    // The optional retirementAge rides through the dispatch path to the wire.
+    expect(sent.retirementAge).toBe(65);
 
     expect(result.successProbability).toBe(0.83);
     expect(result.seedUsed).toBe(7);

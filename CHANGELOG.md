@@ -9,6 +9,16 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- Optional `retirementAge?: number` on `MonteCarloRequest` (contract `0.1.0`,
+  additive — no version bump; the engine is pre-first-release and already accepts
+  and uses it, per nexus-core #83). It marks the age decumulation begins; the
+  engine draws from `currentAge` when omitted, which sinks the out-of-box demo
+  (8%-spend-from-age-45 → ~0 success, all-zero terminals). The browser UI seeds
+  `65`: `ScenarioForm` now threads the store's `inputs.retirementAge` into the
+  request, `scripts/smoke-nexus.mjs` sends it, and `planning-gateway.test.ts`
+  asserts it reaches the wire. (`ScenarioInputs`, the presets, and `scenario-io`
+  already carried the field; only the wire contract and the request builder were
+  missing it.)
 - `NEXT-PROMPT.md` — committed session hand-off: the copy-paste prompt to resume
   the contract-additive work (add the `0.1.0` `pathCacheKey` + `capital_market_assumptions`
   client types) once nexus-core's 6-tool MCP server is live at `0.1.0`. Its step 1

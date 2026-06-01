@@ -94,6 +94,11 @@ export interface GuaranteedIncome {
 export interface MonteCarloRequest {
   contractVersion: typeof PLANNING_CONTRACT_VERSION;
   currentAge: number;
+  /** Age at which employment income stops and portfolio decumulation begins.
+   *  Optional for wire compatibility; when omitted the engine begins drawdown
+   *  at `currentAge`. The browser UI seeds 65 — without it the default
+   *  8%-spend-from-age-45 scenario degenerates to ~0 success. */
+  retirementAge?: number;
   horizonAge: number;
   accounts: Account[];
   assetClasses: AssetClass[];

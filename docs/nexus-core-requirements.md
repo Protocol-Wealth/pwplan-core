@@ -73,6 +73,7 @@ For each tool: request fields the engine must accept, response fields it must re
 {
   "contractVersion": "0.1.0",
   "currentAge": 45,
+  "retirementAge": 65,
   "horizonAge": 95,
   "accounts": [
     {
@@ -121,6 +122,7 @@ For each tool: request fields the engine must accept, response fields it must re
 }
 ```
 
+- **`retirementAge?: number`** _(part of 0.1.0)_ — optional. The age at which employment income stops and decumulation begins; the engine should defer drawdown until this age and draw from `currentAge` when it is **absent**. The UI seeds `65`. Load-bearing for the default demo: without it, the seeded 8%-spend-from-age-45 scenario degenerates to ~0 success with all-zero terminals.
 - `correlations` is **optional**: `assetClassId → assetClassId → ρ`, symmetric, diagonal = 1. **When omitted, the engine must estimate it internally** (the contract says "omit to have the engine estimate via the `correlation_matrix` tool"). So the MC tool cannot hard-require a correlation matrix from the client.
 - `returnModel` ∈ `multivariate_normal | student_t | block_bootstrap | markov_regime | emf_regime`. **All five must be supported.** `emf_regime` is the differentiated path — it must drive the simulation off the live EMF regime classifier + per-asset `lambda`.
 - `lambda` on each asset class is **required when `returnModel = "emf_regime"`**, ignored otherwise.

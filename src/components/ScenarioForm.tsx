@@ -69,6 +69,7 @@ export function ScenarioForm() {
     try {
       const result = await planning.monteCarlo({
         currentAge: inputs.currentAge,
+        retirementAge: inputs.retirementAge,
         horizonAge: inputs.horizonAge,
         accounts: inputs.accounts,
         assetClasses: inputs.assetClasses,
