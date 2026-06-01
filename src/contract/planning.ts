@@ -112,6 +112,11 @@ export interface MonteCarloRequest {
   returnModel: ReturnModel;
   paths: number; // e.g. 10_000
   seed?: number; // deterministic runs for audit reproducibility
+  /** A `pathCacheKey` returned by `regime_return_generator`, replayed here so the
+   *  engine reuses its cached EMF paths instead of regenerating them. Omit to
+   *  generate fresh; a stale/unknown key is treated as a cache miss (regenerate,
+   *  not an error). */
+  pathCacheKey?: string;
 }
 
 export interface MonteCarloResult {
@@ -213,6 +218,35 @@ export interface RegimeReturnResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: capital_market_assumptions — "real data, fake clients"
+// ---------------------------------------------------------------------------
+
+/** Source REAL capital-market assumptions (returns, vols, λ, correlations) from
+ *  the engine, then run them against fake / de-identified portfolios. The result
+ *  is drop-in for a MonteCarloRequest: `assetClasses` + `correlations` slot
+ *  straight into the MC payload. */
+export interface CapitalMarketAssumptionsRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  /** Optional filter. Omit ⇒ the engine's full default asset universe; when
+   *  provided, the engine returns exactly those ids (400 on an unknown id). */
+  assetClassIds?: string[];
+  /** Optional ISO date. Omit ⇒ latest available; otherwise assumptions as of
+   *  that date (or the most recent on/before it). */
+  asOf?: string;
+}
+
+export interface CapitalMarketAssumptionsResult {
+  contractVersion: string;
+  /** Real expectedReturn / volatility / lambda per asset class; lambda is
+   *  populated so the result is usable with returnModel "emf_regime". */
+  assetClasses: AssetClass[];
+  /** Same shape as MonteCarloRequest.correlations — symmetric, diagonal = 1 —
+   *  so the client can pass it straight through. */
+  correlations: Record<string, Record<string, number>>;
+  asOf: string; // ISO date of the assumptions, for provenance
+}
+
+// ---------------------------------------------------------------------------
 // Tool registry — names MUST match nexus-core MCP tool ids exactly.
 // ---------------------------------------------------------------------------
 
@@ -222,6 +256,7 @@ export const PLANNING_TOOLS = {
   taxWithdrawal: "tax_aware_withdrawal",
   correlationMatrix: "correlation_matrix",
   regimeReturnGenerator: "regime_return_generator",
+  capitalMarketAssumptions: "capital_market_assumptions",
 } as const;
 
 export type PlanningToolName =

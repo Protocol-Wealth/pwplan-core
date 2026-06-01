@@ -27,6 +27,7 @@ import {
   type TaxWithdrawalRequest,
   type CorrelationRequest,
   type RegimeReturnRequest,
+  type CapitalMarketAssumptionsRequest,
 } from "../contract/planning";
 
 // --- Minimal, well-typed requests (shape only; the engine does the math). ---
@@ -73,6 +74,10 @@ const regReq: Omit<RegimeReturnRequest, "contractVersion"> = {
   assetClasses: [],
   horizonYears: 50,
   paths: 1000,
+};
+
+const cmaReq: Omit<CapitalMarketAssumptionsRequest, "contractVersion"> = {
+  assetClassIds: ["us_equity", "us_bonds"],
 };
 
 /** Stub global fetch with a single canned response and return the spy. */
@@ -199,6 +204,10 @@ describe("planning gateway dispatch", () => {
         id: "regime_return_generator",
         call: () => planning.regimeReturnGenerator(regReq),
       },
+      {
+        id: "capital_market_assumptions",
+        call: () => planning.capitalMarketAssumptions(cmaReq),
+      },
     ];
 
     for (const { id, call } of dispatches) {
@@ -212,6 +221,44 @@ describe("planning gateway dispatch", () => {
       );
       vi.unstubAllGlobals();
     }
+  });
+
+  it("dispatches capital_market_assumptions and returns drop-in assetClasses + correlations", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      assetClasses: [
+        {
+          id: "us_equity",
+          label: "US Equity",
+          expectedReturn: 0.068,
+          volatility: 0.16,
+          lambda: 0.34,
+        },
+      ],
+      correlations: { us_equity: { us_equity: 1 } },
+      asOf: "2026-05-29",
+    });
+
+    const result = await planning.capitalMarketAssumptions(cmaReq);
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      "https://nexusmcp.site/mcp/tools/capital_market_assumptions",
+    );
+    const sent = JSON.parse(init.body);
+    expect(sent.contractVersion).toBe(PLANNING_CONTRACT_VERSION);
+    expect(sent.assetClassIds).toEqual(["us_equity", "us_bonds"]);
+    // The result is drop-in for a MonteCarloRequest.
+    expect(result.assetClasses[0].id).toBe("us_equity");
+    expect(result.correlations.us_equity.us_equity).toBe(1);
+    expect(result.asOf).toBe("2026-05-29");
+  });
+
+  it("rides an optional pathCacheKey through the monte_carlo dispatch", async () => {
+    const fetchMock = stubFetch({ contractVersion: "0.1.0" });
+    await planning.monteCarlo({ ...mcReq, pathCacheKey: "emf-cache-xyz" });
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.pathCacheKey).toBe("emf-cache-xyz");
   });
 
   it("defaults the active backend to nexus-mcp", () => {

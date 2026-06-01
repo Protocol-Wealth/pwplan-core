@@ -1,10 +1,10 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-06-01 (added optional `retirementAge?` to `MonteCarloRequest`, additive into contract 0.1.0; browser UI seeds 65 via an editable Retirement age field + age-ordering validation). Session-start snapshot; maintain it._
+_Last updated: 2026-06-01 (landed the client side of the two `0.1.0` contract additions — `capital_market_assumptions` as the 6th tool + `pathCacheKey?` on `MonteCarloRequest` — at parity with the now-live 6-tool nexus-core engine; verified via `scripts/smoke-nexus.mjs` + a direct `/mcp/tools` probe. No version bump. UI surfacing of CMA is the next step, not yet built). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 109 tests
+Verified green locally: typecheck clean, lint clean, prettier clean, 111 tests
 pass (8 test files), build succeeds (~236 kB / ~72 kB gzip). **This repo is now
 positioned as demo / case-study tooling**: it runs
 against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
@@ -26,21 +26,25 @@ Thin UI → `planning-gateway` → `nexus-mcp` (open; the only backend this repo
 uses) | `pw-api` (private-fork seam). Wire contract v0.1.0, PII-free and enforced
 by test. `assertNoPII` is a small, always-on, dependency-free structural tripwire
 (`src/lib/compliance.ts`); `auditCall` is a no-op seam (writes nothing). See
-README.md "Compliance scope". The UI exposes three tools behind a tab bar, each
-wired to its gateway method (`planning.monteCarlo` / `glidePath` /
-`taxWithdrawal`); the remaining two contract tools (correlation_matrix,
-regime_return_generator) are in the contract but not yet surfaced as their own UI.
+README.md "Compliance scope". The contract + gateway now cover all **6** live
+engine tools; the UI exposes three of them behind a tab bar, each wired to its
+gateway method (`planning.monteCarlo` / `glidePath` / `taxWithdrawal`). The other
+three (correlation_matrix, regime_return_generator, capital_market_assumptions)
+have contract types + gateway methods but are not yet surfaced as their own UI.
 
 ## File inventory
 
 _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 
-- `src/contract/planning.ts` — wire contract v0.1.0; 5 tools; PII-free invariant.
+- `src/contract/planning.ts` — wire contract v0.1.0; **6 tools**; PII-free invariant.
   `MonteCarloRequest` carries an optional `retirementAge?` (additive; the UI seeds
-  65, the engine draws from `currentAge` when omitted).
+  65, the engine draws from `currentAge` when omitted) and an optional
+  `pathCacheKey?` (replay a `regime_return_generator` EMF-path cache key; stale =
+  cache miss). `CapitalMarketAssumptionsRequest`/`Result` (the 6th tool) source
+  real returns/vols/λ/correlations that drop straight into a `MonteCarloRequest`.
 - `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
-- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export.
-- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 5 tools, pw-api seam; 9 tests.
+- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; one `planning.*` method per tool (6).
+- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 6 tools, CMA drop-in round-trip, `pathCacheKey` passthrough, pw-api seam; 11 tests.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
 - `src/store/scenario.ts` — Zustand store: active `tool` + per-tool inputs (scenario / glidePath / tax) and result slots; accounts/asset classes are one shared portfolio. Seeded valid defaults.
 - `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity.
@@ -85,22 +89,22 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   the _live_ `nexusmcp.site` (deliberate — a flaky external engine must not gate
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
 - `NOTICE` patent application number is a placeholder (blocked on the maintainer).
-- The two contract tools `correlation_matrix` and `regime_return_generator` have
-  contract types + gateway methods but no dedicated UI yet.
+- Three contract tools — `correlation_matrix`, `regime_return_generator` and
+  `capital_market_assumptions` — have contract types + gateway methods but no
+  dedicated UI yet. Surfacing the CMA "real data, fake clients" flow (call CMA,
+  drop `assetClasses` + `correlations` into the Monte Carlo inputs) is the next
+  planned UI step.
 
 ## Next planned work
 
-- **Contract additive changes (next up):** add `pathCacheKey?` to
-  `MonteCarloRequest` and a `capital_market_assumptions` tool, folded into v0.1.0
-  with NO version bump (the nexus-core engine is pre-first-release, so amending
-  0.1.0 is not breaking; bumping would break the exact-match `ContractMismatchError`
-  against an engine shipping 0.1.0). The spec is **finalized and pinned to 0.1.0**
-  in `docs/nexus-core-requirements.md` (§3.1 `pathCacheKey`, §3.6
-  `capital_market_assumptions`) and handed to nexus-core for the server build;
-  what remains here is adding the matching types to `src/contract/planning.ts` +
-  the `planning.*` gateway method + tests, so client and engine land at 0.1.0
-  together. **Trigger + ready-to-run prompt:** `NEXT-PROMPT.md` at repo root — run
-  it once nexus-core's 6-tool server is live at `0.1.0` (its step 1 verifies via
-  `scripts/smoke-nexus.mjs`).
+- **Contract additive changes — DONE (2026-06-01).** `pathCacheKey?` on
+  `MonteCarloRequest` and the `capital_market_assumptions` tool are now in the
+  contract + gateway + tests, folded into v0.1.0 with NO version bump, matching
+  the live 6-tool engine. `NEXT-PROMPT.md` (now stale) can be deleted; the only
+  remaining piece of that hand-off is its step 4 — the CMA UI flow (see below).
+- **CMA "real data, fake clients" UI (next up):** a control that calls
+  `planning.capitalMarketAssumptions` and drops the returned `assetClasses` +
+  `correlations` into the Monte Carlo inputs; ideally also surface
+  `correlation_matrix` and `regime_return_generator` in the UI.
 - **Theming** to the `-core` family visual language (needs a design reference).
 - **NOTICE patent number** when issued.

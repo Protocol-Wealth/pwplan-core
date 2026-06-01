@@ -9,6 +9,27 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Capital-market-assumptions tool + `pathCacheKey` — the client side of the two
+  `0.1.0` additions, landing the contract at parity with the now-live 6-tool
+  nexus-core engine** (additive, **no version bump** — invariant #5; the engine
+  serves `0.1.0` and `ContractMismatchError` is an exact-match check). The live
+  smoke test (`scripts/smoke-nexus.mjs`) and a direct probe of
+  `nexusmcp.site/mcp/tools` confirmed all six tools at `contractVersion 0.1.0`
+  before any client code changed (nexus-core #82–#84). Specifically:
+  - `CapitalMarketAssumptionsRequest` / `CapitalMarketAssumptionsResult` in
+    `src/contract/planning.ts` (§3.6) — source **real** asset-class returns,
+    vols, λ and correlations from the engine; the result's `assetClasses` +
+    `correlations` are drop-in for a `MonteCarloRequest` (the "real data, fake
+    clients" flow). `capitalMarketAssumptions: "capital_market_assumptions"`
+    added to `PLANNING_TOOLS` (the 6th tool).
+  - Optional `pathCacheKey?: string` on `MonteCarloRequest` (§3.1) — replay a
+    `regime_return_generator` cache key so the engine reuses its EMF paths; a
+    stale/unknown key is a cache miss (regenerate), never an error.
+  - `planning.capitalMarketAssumptions(req, opts?)` gateway method, same
+    `callTool` dispatch + PII tripwire + audit seam as the other five.
+  - `planning-gateway.test.ts`: the 6th tool added to the tool-id mapping test,
+    plus a CMA dispatch test (asserts the drop-in `assetClasses`/`correlations`/
+    `asOf` round-trip) and a `pathCacheKey` passthrough test. +2 tests (111 total).
 - Editable **Retirement age** input on the Monte Carlo form (`ScenarioForm`),
   placed between Current age and Horizon age, so the value sent to the engine is
   now visible and adjustable rather than only seeded. `validateScenario` gained a

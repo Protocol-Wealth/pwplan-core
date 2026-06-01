@@ -37,6 +37,8 @@ import {
   type CorrelationResult,
   type RegimeReturnRequest,
   type RegimeReturnResult,
+  type CapitalMarketAssumptionsRequest,
+  type CapitalMarketAssumptionsResult,
   type PlanningToolName,
 } from "../contract/planning";
 import { assertNoPII, auditCall } from "./compliance";
@@ -169,6 +171,16 @@ export const planning = {
   ) =>
     callTool<RegimeReturnRequest, RegimeReturnResult>(
       PLANNING_TOOLS.regimeReturnGenerator,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  capitalMarketAssumptions: (
+    req: Omit<CapitalMarketAssumptionsRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<CapitalMarketAssumptionsRequest, CapitalMarketAssumptionsResult>(
+      PLANNING_TOOLS.capitalMarketAssumptions,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),
