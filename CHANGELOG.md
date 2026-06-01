@@ -9,6 +9,12 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- Editable **Retirement age** input on the Monte Carlo form (`ScenarioForm`),
+  placed between Current age and Horizon age, so the value sent to the engine is
+  now visible and adjustable rather than only seeded. `validateScenario` gained a
+  request-shape age-ordering check — `currentAge ≤ retirementAge < horizonAge`,
+  matching the glide-path tool's rules and messages (skipped when ages are
+  absent, e.g. allocation-only callers). +5 validation tests.
 - Optional `retirementAge?: number` on `MonteCarloRequest` (contract `0.1.0`,
   additive — no version bump; the engine is pre-first-release and already accepts
   and uses it, per nexus-core #83). It marks the age decumulation begins; the

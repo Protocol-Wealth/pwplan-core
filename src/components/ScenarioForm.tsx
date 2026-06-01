@@ -218,6 +218,12 @@ export function ScenarioForm() {
             onChange={(v) => setInputs({ currentAge: v })}
           />
         </Field>
+        <Field label="Retirement age">
+          <NumberInput
+            value={inputs.retirementAge}
+            onChange={(v) => setInputs({ retirementAge: v })}
+          />
+        </Field>
         <Field label="Horizon age">
           <NumberInput
             value={inputs.horizonAge}

@@ -146,4 +146,56 @@ describe("validateScenario", () => {
     });
     expect(issues).toEqual([]);
   });
+
+  it("accepts a well-ordered age trio", () => {
+    expect(
+      validateScenario({
+        assetClasses,
+        accounts: balanced,
+        currentAge: 45,
+        retirementAge: 65,
+        horizonAge: 95,
+      }),
+    ).toEqual([]);
+  });
+
+  it("accepts retirement age equal to current age (already retired)", () => {
+    expect(
+      validateScenario({
+        assetClasses,
+        accounts: balanced,
+        currentAge: 70,
+        retirementAge: 70,
+        horizonAge: 95,
+      }),
+    ).toEqual([]);
+  });
+
+  it("flags a retirement age below the current age", () => {
+    expect(
+      validateScenario({
+        assetClasses,
+        accounts: balanced,
+        currentAge: 65,
+        retirementAge: 60,
+        horizonAge: 95,
+      }),
+    ).toContain("Retirement age must not be below current age.");
+  });
+
+  it("flags a horizon age not beyond the retirement age", () => {
+    expect(
+      validateScenario({
+        assetClasses,
+        accounts: balanced,
+        currentAge: 45,
+        retirementAge: 65,
+        horizonAge: 65,
+      }),
+    ).toContain("Horizon age must be beyond retirement age.");
+  });
+
+  it("skips age ordering when ages are omitted", () => {
+    expect(validateScenario({ assetClasses, accounts: balanced })).toEqual([]);
+  });
 });

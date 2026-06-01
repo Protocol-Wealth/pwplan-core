@@ -371,7 +371,7 @@ The headline demo capability: source **real** capital-market assumptions (return
 
 **Asset ids are user-defined strings** (e.g. `us_equity`). The engine **must not hardcode a fixed asset universe** — it must accept arbitrary ids with the per-asset params supplied. (See §5 for the "real data" mode.)
 
-**Request-shape rules the client already enforces** (engine should also validate and return `400` on violation): allocations sum to 1 per account; asset-class ids unique; account allocations reference only declared asset-class ids; `currentAge < retirementAge ≤ horizonAge` (glide path) and sensible age/range bounds.
+**Request-shape rules the client already enforces** (engine should also validate and return `400` on violation): allocations sum to 1 per account; asset-class ids unique; account allocations reference only declared asset-class ids; age ordering `currentAge ≤ retirementAge < horizonAge` (enforced on both `monte_carlo_decumulation` and `glide_path`) and sensible age/range bounds.
 
 ---
 

@@ -41,6 +41,11 @@ export function duplicateAssetClassIds(assetClasses: AssetClass[]): string[] {
 export interface ScenarioToValidate {
   accounts: Account[];
   assetClasses: AssetClass[];
+  /** Plan lifecycle ages. Optional here so allocation-only callers/tests need
+   *  not supply them; when present, age ordering is checked. */
+  currentAge?: number;
+  retirementAge?: number;
+  horizonAge?: number;
 }
 
 /**
@@ -49,6 +54,25 @@ export interface ScenarioToValidate {
  */
 export function validateScenario(s: ScenarioToValidate): string[] {
   const issues: string[] = [];
+
+  // Age ordering (currentAge ≤ retirementAge < horizonAge), matching the
+  // glide-path tool's rules and messages. Skipped when ages are absent. This is
+  // request-shape ordering, not a financial model — the engine owns the math.
+  const { currentAge, retirementAge, horizonAge } = s;
+  if (
+    typeof retirementAge === "number" &&
+    typeof currentAge === "number" &&
+    retirementAge < currentAge
+  ) {
+    issues.push("Retirement age must not be below current age.");
+  }
+  if (
+    typeof horizonAge === "number" &&
+    typeof retirementAge === "number" &&
+    horizonAge <= retirementAge
+  ) {
+    issues.push("Horizon age must be beyond retirement age.");
+  }
 
   if (s.assetClasses.length === 0) {
     issues.push("Add at least one asset class.");

@@ -1,11 +1,11 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-06-01 (added optional `retirementAge?` to `MonteCarloRequest`, additive into contract 0.1.0; browser UI seeds 65). Session-start snapshot; maintain it._
+_Last updated: 2026-06-01 (added optional `retirementAge?` to `MonteCarloRequest`, additive into contract 0.1.0; browser UI seeds 65 via an editable Retirement age field + age-ordering validation). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 104 tests
-pass (8 test files), build succeeds (~235 kB / ~72 kB gzip). **This repo is now
+Verified green locally: typecheck clean, lint clean, prettier clean, 109 tests
+pass (8 test files), build succeeds (~236 kB / ~72 kB gzip). **This repo is now
 positioned as demo / case-study tooling**: it runs
 against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
 `.env` needed) with de-identified / fake client data. The production compliance
@@ -43,13 +43,13 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 5 tools, pw-api seam; 9 tests.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
 - `src/store/scenario.ts` — Zustand store: active `tool` + per-tool inputs (scenario / glidePath / tax) and result slots; accounts/asset classes are one shared portfolio. Seeded valid defaults.
-- `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params, asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income, filing status; Run gated on validity.
+- `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity.
 - `src/components/GlidePathTool.tsx` — glide-path form + equity-weight-by-age line chart (fixed 0–1 axis).
 - `src/components/TaxWithdrawalTool.tsx` — tax form over the shared portfolio + withdrawals-by-account table (total tax, effective rate, RMD indicator).
 - `src/components/scenario-io.ts` / `.test.ts` — pure, versioned, PII-free serialize/parse for plan inputs (fail-closed `assertNoPII` on save + on the raw input at load); 13 tests. No browser storage.
 - `src/components/scenario-presets.ts` / `.test.ts` — three built-in case-study snapshots (accumulator / near-retiree / crisis-stress), each validator-clean and round-trip-safe; 15 tests.
 - `src/components/ScenarioIO.tsx` — Save (Blob download) / Load (file input) / preset picker; uses the store's `loadSnapshot`.
-- `src/components/scenario-validation.ts` / `.test.ts` — pure scenario request-shape validation (allocation-sums-to-1, unique ids, known-id refs); 15 tests. No quant logic.
+- `src/components/scenario-validation.ts` / `.test.ts` — pure scenario request-shape validation (allocation-sums-to-1, unique ids, known-id refs, age ordering `currentAge ≤ retirementAge < horizonAge`); 20 tests. No quant logic.
 - `src/components/tool-validation.ts` / `.test.ts` — pure glide-path + tax request-shape validation (ranges, age ordering, portfolio presence); 10 tests. No quant logic.
 - `src/components/ResultsPanel.tsx` — Monte Carlo results: success probability + 3 hand-rolled charts (median-balance line/area, terminal percentile bars, regime strip when present). Inline SVG/CSS, no chart lib.
 - `src/components/results-viz.ts` / `.test.ts` — pure geometry helpers (seriesGeometry incl. forcedMax, percentileBars, regimeRuns, ageWeightSeries); 20 tests. Presentation math only.
