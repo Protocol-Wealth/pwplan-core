@@ -1,6 +1,6 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-06-01 (landed the client side of the two `0.1.0` contract additions — `capital_market_assumptions` as the 6th tool + `pathCacheKey?` on `MonteCarloRequest` — at parity with the now-live 6-tool nexus-core engine; verified via `scripts/smoke-nexus.mjs` + a direct `/mcp/tools` probe. No version bump. UI surfacing of CMA is the next step, not yet built). Session-start snapshot; maintain it._
+_Last updated: 2026-06-01 (landed the client side of the two `0.1.0` contract additions — `capital_market_assumptions` as the 6th tool + `pathCacheKey?` on `MonteCarloRequest` — at parity with the now-live 6-tool nexus-core engine, then shipped the "real data, fake clients" UI: a Monte Carlo control that loads real engine assumptions + correlations onto a de-identified portfolio. Verified end-to-end against the live engine. No version bump). Session-start snapshot; maintain it._
 
 ## Status
 
@@ -46,8 +46,8 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; one `planning.*` method per tool (6).
 - `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 6 tools, CMA drop-in round-trip, `pathCacheKey` passthrough, pw-api seam; 11 tests.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
-- `src/store/scenario.ts` — Zustand store: active `tool` + per-tool inputs (scenario / glidePath / tax) and result slots; accounts/asset classes are one shared portfolio. Seeded valid defaults.
-- `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity.
+- `src/store/scenario.ts` — Zustand store: active `tool` + per-tool inputs (scenario / glidePath / tax) and result slots; accounts/asset classes are one shared portfolio. Seeded valid defaults. Plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions — outside `ScenarioInputs` (re-fetched, not persisted; cleared on snapshot load).
+- `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity. Includes the **"Load real market assumptions"** control (calls `capital_market_assumptions`, drops real returns/vols/λ onto the current portfolio + carries the engine correlation matrix into the run; provenance `asOf` line + a compact read-only `CorrelationMatrix`).
 - `src/components/GlidePathTool.tsx` — glide-path form + equity-weight-by-age line chart (fixed 0–1 axis).
 - `src/components/TaxWithdrawalTool.tsx` — tax form over the shared portfolio + withdrawals-by-account table (total tax, effective rate, RMD indicator).
 - `src/components/scenario-io.ts` / `.test.ts` — pure, versioned, PII-free serialize/parse for plan inputs (fail-closed `assertNoPII` on save + on the raw input at load); 13 tests. No browser storage.
@@ -89,11 +89,13 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   the _live_ `nexusmcp.site` (deliberate — a flaky external engine must not gate
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
 - `NOTICE` patent application number is a placeholder (blocked on the maintainer).
-- Three contract tools — `correlation_matrix`, `regime_return_generator` and
-  `capital_market_assumptions` — have contract types + gateway methods but no
-  dedicated UI yet. Surfacing the CMA "real data, fake clients" flow (call CMA,
-  drop `assetClasses` + `correlations` into the Monte Carlo inputs) is the next
-  planned UI step.
+- `capital_market_assumptions` is surfaced (the Monte Carlo "Load real market
+  assumptions" control), and its correlation matrix is rendered in-context. The
+  other two tools — `correlation_matrix` and `regime_return_generator` — have
+  contract types + gateway methods but no dedicated UI yet. They're more
+  engine-internal; standalone tabs for them are a deferred, lower-value follow-up
+  (`regime_return_generator` would pair naturally with the new `pathCacheKey`
+  reuse path).
 
 ## Next planned work
 
@@ -102,9 +104,12 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   contract + gateway + tests, folded into v0.1.0 with NO version bump, matching
   the live 6-tool engine. `NEXT-PROMPT.md` (now stale) can be deleted; the only
   remaining piece of that hand-off is its step 4 — the CMA UI flow (see below).
-- **CMA "real data, fake clients" UI (next up):** a control that calls
-  `planning.capitalMarketAssumptions` and drops the returned `assetClasses` +
-  `correlations` into the Monte Carlo inputs; ideally also surface
-  `correlation_matrix` and `regime_return_generator` in the UI.
+- **CMA "real data, fake clients" UI — DONE (2026-06-01).** The Monte Carlo form
+  loads real engine assumptions + correlations onto a de-identified portfolio
+  (verified end-to-end live).
+- **Standalone `correlation_matrix` / `regime_return_generator` tabs (optional):**
+  dedicated tool tabs for the last two contract tools; `regime_return_generator`
+  would close the `pathCacheKey` reuse loop (generate EMF paths → replay the key
+  in a Monte Carlo run). Lower priority — engine-internal surfaces.
 - **Theming** to the `-core` family visual language (needs a design reference).
 - **NOTICE patent number** when issued.

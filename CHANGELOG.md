@@ -9,6 +9,20 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **"Real data, fake clients" UI — a _Load real market assumptions_ control on the
+  Monte Carlo form** (`ScenarioForm`). It calls `planning.capitalMarketAssumptions`
+  for the current asset-class ids (or the engine's full default universe when
+  there are none), replaces each asset class's `expectedReturn` / `volatility` /
+  `λ` in place — same ids, so account allocations stay valid — and stashes the
+  engine's correlation matrix. The matrix then rides into the next simulation as
+  `MonteCarloRequest.correlations`; a provenance line shows the assumptions'
+  `asOf` date, and a compact read-only correlation matrix is rendered beneath the
+  control. Verified end-to-end against the live engine: CMA (asOf 2026-05-29) →
+  Monte Carlo accepts the drop-in `assetClasses` + `correlations` (HTTP 200,
+  regime-aware result). Store gained an ephemeral `assumptions` slice
+  (`{ asOf, correlations }` + `loadingAssumptions`), deliberately outside
+  `ScenarioInputs` (live data, re-fetched — cleared on snapshot load) so
+  scenario save/load is untouched. No new wire types; no quant logic.
 - **Capital-market-assumptions tool + `pathCacheKey` — the client side of the two
   `0.1.0` additions, landing the contract at parity with the now-live 6-tool
   nexus-core engine** (additive, **no version bump** — invariant #5; the engine

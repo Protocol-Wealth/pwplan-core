@@ -61,6 +61,20 @@ export interface TaxWithdrawalInputs {
   otherTaxableIncome: number;
 }
 
+/**
+ * Live, engine-sourced capital-market assumptions (the "real data, fake clients"
+ * flow). Fetched from the `capital_market_assumptions` tool and threaded into the
+ * Monte Carlo run as `correlations`; the refreshed per-asset returns/vols/λ land
+ * directly in `inputs.assetClasses`. Deliberately NOT part of `ScenarioInputs`:
+ * it is live data, re-fetched rather than persisted, so it is cleared on load.
+ */
+export interface MarketAssumptions {
+  /** ISO date the engine's assumptions are as-of (provenance). */
+  asOf: string;
+  /** assetClassId → assetClassId → ρ; drop-in for MonteCarloRequest.correlations. */
+  correlations: Record<string, Record<string, number>>;
+}
+
 interface ScenarioState {
   tool: PlanningTool;
 
@@ -71,6 +85,10 @@ interface ScenarioState {
   result: MonteCarloResult | null;
   glidePathResult: GlidePathResult | null;
   taxResult: TaxWithdrawalResult | null;
+
+  /** Live engine assumptions from capital_market_assumptions; null until loaded. */
+  assumptions: MarketAssumptions | null;
+  loadingAssumptions: boolean;
 
   running: boolean;
   error: string | null;
@@ -90,6 +108,8 @@ interface ScenarioState {
   setResult: (r: MonteCarloResult | null) => void;
   setGlidePathResult: (r: GlidePathResult | null) => void;
   setTaxResult: (r: TaxWithdrawalResult | null) => void;
+  setAssumptions: (a: MarketAssumptions | null) => void;
+  setLoadingAssumptions: (b: boolean) => void;
   setRunning: (b: boolean) => void;
   setError: (e: string | null) => void;
 }
@@ -171,6 +191,9 @@ export const useScenario = create<ScenarioState>((set) => ({
   glidePathResult: null,
   taxResult: null,
 
+  assumptions: null,
+  loadingAssumptions: false,
+
   running: false,
   error: null,
 
@@ -186,6 +209,9 @@ export const useScenario = create<ScenarioState>((set) => ({
       result: null,
       glidePathResult: null,
       taxResult: null,
+      // Assumptions are live engine data tied to the prior inputs; drop them so a
+      // loaded plan does not silently reuse a stale correlation matrix.
+      assumptions: null,
       error: null,
       running: false,
     }),
@@ -197,6 +223,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   setResult: (result) => set({ result }),
   setGlidePathResult: (glidePathResult) => set({ glidePathResult }),
   setTaxResult: (taxResult) => set({ taxResult }),
+  setAssumptions: (assumptions) => set({ assumptions }),
+  setLoadingAssumptions: (loadingAssumptions) => set({ loadingAssumptions }),
   setRunning: (running) => set({ running }),
   setError: (error) => set({ error }),
 }));

@@ -45,10 +45,20 @@ on completion and note the version in CHANGELOG.md._
       `aria-current`, deduped `<head>`; labels/role=img already in place; contrast
       tuning — all `stone-400` body/micro-text raised to `stone-500` (≈4.6:1, WCAG AA
       on white) across 9 components.)_
-- [ ] Theming to match the `-core` family visual language.
-- [ ] Contract additive changes: `pathCacheKey?` on `MonteCarloRequest` + a
+- [x] Contract additive changes: `pathCacheKey?` on `MonteCarloRequest` + a
       capital-market-assumptions tool, folded into v0.1.0 (no bump; engine is
-      pre-first-release). Coordinate with the nexus-core server build.
+      pre-first-release). _(done 2026-06-01: 6th tool + `pathCacheKey?` in
+      contract/gateway/tests at parity with the now-live 6-tool engine; verified
+      via `scripts/smoke-nexus.mjs` + a `/mcp/tools` probe; +2 tests.)_
+- [x] "Real data, fake clients" UI: a Monte Carlo control that calls
+      `capital_market_assumptions` and drops the real `assetClasses` +
+      `correlations` onto a de-identified portfolio. _(done 2026-06-01:
+      `ScenarioForm` "Load real market assumptions" + provenance + correlation
+      matrix; ephemeral store `assumptions` slice; verified end-to-end live.)_
+- [ ] Standalone `correlation_matrix` / `regime_return_generator` UI tabs
+      (optional, lower priority — engine-internal; the latter would close the
+      `pathCacheKey` reuse loop).
+- [ ] Theming to match the `-core` family visual language.
 
 ## Dependency on other repos (track, do not build here)
 

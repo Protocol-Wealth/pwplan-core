@@ -56,8 +56,18 @@ function removeAt<T>(arr: T[], i: number): T[] {
 }
 
 export function ScenarioForm() {
-  const { inputs, setInputs, setResult, setRunning, setError, running } =
-    useScenario();
+  const {
+    inputs,
+    setInputs,
+    setResult,
+    setRunning,
+    setError,
+    running,
+    assumptions,
+    loadingAssumptions,
+    setAssumptions,
+    setLoadingAssumptions,
+  } = useScenario();
 
   const issues = validateScenario(inputs);
   const runnable = issues.length === 0;
@@ -73,6 +83,9 @@ export function ScenarioForm() {
         horizonAge: inputs.horizonAge,
         accounts: inputs.accounts,
         assetClasses: inputs.assetClasses,
+        // Engine-sourced correlations from the last "real assumptions" load;
+        // omitted (undefined) when none, so the engine estimates them itself.
+        correlations: assumptions?.correlations,
         annualSpend: inputs.annualSpend,
         spendColaRate: inputs.spendColaRate,
         guaranteedIncome: inputs.guaranteedIncome,
@@ -85,6 +98,30 @@ export function ScenarioForm() {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setRunning(false);
+    }
+  }
+
+  // --- real market assumptions ("real data, fake clients") -----------------
+  // Pull REAL capital-market assumptions (returns, vols, λ, correlations) from
+  // the engine and drop them onto the current (fake / de-identified) portfolio:
+  // the returned assetClasses replace inputs.assetClasses in place — same ids,
+  // so account allocations stay valid — and the correlation matrix is stashed
+  // for the next run. Filtered to the current asset-class ids so the structure
+  // is preserved; with none, the engine's full default universe is returned.
+  async function loadAssumptions() {
+    setLoadingAssumptions(true);
+    setError(null);
+    try {
+      const ids = inputs.assetClasses.map((ac) => ac.id).filter(Boolean);
+      const cma = await planning.capitalMarketAssumptions(
+        ids.length ? { assetClassIds: ids } : {},
+      );
+      setInputs({ assetClasses: cma.assetClasses });
+      setAssumptions({ asOf: cma.asOf, correlations: cma.correlations });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingAssumptions(false);
     }
   }
 
@@ -274,6 +311,42 @@ export function ScenarioForm() {
           addLabel="asset class"
           onAdd={addAssetClass}
         />
+
+        {/* Real data, fake clients: pull live engine assumptions onto the
+            current de-identified portfolio. */}
+        <div className="space-y-2 border border-stone-300 bg-stone-50 p-3">
+          <button
+            type="button"
+            onClick={loadAssumptions}
+            disabled={loadingAssumptions || running}
+            className="w-full border border-stone-400 bg-white px-3 py-1.5 font-mono text-[0.7rem] uppercase tracking-wider text-stone-700 transition hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-900 disabled:opacity-40"
+          >
+            {loadingAssumptions ? "Loading…" : "Load real market assumptions"}
+          </button>
+          {assumptions ? (
+            <div className="space-y-2">
+              <p className="font-mono text-[0.6rem] leading-relaxed text-stone-500">
+                Real capital-market assumptions as of{" "}
+                <span className="text-stone-700">{assumptions.asOf}</span>,
+                applied to this de-identified portfolio. Returns, vols and λ
+                above are now engine-sourced; correlations below ride into the
+                run.
+              </p>
+              <CorrelationMatrix
+                ids={inputs.assetClasses.map((ac) => ac.id)}
+                matrix={assumptions.correlations}
+              />
+            </div>
+          ) : (
+            <p className="font-mono text-[0.6rem] leading-relaxed text-stone-500">
+              Replaces the asset-class returns / vols / λ with live values from
+              the engine&rsquo;s <span className="text-stone-700">EMF</span>{" "}
+              capital-market-assumptions tool and carries real correlations into
+              the simulation.
+            </p>
+          )}
+        </div>
+
         {inputs.assetClasses.length === 0 && <Empty>No asset classes.</Empty>}
         {inputs.assetClasses.map((ac, i) => (
           <Card key={i} onRemove={() => removeAssetClass(i)}>
@@ -443,5 +516,71 @@ export function ScenarioForm() {
         label="Run simulation"
       />
     </section>
+  );
+}
+
+/**
+ * Compact, read-only correlation matrix. Presentation only — renders the
+ * engine-returned ρ values (symmetric, diagonal = 1) as a small table, ordered
+ * by the current asset-class ids and limited to ids the matrix actually carries.
+ */
+function CorrelationMatrix({
+  ids,
+  matrix,
+}: {
+  ids: string[];
+  matrix: Record<string, Record<string, number>>;
+}) {
+  const cols = ids.filter((id) => id && matrix[id]);
+  if (cols.length === 0) return null;
+  return (
+    <div className="overflow-x-auto">
+      <table className="border-collapse font-mono text-[0.6rem] tabular-nums text-stone-600">
+        <caption className="sr-only">
+          Engine-sourced asset-class correlation matrix
+        </caption>
+        <thead>
+          <tr>
+            <th className="px-1.5 py-1 text-left font-normal text-stone-400">
+              ρ
+            </th>
+            {cols.map((id) => (
+              <th
+                key={id}
+                scope="col"
+                className="px-1.5 py-1 text-right font-normal text-stone-500"
+              >
+                {id}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {cols.map((row) => (
+            <tr key={row}>
+              <th
+                scope="row"
+                className="px-1.5 py-1 text-left font-normal text-stone-500"
+              >
+                {row}
+              </th>
+              {cols.map((col) => {
+                const v = matrix[row]?.[col];
+                return (
+                  <td
+                    key={col}
+                    className={`px-1.5 py-1 text-right ${
+                      row === col ? "text-stone-400" : "text-stone-700"
+                    }`}
+                  >
+                    {typeof v === "number" ? v.toFixed(2) : "—"}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
