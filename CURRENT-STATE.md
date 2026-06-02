@@ -1,22 +1,22 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-06-02 (contract+gateway now cover all 12 live engine tools; added four calculator tabs — RMD, Tax-bracket headroom / Roth-fill, Social Security claiming, Regime-conditioned SWR — wired contract → gateway → UI. nexus-core #97–#101 are merged + deployed (rev nexus-core-00041), so all 9 UI tabs work against the live engine. Earlier this session: Roth + Sequence tabs, the two `0.1.0` additions, the "real data, fake clients" control, and the vitest-4 Dependabot fix. No version bump). Session-start snapshot; maintain it._
+_Last updated: 2026-06-02 (all 12 engine tools are now surfaced in the UI — added the Correlation matrix + Regime return generator tabs (the last two contract-only tools), extracting a shared `MatrixTable`. 11 UI tabs + the CMA control; both new tabs verified live. Earlier this session: the four calculator tabs (RMD / Bracket / Social Security / Regime SWR), Roth + Sequence tabs, the two `0.1.0` additions, the CMA control, and the vitest-4 Dependabot fix. No version bump). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 140 tests
-pass (8 test files), build succeeds (~262 kB / ~77 kB gzip). **This repo is now
+Verified green locally: typecheck clean, lint clean, prettier clean, 151 tests
+pass (8 test files), build succeeds (~269 kB / ~78 kB gzip). **This repo is now
 positioned as demo / case-study tooling**: it runs
 against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
 `.env` needed) with de-identified / fake client data. The production compliance
 stack (pwos-core PII de-identification + audit log) and any pw-api integration
 have been **removed from this OSS repo** and live only in a private fork; the
 `pw-api` gateway seam is kept so that fork stays a low-diff sync. The UI exposes
-**nine** tools via a wrapping tab bar (Monte Carlo, Glide path, Tax withdrawal,
-Roth conversion, Sequence risk, RMD, Bracket room, Social Security, Regime SWR),
-each wired to its gateway method with client-side request-shape validation and
-hand-rolled SVG/CSS results (no chart library). Accounts/asset classes are a
-shared portfolio.
+**eleven** tools via a wrapping tab bar (Monte Carlo, Glide path, Tax withdrawal,
+Roth conversion, Sequence risk, RMD, Bracket room, Social Security, Regime SWR,
+Correlation, Regime paths), each wired to its gateway method with client-side
+request-shape validation and hand-rolled SVG/CSS results (no chart library).
+Accounts/asset classes are a shared portfolio.
 Plan inputs can be saved/loaded as PII-free JSON and seeded from built-in
 case-study presets. Every first-party source file carries an SPDX Apache-2.0
 header. The demo-reframe work shipped via PR #1 (CCO + CTO/CISO approved) and is
@@ -28,14 +28,14 @@ Thin UI → `planning-gateway` → `nexus-mcp` (open; the only backend this repo
 uses) | `pw-api` (private-fork seam). Wire contract v0.1.0, PII-free and enforced
 by test. `assertNoPII` is a small, always-on, dependency-free structural tripwire
 (`src/lib/compliance.ts`); `auditCall` is a no-op seam (writes nothing). See
-README.md "Compliance scope". The contract + gateway now cover all **12** engine
-tools; the UI exposes nine behind a wrapping tab bar (`planning.monteCarlo` /
+README.md "Compliance scope". The contract + gateway cover all **12** engine
+tools; the UI exposes eleven behind a wrapping tab bar (`planning.monteCarlo` /
 `glidePath` / `taxWithdrawal` / `rothConversion` / `sequenceOfReturnsStress` /
-`rmd` / `taxBracketHeadroom` / `socialSecurityClaiming` / `regimeConditionedSwr`),
-plus the `capitalMarketAssumptions` control inside the Monte Carlo tab. Only
-`correlation_matrix` and `regime_return_generator` remain contract+gateway-only
-(no dedicated UI). All tabs run against the live engine (nexus-core #97–#101
-deployed, rev nexus-core-00041); the six newest tools were smoke-verified live.
+`rmd` / `taxBracketHeadroom` / `socialSecurityClaiming` / `regimeConditionedSwr` /
+`correlationMatrix` / `regimeReturnGenerator`), plus the `capitalMarketAssumptions`
+control inside the Monte Carlo tab — i.e. **every tool is now surfaced.** All tabs
+run against the live engine (nexus-core #97–#101 deployed, rev nexus-core-00041);
+every newer tool, including Correlation + Regime paths, was smoke-verified live.
 
 ## File inventory
 
@@ -50,10 +50,11 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   (+ `SocialSecurityClaimRow`/`Breakeven`), `RegimeConditionedSwrRequest`/`Result`.
 - `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
 - `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; one `planning.*` method per tool (12).
-- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 12 tools, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks, pw-api seam; 17 tests.
+- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 12 tools, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks (incl. correlation + regime-return), pw-api seam; 19 tests.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
-- `src/store/scenario.ts` — Zustand store: active `tool` (9 UI tools) + per-tool inputs (scenario / glidePath / tax / roth / sor / rmd / bracket / socialSecurity / regimeSwr) and result slots; accounts/asset classes are one shared portfolio. Seeded valid defaults. Plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions — outside `ScenarioInputs` (re-fetched, not persisted; cleared on snapshot load).
-- `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity. Includes the **"Load real market assumptions"** control (calls `capital_market_assumptions`, drops real returns/vols/λ onto the current portfolio + carries the engine correlation matrix into the run; provenance `asOf` line + a compact read-only `CorrelationMatrix`).
+- `src/store/scenario.ts` — Zustand store: active `tool` (11 UI tools) + per-tool inputs (scenario / glidePath / tax / roth / sor / rmd / bracket / socialSecurity / regimeSwr / correlation / regimeGen) and result slots; accounts/asset classes are one shared portfolio. Seeded valid defaults. Plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions — outside `ScenarioInputs` (re-fetched, not persisted; cleared on snapshot load).
+- `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity. Includes the **"Load real market assumptions"** control (calls `capital_market_assumptions`, drops real returns/vols/λ onto the current portfolio + carries the engine correlation matrix into the run; provenance `asOf` line + the shared `MatrixTable`).
+- `src/components/MatrixTable.tsx` — generic read-only square-matrix renderer (ids × ids → numbers); shared by the CMA control, the Correlation tab, and the Regime-paths transition matrix.
 - `src/components/GlidePathTool.tsx` — glide-path form + equity-weight-by-age line chart (fixed 0–1 axis).
 - `src/components/TaxWithdrawalTool.tsx` — tax form over the shared portfolio + withdrawals-by-account table (total tax, effective rate, RMD indicator).
 - `src/components/RothConversionTool.tsx` — Roth-conversion form (income, filing status, conversion amount, growth, years, retirement rate, pay-from-conversion toggle) + results panel (net benefit, breakeven rate, incremental conversion tax + effective rate, both terminal after-tax values).
@@ -62,11 +63,13 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/components/BracketHeadroomTool.tsx` — bracket-headroom/Roth-fill form (taxable income, filing status, target rate) + results (room to next rate, marginal rate, room to fill the target rate).
 - `src/components/SocialSecurityTool.tsx` — Social Security form (PIA, FRA) + results (monthly-benefit-by-claim-age bar chart 62–70 + breakeven ages).
 - `src/components/RegimeSwrTool.tsx` — regime-SWR form (base rate, portfolio balance) + results (live regime, multiplier, adjusted rate, first-year withdrawal).
+- `src/components/CorrelationTool.tsx` — correlation-matrix form (asset-class ids, lookback, shrinkage toggle) + results (`MatrixTable` of the real-data ρ matrix + `asOf`).
+- `src/components/RegimeReturnTool.tsx` — regime-return-generator form (horizon, paths; over the shared portfolio's λ-bearing asset classes) + results (current regime, transition `MatrixTable`, `pathCacheKey`).
 - `src/components/scenario-io.ts` / `.test.ts` — pure, versioned, PII-free serialize/parse for plan inputs (fail-closed `assertNoPII` on save + on the raw input at load); 13 tests. No browser storage.
 - `src/components/scenario-presets.ts` / `.test.ts` — three built-in case-study snapshots (accumulator / near-retiree / crisis-stress), each validator-clean and round-trip-safe; 15 tests.
 - `src/components/ScenarioIO.tsx` — Save (Blob download) / Load (file input) / preset picker; uses the store's `loadSnapshot`.
 - `src/components/scenario-validation.ts` / `.test.ts` — pure scenario request-shape validation (allocation-sums-to-1, unique ids, known-id refs, age ordering `currentAge ≤ retirementAge < horizonAge`); 20 tests. No quant logic.
-- `src/components/tool-validation.ts` / `.test.ts` — pure request-shape validation for glide-path, tax, Roth, sequence-stress (`parseReturns`), RMD, bracket-headroom, Social Security, and regime-SWR (`validateRmd` / `validateBracketHeadroom` / `validateSocialSecurity` / `validateRegimeSwr`); ranges, age ordering, portfolio presence, return parsing; 33 tests. No quant logic.
+- `src/components/tool-validation.ts` / `.test.ts` — pure request-shape validation for glide-path, tax, Roth, sequence-stress (`parseReturns`), RMD, bracket-headroom, Social Security, regime-SWR, correlation (`validateCorrelation` + `parseIdList`), and regime-gen (`validateRegimeGen`); ranges, age ordering, portfolio presence, list parsing, λ presence; 44 tests. No quant logic.
 - `src/components/ResultsPanel.tsx` — Monte Carlo results: success probability + 3 hand-rolled charts (median-balance line/area, terminal percentile bars, regime strip when present). Inline SVG/CSS, no chart lib.
 - `src/components/results-viz.ts` / `.test.ts` — pure geometry helpers (seriesGeometry incl. forcedMax, percentileBars, regimeRuns, ageWeightSeries); 20 tests. Presentation math only.
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
@@ -101,13 +104,9 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   the _live_ `nexusmcp.site` (deliberate — a flaky external engine must not gate
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
 - `NOTICE` patent application number is a placeholder (blocked on the maintainer).
-- Of the 12 contract tools, the UI surfaces ten: nine tabs (Monte Carlo, Glide
-  path, Tax withdrawal, Roth conversion, Sequence risk, RMD, Bracket room, Social
-  Security, Regime SWR) + `capital_market_assumptions` (the Monte Carlo "Load real
-  market assumptions" control). Only `correlation_matrix` and
-  `regime_return_generator` remain contract+gateway-only (no dedicated UI) —
-  engine-internal; `regime_return_generator` would pair with the `pathCacheKey`
-  reuse path.
+- **All 12 contract tools are now surfaced in the UI** — 11 tabs +
+  `capital_market_assumptions` (the Monte Carlo "Load real market assumptions"
+  control). No remaining gateway-only tools.
 
 ## Next planned work
 
@@ -123,12 +122,12 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   Contract + gateway + UI tabs. Engine side in nexus-core PR #100 (merged +
   deployed); both tools smoke-verified live.
 - **RMD, Bracket-headroom/Roth-fill, Social Security, Regime-SWR tabs — DONE
-  (2026-06-02).** Contract + gateway + UI tabs (12 tools total, 9 UI tabs). Engine
-  side in nexus-core PR #101 (merged + deployed, rev nexus-core-00041); all six
-  newest tools smoke-verified live.
-- **Standalone `correlation_matrix` / `regime_return_generator` tabs (optional):**
-  dedicated tool tabs for the last two contract tools; `regime_return_generator`
-  would close the `pathCacheKey` reuse loop (generate EMF paths → replay the key
-  in a Monte Carlo run). Lower priority — engine-internal surfaces.
-- **Theming** to the `-core` family visual language (needs a design reference).
+  (2026-06-02).** Contract + gateway + UI tabs. Engine side in nexus-core PR #101
+  (merged + deployed, rev nexus-core-00041); smoke-verified live.
+- **Correlation matrix + Regime return generator tabs — DONE (2026-06-02).** The
+  last two contract-only tools now have UI (shared `MatrixTable`); the Regime-paths
+  tab closes the `pathCacheKey` reuse loop. Both smoke-verified live. **All 12
+  tools are now surfaced.**
+- **Theming** to the `-core` family visual language — _next up; needs a design
+  reference (held for input)._
 - **NOTICE patent number** when issued.

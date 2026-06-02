@@ -9,10 +9,12 @@
  * in nexus-core.
  */
 
-import type { Account } from "../contract/planning";
+import type { Account, AssetClass } from "../contract/planning";
 import type {
   BracketHeadroomInputs,
+  CorrelationInputs,
   GlidePathInputs,
+  RegimeGenInputs,
   RegimeSwrInputs,
   RmdInputs,
   RothInputs,
@@ -166,6 +168,61 @@ export function validateRegimeSwr(r: RegimeSwrInputs): string[] {
   }
   if (r.portfolioBalance < 0) {
     issues.push("Portfolio balance cannot be negative.");
+  }
+  return issues;
+}
+
+/** Split a comma/space-separated id list into trimmed, non-empty tokens. Pure. */
+export function parseIdList(text: string): string[] {
+  return text
+    .split(/[,\s]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+}
+
+/** Reasons a correlation-matrix request cannot be dispatched, in display order. */
+export function validateCorrelation(c: CorrelationInputs): string[] {
+  const issues: string[] = [];
+  if (parseIdList(c.assetClassIdsText).length < 2) {
+    issues.push("Enter at least two asset-class ids.");
+  }
+  if (
+    !Number.isInteger(c.lookbackDays) ||
+    c.lookbackDays < 30 ||
+    c.lookbackDays > 3650
+  ) {
+    issues.push("Lookback days must be a whole number in [30, 3650].");
+  }
+  return issues;
+}
+
+/**
+ * Reasons a regime-return-generator request cannot be dispatched. Uses the
+ * shared portfolio's asset classes (each needs a λ for the EMF regime model).
+ */
+export function validateRegimeGen(
+  g: RegimeGenInputs,
+  assetClasses: AssetClass[],
+): string[] {
+  const issues: string[] = [];
+  if (assetClasses.length === 0) {
+    issues.push("Add asset classes in the Monte Carlo tab (each needs a λ).");
+  } else if (
+    assetClasses.some(
+      (ac) => ac.lambda === undefined || !Number.isFinite(ac.lambda),
+    )
+  ) {
+    issues.push("Every asset class needs a λ (EMF decay) for regime paths.");
+  }
+  if (
+    !Number.isInteger(g.horizonYears) ||
+    g.horizonYears < 1 ||
+    g.horizonYears > 200
+  ) {
+    issues.push("Horizon years must be a whole number in [1, 200].");
+  }
+  if (!Number.isInteger(g.paths) || g.paths < 1 || g.paths > 50_000) {
+    issues.push("Paths must be a whole number in [1, 50000].");
   }
   return issues;
 }

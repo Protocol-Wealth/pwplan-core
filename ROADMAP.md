@@ -64,10 +64,13 @@ on completion and note the version in CHANGELOG.md._
       `SocialSecurityTool` / `RegimeSwrTool` + validators; +16 tests. Engine side
       nexus-core PR #101, merged + deployed (rev nexus-core-00041); all six newest
       tools smoke-verified live.)_
-- [ ] Standalone `correlation_matrix` / `regime_return_generator` UI tabs
-      (optional, lower priority — engine-internal; the latter would close the
-      `pathCacheKey` reuse loop).
-- [ ] Theming to match the `-core` family visual language.
+- [x] Standalone `correlation_matrix` / `regime_return_generator` UI tabs.
+      _(done 2026-06-02: `CorrelationTool` + `RegimeReturnTool` tabs + shared
+      `MatrixTable` (extracted from ScenarioForm); the Regime-paths tab surfaces
+      the `pathCacheKey` for replay in a Monte Carlo run; +11 tests; both
+      smoke-verified live. All 12 contract tools are now surfaced.)_
+- [ ] Theming to match the `-core` family visual language (needs a design
+      reference — held for input).
 
 ## Dependency on other repos (track, do not build here)
 

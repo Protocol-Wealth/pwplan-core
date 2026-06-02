@@ -3,9 +3,12 @@
 
 import { describe, it, expect } from "vitest";
 import {
+  parseIdList,
   parseReturns,
   validateBracketHeadroom,
+  validateCorrelation,
   validateGlidePath,
+  validateRegimeGen,
   validateRegimeSwr,
   validateRmd,
   validateRoth,
@@ -15,7 +18,9 @@ import {
 } from "./tool-validation";
 import type {
   BracketHeadroomInputs,
+  CorrelationInputs,
   GlidePathInputs,
+  RegimeGenInputs,
   RegimeSwrInputs,
   RmdInputs,
   RothInputs,
@@ -23,7 +28,7 @@ import type {
   SorInputs,
   TaxWithdrawalInputs,
 } from "../store/scenario";
-import type { Account } from "../contract/planning";
+import type { Account, AssetClass } from "../contract/planning";
 
 const validGlide: GlidePathInputs = {
   currentAge: 45,
@@ -267,5 +272,87 @@ describe("validateRegimeSwr", () => {
     expect(
       validateRegimeSwr({ ...validRegimeSwr, portfolioBalance: -1 }),
     ).toContain("Portfolio balance cannot be negative.");
+  });
+});
+
+describe("parseIdList", () => {
+  it("splits comma/space separated ids and trims", () => {
+    expect(parseIdList("us_equity, us_bonds  intl_equity")).toEqual([
+      "us_equity",
+      "us_bonds",
+      "intl_equity",
+    ]);
+  });
+  it("returns [] on blank input", () => {
+    expect(parseIdList("  ")).toEqual([]);
+  });
+});
+
+const validCorr: CorrelationInputs = {
+  assetClassIdsText: "us_equity, us_bonds",
+  lookbackDays: 1260,
+  shrinkage: true,
+};
+
+describe("validateCorrelation", () => {
+  it("accepts a well-formed request", () => {
+    expect(validateCorrelation(validCorr)).toEqual([]);
+  });
+  it("requires at least two ids", () => {
+    expect(
+      validateCorrelation({ ...validCorr, assetClassIdsText: "us_equity" }),
+    ).toContain("Enter at least two asset-class ids.");
+  });
+  it("rejects an out-of-range lookback", () => {
+    expect(validateCorrelation({ ...validCorr, lookbackDays: 10 })).toContain(
+      "Lookback days must be a whole number in [30, 3650].",
+    );
+  });
+});
+
+const assetClassesWithLambda: AssetClass[] = [
+  {
+    id: "us_equity",
+    label: "US Equity",
+    expectedReturn: 0.07,
+    volatility: 0.16,
+    lambda: 0.35,
+  },
+  {
+    id: "us_bonds",
+    label: "US Bonds",
+    expectedReturn: 0.03,
+    volatility: 0.05,
+    lambda: 0.1,
+  },
+];
+const validRegimeGen: RegimeGenInputs = { horizonYears: 50, paths: 10_000 };
+
+describe("validateRegimeGen", () => {
+  it("accepts a well-formed request with λ on every asset class", () => {
+    expect(validateRegimeGen(validRegimeGen, assetClassesWithLambda)).toEqual(
+      [],
+    );
+  });
+  it("rejects an empty portfolio", () => {
+    expect(validateRegimeGen(validRegimeGen, [])).toContain(
+      "Add asset classes in the Monte Carlo tab (each needs a λ).",
+    );
+  });
+  it("requires λ on every asset class", () => {
+    const noLambda: AssetClass[] = [
+      { id: "x", label: "X", expectedReturn: 0.05, volatility: 0.1 },
+    ];
+    expect(validateRegimeGen(validRegimeGen, noLambda)).toContain(
+      "Every asset class needs a λ (EMF decay) for regime paths.",
+    );
+  });
+  it("rejects an out-of-range horizon", () => {
+    expect(
+      validateRegimeGen(
+        { ...validRegimeGen, horizonYears: 0 },
+        assetClassesWithLambda,
+      ),
+    ).toContain("Horizon years must be a whole number in [1, 200].");
   });
 });

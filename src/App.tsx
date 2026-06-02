@@ -26,6 +26,14 @@ import {
   SocialSecurityResults,
 } from "./components/SocialSecurityTool";
 import { RegimeSwrForm, RegimeSwrResults } from "./components/RegimeSwrTool";
+import {
+  CorrelationForm,
+  CorrelationResults,
+} from "./components/CorrelationTool";
+import {
+  RegimeReturnForm,
+  RegimeReturnResults,
+} from "./components/RegimeReturnTool";
 import { ScenarioIO } from "./components/ScenarioIO";
 import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
@@ -40,6 +48,8 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "bracket_headroom", label: "Bracket room" },
   { value: "social_security", label: "Social Security" },
   { value: "regime_swr", label: "Regime SWR" },
+  { value: "correlation", label: "Correlation" },
+  { value: "regime_paths", label: "Regime paths" },
 ];
 
 function ToolTabs() {
@@ -122,6 +132,20 @@ function ActiveTool() {
         <>
           <RegimeSwrForm />
           <RegimeSwrResults />
+        </>
+      );
+    case "correlation":
+      return (
+        <>
+          <CorrelationForm />
+          <CorrelationResults />
+        </>
+      );
+    case "regime_paths":
+      return (
+        <>
+          <RegimeReturnForm />
+          <RegimeReturnResults />
         </>
       );
     case "monte_carlo":

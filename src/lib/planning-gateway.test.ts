@@ -454,6 +454,35 @@ describe("planning gateway dispatch", () => {
     expect(result.firstYearWithdrawal).toBe(30000);
   });
 
+  it("dispatches correlation_matrix and returns the matrix + asOf", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      matrix: { us_equity: { us_equity: 1, us_bonds: 0.17 } },
+      asOf: "2026-05-29",
+    });
+    const result = await planning.correlationMatrix(corrReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/correlation_matrix",
+    );
+    expect(result.matrix.us_equity.us_bonds).toBe(0.17);
+    expect(result.asOf).toBe("2026-05-29");
+  });
+
+  it("dispatches regime_return_generator and returns regime + transition matrix + cache key", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      currentRegime: "crisis",
+      transitionMatrix: { crisis: { crisis: 0.5, expansion: 0.5 } },
+      pathCacheKey: "emf-v1-777",
+    });
+    const result = await planning.regimeReturnGenerator(regReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/regime_return_generator",
+    );
+    expect(result.currentRegime).toBe("crisis");
+    expect(result.pathCacheKey).toBe("emf-v1-777");
+  });
+
   it("defaults the active backend to nexus-mcp", () => {
     expect(ACTIVE_BACKEND).toBe("nexus-mcp");
   });

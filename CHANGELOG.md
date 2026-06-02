@@ -9,6 +9,21 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Correlation matrix + Regime return generator tabs — the last two contract
+  tools now have UI; all 12 tools are surfaced (11 tabs + the CMA control).**
+  - **Correlation** (`planning.correlationMatrix`): asset-class ids +
+    lookback + Ledoit-Wolf shrinkage toggle → the real-data correlation matrix
+    (rendered via the shared `MatrixTable`) + `asOf`.
+  - **Regime paths** (`planning.regimeReturnGenerator`): runs over the shared
+    Monte Carlo portfolio's asset classes (each needs a λ) → live current regime,
+    the regime **transition matrix**, and the `pathCacheKey` (replayable in a
+    Monte Carlo run to reuse the EMF paths — closing the `pathCacheKey` loop).
+  - Extracted `MatrixTable` (a generic square-matrix renderer) from
+    `ScenarioForm`'s inline correlation table; reused by all three matrix views.
+  - Store inputs/results/setters (+ `PlanningTool` union → 11 UI tools), pure
+    validators (`validateCorrelation`, `validateRegimeGen`, `parseIdList`),
+    `scenario-io` tolerance, +11 tests (151 total). Both verified live. No
+    version bump (these tools already existed in the contract/gateway).
 - **Four calculator tabs — RMD, Tax-bracket headroom / Roth-fill, Social Security
   claiming, and Regime-conditioned SWR — wired end to end (contract → gateway →
   UI).** The contract + gateway now cover all **12** engine tools, and the tab bar

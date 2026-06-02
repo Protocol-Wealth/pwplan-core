@@ -19,6 +19,7 @@ import {
   IssueList,
   RunButton,
 } from "./form-controls";
+import { MatrixTable } from "./MatrixTable";
 import type {
   AccountType,
   AssetClass,
@@ -332,9 +333,11 @@ export function ScenarioForm() {
                 above are now engine-sourced; correlations below ride into the
                 run.
               </p>
-              <CorrelationMatrix
+              <MatrixTable
                 ids={inputs.assetClasses.map((ac) => ac.id)}
                 matrix={assumptions.correlations}
+                corner="ρ"
+                caption="Engine-sourced asset-class correlation matrix"
               />
             </div>
           ) : (
@@ -524,63 +527,3 @@ export function ScenarioForm() {
  * engine-returned ρ values (symmetric, diagonal = 1) as a small table, ordered
  * by the current asset-class ids and limited to ids the matrix actually carries.
  */
-function CorrelationMatrix({
-  ids,
-  matrix,
-}: {
-  ids: string[];
-  matrix: Record<string, Record<string, number>>;
-}) {
-  const cols = ids.filter((id) => id && matrix[id]);
-  if (cols.length === 0) return null;
-  return (
-    <div className="overflow-x-auto">
-      <table className="border-collapse font-mono text-[0.6rem] tabular-nums text-stone-600">
-        <caption className="sr-only">
-          Engine-sourced asset-class correlation matrix
-        </caption>
-        <thead>
-          <tr>
-            <th className="px-1.5 py-1 text-left font-normal text-stone-400">
-              ρ
-            </th>
-            {cols.map((id) => (
-              <th
-                key={id}
-                scope="col"
-                className="px-1.5 py-1 text-right font-normal text-stone-500"
-              >
-                {id}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {cols.map((row) => (
-            <tr key={row}>
-              <th
-                scope="row"
-                className="px-1.5 py-1 text-left font-normal text-stone-500"
-              >
-                {row}
-              </th>
-              {cols.map((col) => {
-                const v = matrix[row]?.[col];
-                return (
-                  <td
-                    key={col}
-                    className={`px-1.5 py-1 text-right ${
-                      row === col ? "text-stone-400" : "text-stone-700"
-                    }`}
-                  >
-                    {typeof v === "number" ? v.toFixed(2) : "—"}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}

@@ -27,6 +27,8 @@ import type {
   TaxBracketHeadroomResult,
   SocialSecurityClaimingResult,
   RegimeConditionedSwrResult,
+  CorrelationResult,
+  RegimeReturnResult,
   TaxWithdrawalResult,
 } from "../contract/planning";
 
@@ -40,7 +42,9 @@ export type PlanningTool =
   | "rmd"
   | "bracket_headroom"
   | "social_security"
-  | "regime_swr";
+  | "regime_swr"
+  | "correlation"
+  | "regime_paths";
 
 /** Glide-path shape, derived from the wire contract (no new wire type). */
 export type GlidePathShape = GlidePathRequest["shape"];
@@ -115,6 +119,19 @@ export interface RegimeSwrInputs {
   portfolioBalance: number;
 }
 
+export interface CorrelationInputs {
+  /** Comma/space-separated asset-class ids (must be in the engine's universe). */
+  assetClassIdsText: string;
+  lookbackDays: number;
+  shrinkage: boolean;
+}
+
+export interface RegimeGenInputs {
+  /** Uses the shared portfolio's asset classes (each needs a λ). */
+  horizonYears: number;
+  paths: number;
+}
+
 /**
  * Live, engine-sourced capital-market assumptions (the "real data, fake clients"
  * flow). Fetched from the `capital_market_assumptions` tool and threaded into the
@@ -141,6 +158,8 @@ interface ScenarioState {
   bracketInputs: BracketHeadroomInputs;
   socialSecurityInputs: SocialSecurityInputs;
   regimeSwrInputs: RegimeSwrInputs;
+  correlationInputs: CorrelationInputs;
+  regimeGenInputs: RegimeGenInputs;
 
   result: MonteCarloResult | null;
   glidePathResult: GlidePathResult | null;
@@ -151,6 +170,8 @@ interface ScenarioState {
   bracketResult: TaxBracketHeadroomResult | null;
   socialSecurityResult: SocialSecurityClaimingResult | null;
   regimeSwrResult: RegimeConditionedSwrResult | null;
+  correlationResult: CorrelationResult | null;
+  regimeGenResult: RegimeReturnResult | null;
 
   /** Live engine assumptions from capital_market_assumptions; null until loaded. */
   assumptions: MarketAssumptions | null;
@@ -177,6 +198,8 @@ interface ScenarioState {
   setBracketInputs: (patch: Partial<BracketHeadroomInputs>) => void;
   setSocialSecurityInputs: (patch: Partial<SocialSecurityInputs>) => void;
   setRegimeSwrInputs: (patch: Partial<RegimeSwrInputs>) => void;
+  setCorrelationInputs: (patch: Partial<CorrelationInputs>) => void;
+  setRegimeGenInputs: (patch: Partial<RegimeGenInputs>) => void;
   setResult: (r: MonteCarloResult | null) => void;
   setGlidePathResult: (r: GlidePathResult | null) => void;
   setTaxResult: (r: TaxWithdrawalResult | null) => void;
@@ -186,6 +209,8 @@ interface ScenarioState {
   setBracketResult: (r: TaxBracketHeadroomResult | null) => void;
   setSocialSecurityResult: (r: SocialSecurityClaimingResult | null) => void;
   setRegimeSwrResult: (r: RegimeConditionedSwrResult | null) => void;
+  setCorrelationResult: (r: CorrelationResult | null) => void;
+  setRegimeGenResult: (r: RegimeReturnResult | null) => void;
   setAssumptions: (a: MarketAssumptions | null) => void;
   setLoadingAssumptions: (b: boolean) => void;
   setRunning: (b: boolean) => void;
@@ -295,6 +320,17 @@ const DEFAULT_REGIME_SWR: RegimeSwrInputs = {
   portfolioBalance: 1_000_000,
 };
 
+const DEFAULT_CORRELATION: CorrelationInputs = {
+  assetClassIdsText: "us_equity, us_bonds",
+  lookbackDays: 1260,
+  shrinkage: true,
+};
+
+const DEFAULT_REGIME_GEN: RegimeGenInputs = {
+  horizonYears: 50,
+  paths: 10_000,
+};
+
 export const useScenario = create<ScenarioState>((set) => ({
   tool: "monte_carlo",
 
@@ -307,6 +343,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   bracketInputs: DEFAULT_BRACKET,
   socialSecurityInputs: DEFAULT_SOCIAL_SECURITY,
   regimeSwrInputs: DEFAULT_REGIME_SWR,
+  correlationInputs: DEFAULT_CORRELATION,
+  regimeGenInputs: DEFAULT_REGIME_GEN,
 
   result: null,
   glidePathResult: null,
@@ -317,6 +355,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   bracketResult: null,
   socialSecurityResult: null,
   regimeSwrResult: null,
+  correlationResult: null,
+  regimeGenResult: null,
 
   assumptions: null,
   loadingAssumptions: false,
@@ -361,6 +401,10 @@ export const useScenario = create<ScenarioState>((set) => ({
     })),
   setRegimeSwrInputs: (patch) =>
     set((s) => ({ regimeSwrInputs: { ...s.regimeSwrInputs, ...patch } })),
+  setCorrelationInputs: (patch) =>
+    set((s) => ({ correlationInputs: { ...s.correlationInputs, ...patch } })),
+  setRegimeGenInputs: (patch) =>
+    set((s) => ({ regimeGenInputs: { ...s.regimeGenInputs, ...patch } })),
   setResult: (result) => set({ result }),
   setGlidePathResult: (glidePathResult) => set({ glidePathResult }),
   setTaxResult: (taxResult) => set({ taxResult }),
@@ -371,6 +415,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   setSocialSecurityResult: (socialSecurityResult) =>
     set({ socialSecurityResult }),
   setRegimeSwrResult: (regimeSwrResult) => set({ regimeSwrResult }),
+  setCorrelationResult: (correlationResult) => set({ correlationResult }),
+  setRegimeGenResult: (regimeGenResult) => set({ regimeGenResult }),
   setAssumptions: (assumptions) => set({ assumptions }),
   setLoadingAssumptions: (loadingAssumptions) => set({ loadingAssumptions }),
   setRunning: (running) => set({ running }),

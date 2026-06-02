@@ -134,6 +134,8 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "bracket_headroom",
   "social_security",
   "regime_swr",
+  "correlation",
+  "regime_paths",
 ];
 
 function parseAssetClass(v: unknown): AssetClass | null {
