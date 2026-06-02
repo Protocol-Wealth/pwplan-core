@@ -38,6 +38,12 @@ import {
   PortfolioXrayForm,
   PortfolioXrayResults,
 } from "./components/PortfolioXrayTool";
+import { FireForm, FireResults } from "./components/FireTool";
+import {
+  RiskMetricsForm,
+  RiskMetricsResults,
+} from "./components/RiskMetricsTool";
+import { RebalanceForm, RebalanceResults } from "./components/RebalanceTool";
 import { ScenarioIO } from "./components/ScenarioIO";
 import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
@@ -55,6 +61,9 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "correlation", label: "Correlation" },
   { value: "regime_paths", label: "Regime paths" },
   { value: "portfolio_xray", label: "X-ray" },
+  { value: "fire", label: "FIRE" },
+  { value: "risk_metrics", label: "Risk metrics" },
+  { value: "rebalance", label: "Rebalance" },
 ];
 
 function ToolTabs() {
@@ -158,6 +167,27 @@ function ActiveTool() {
         <>
           <PortfolioXrayForm />
           <PortfolioXrayResults />
+        </>
+      );
+    case "fire":
+      return (
+        <>
+          <FireForm />
+          <FireResults />
+        </>
+      );
+    case "risk_metrics":
+      return (
+        <>
+          <RiskMetricsForm />
+          <RiskMetricsResults />
+        </>
+      );
+    case "rebalance":
+      return (
+        <>
+          <RebalanceForm />
+          <RebalanceResults />
         </>
       );
     case "monte_carlo":

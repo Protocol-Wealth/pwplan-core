@@ -73,11 +73,14 @@ on completion and note the version in CHANGELOG.md._
       analyzes the shared Monte Carlo portfolio → live regime + severity-coded
       findings (concentration, tax-location, growth posture, regime sensitivity) +
       metrics; engine side nexus-core #116. 13th tool, 12 UI tabs; +6 tests.)_
+- [x] FIRE/Coast, risk-metrics, and rebalance-to-target tabs. _(done 2026-06-02:
+      `FireTool` / `RiskMetricsTool` / `RebalanceTool`; engine side nexus-core
+      #117. 16 contract tools, 15 UI tabs; +16 tests.)_
 - [ ] Theming to match the `-core` family visual language (needs a design
       reference — held for input).
-- [ ] Optional further calculators inspired by OSS finance apps (risk metrics,
-      FIRE/Coast, rebalance-to-target, dividend income) — see the feature-ideas
-      memo. Net-worth/holdings tracking stays OUT of scope (PII/production).
+- [ ] Optional further calculators inspired by OSS finance apps (dividend income,
+      withdrawal-tax-aware Roth ladder) — see the feature-ideas memo.
+      Net-worth/holdings tracking stays OUT of scope (PII/production).
 
 ## Dependency on other repos (track, do not build here)
 

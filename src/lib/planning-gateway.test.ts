@@ -35,6 +35,9 @@ import {
   type SocialSecurityClaimingRequest,
   type RegimeConditionedSwrRequest,
   type PortfolioXrayRequest,
+  type FireRequest,
+  type RiskMetricsRequest,
+  type RebalanceRequest,
 } from "../contract/planning";
 
 // --- Minimal, well-typed requests (shape only; the engine does the math). ---
@@ -134,6 +137,47 @@ const xrayReq: Omit<PortfolioXrayRequest, "contractVersion"> = {
     },
   ],
   accounts: [{ type: "roth", balance: 100_000, allocation: { us_equity: 1 } }],
+};
+
+const fireReq: Omit<FireRequest, "contractVersion"> = {
+  currentAge: 40,
+  retirementAge: 65,
+  currentBalance: 400_000,
+  annualContribution: 30_000,
+  growthRate: 0.05,
+  annualSpend: 80_000,
+  swr: 0.04,
+};
+
+const riskReq: Omit<RiskMetricsRequest, "contractVersion"> = {
+  returns: [0.12, -0.08, 0.15, -0.03, 0.06],
+  riskFreeRate: 0.02,
+  periodsPerYear: 1,
+};
+
+const rebalanceReq: Omit<RebalanceRequest, "contractVersion"> = {
+  assetClasses: [
+    {
+      id: "us_equity",
+      label: "US Equity",
+      expectedReturn: 0.07,
+      volatility: 0.16,
+    },
+    {
+      id: "us_bonds",
+      label: "US Bonds",
+      expectedReturn: 0.03,
+      volatility: 0.05,
+    },
+  ],
+  accounts: [
+    {
+      type: "taxable",
+      balance: 100_000,
+      allocation: { us_equity: 0.7, us_bonds: 0.3 },
+    },
+  ],
+  targetWeights: { us_equity: 0.6, us_bonds: 0.4 },
 };
 
 /** Stub global fetch with a single canned response and return the spy. */
@@ -289,6 +333,9 @@ describe("planning gateway dispatch", () => {
         id: "portfolio_xray",
         call: () => planning.portfolioXray(xrayReq),
       },
+      { id: "fire", call: () => planning.fire(fireReq) },
+      { id: "risk_metrics", call: () => planning.riskMetrics(riskReq) },
+      { id: "rebalance", call: () => planning.rebalance(rebalanceReq) },
     ];
 
     for (const { id, call } of dispatches) {
@@ -532,6 +579,83 @@ describe("planning gateway dispatch", () => {
     expect(result.regime).toBe("crisis");
     expect(result.concentration.maxWeightAsset).toBe("us_equity");
     expect(result.findings[0].severity).toBe("warn");
+  });
+
+  it("dispatches fire and returns the FIRE figures", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      fireNumber: 2_000_000,
+      coastNumber: 590_576.5,
+      coastReached: false,
+      projectedBalanceAtRetirement: 2_793_000,
+      surplusOrGapAtRetirement: 793_000,
+      yearsToFire: 23,
+      fireAge: 63,
+    });
+    const result = await planning.fire(fireReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/fire",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.annualSpend).toBe(80_000);
+    expect(sent.swr).toBe(0.04);
+    expect(result.fireNumber).toBe(2_000_000);
+    expect(result.coastReached).toBe(false);
+  });
+
+  it("dispatches risk_metrics and returns the statistics", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      periods: 5,
+      annualizedReturn: 0.041,
+      annualizedVolatility: 0.103,
+      sharpe: 0.2,
+      sortino: 0.31,
+      maxDrawdown: -0.08,
+      valueAtRisk95: 0.07,
+      conditionalVaR95: 0.08,
+    });
+    const result = await planning.riskMetrics(riskReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/risk_metrics",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.returns).toEqual([0.12, -0.08, 0.15, -0.03, 0.06]);
+    expect(sent.periodsPerYear).toBe(1);
+    expect(result.periods).toBe(5);
+    expect(result.maxDrawdown).toBe(-0.08);
+  });
+
+  it("dispatches rebalance and returns the drift + trades", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      totalValue: 100_000,
+      turnover: 10_000,
+      perAsset: [
+        {
+          id: "us_equity",
+          currentWeight: 0.7,
+          targetWeight: 0.6,
+          drift: 0.1,
+          tradeAmount: -10_000,
+        },
+        {
+          id: "us_bonds",
+          currentWeight: 0.3,
+          targetWeight: 0.4,
+          drift: -0.1,
+          tradeAmount: 10_000,
+        },
+      ],
+    });
+    const result = await planning.rebalance(rebalanceReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/rebalance",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.targetWeights).toEqual({ us_equity: 0.6, us_bonds: 0.4 });
+    expect(result.turnover).toBe(10_000);
+    expect(result.perAsset[0].tradeAmount).toBe(-10_000);
   });
 
   it("defaults the active backend to nexus-mcp", () => {

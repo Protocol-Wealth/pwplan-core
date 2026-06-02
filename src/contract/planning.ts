@@ -461,6 +461,90 @@ export interface PortfolioXrayResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: fire (FIRE / Coast-FIRE)
+// ---------------------------------------------------------------------------
+
+/** FIRE / Coast-FIRE accumulation math: the FIRE number (spend ÷ safe withdrawal
+ *  rate), the coast number needed today, and years/age to financial independence
+ *  with level contributions. A single nominal growth rate; educational. */
+export interface FireRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  currentAge: number;
+  retirementAge: number;
+  currentBalance: number;
+  annualContribution: number;
+  growthRate: number; // nominal annual, decimal
+  annualSpend: number; // target retirement spend, today's dollars
+  swr?: number; // safe withdrawal rate for the FIRE number (default 0.04)
+}
+
+export interface FireResult {
+  contractVersion: string;
+  fireNumber: number; // annualSpend / swr
+  coastNumber: number; // balance needed today to coast to fireNumber
+  coastReached: boolean;
+  projectedBalanceAtRetirement: number; // existing + contributions, compounded
+  surplusOrGapAtRetirement: number; // projected − fireNumber (>0 is a surplus)
+  yearsToFire: number | null; // null if not reached within the search cap
+  fireAge: number | null; // currentAge + yearsToFire, or null
+}
+
+// ---------------------------------------------------------------------------
+// Tool: risk_metrics
+// ---------------------------------------------------------------------------
+
+/** Ex-post risk statistics for a realized (or simulated) periodic return series.
+ *  Descriptive analysis of the supplied series — not a forecast, not advice. */
+export interface RiskMetricsRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  /** Simple per-period returns (decimal); need >= 2, each > -1. */
+  returns: number[];
+  riskFreeRate?: number; // annual, decimal (default 0)
+  periodsPerYear?: number; // 1 annual, 12 monthly, 252 daily (default 1)
+}
+
+export interface RiskMetricsResult {
+  contractVersion: string;
+  periods: number;
+  annualizedReturn: number; // geometric
+  annualizedVolatility: number; // sample stdev, annualized
+  sharpe: number;
+  sortino: number;
+  maxDrawdown: number; // negative fraction (peak-to-trough)
+  valueAtRisk95: number; // positive loss fraction at 95% confidence
+  conditionalVaR95: number; // mean loss in the worst-5% tail
+}
+
+// ---------------------------------------------------------------------------
+// Tool: rebalance (rebalance-to-target)
+// ---------------------------------------------------------------------------
+
+export interface RebalanceRow {
+  id: string;
+  currentWeight: number;
+  targetWeight: number;
+  drift: number; // current − target
+  tradeAmount: number; // >0 buy, <0 sell
+}
+
+/** Drift + self-financing trades to move the shared portfolio (asset classes +
+ *  accounts) to `targetWeights`. Illustrative — not a trade instruction. */
+export interface RebalanceRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  assetClasses: AssetClass[];
+  accounts: Account[];
+  /** Target weight per declared asset-class id; must sum to 1. */
+  targetWeights: Record<string, number>;
+}
+
+export interface RebalanceResult {
+  contractVersion: string;
+  totalValue: number;
+  turnover: number; // one-way turnover (buys == sells)
+  perAsset: RebalanceRow[];
+}
+
+// ---------------------------------------------------------------------------
 // Tool registry — names MUST match nexus-core MCP tool ids exactly.
 // ---------------------------------------------------------------------------
 
@@ -478,6 +562,9 @@ export const PLANNING_TOOLS = {
   socialSecurityClaiming: "social_security_claiming",
   regimeConditionedSwr: "regime_conditioned_swr",
   portfolioXray: "portfolio_xray",
+  fire: "fire",
+  riskMetrics: "risk_metrics",
+  rebalance: "rebalance",
 } as const;
 
 export type PlanningToolName =

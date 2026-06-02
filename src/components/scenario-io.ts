@@ -137,6 +137,9 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "correlation",
   "regime_paths",
   "portfolio_xray",
+  "fire",
+  "risk_metrics",
+  "rebalance",
 ];
 
 function parseAssetClass(v: unknown): AssetClass | null {

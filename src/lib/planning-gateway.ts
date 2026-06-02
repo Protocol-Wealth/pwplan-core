@@ -53,6 +53,12 @@ import {
   type RegimeConditionedSwrResult,
   type PortfolioXrayRequest,
   type PortfolioXrayResult,
+  type FireRequest,
+  type FireResult,
+  type RiskMetricsRequest,
+  type RiskMetricsResult,
+  type RebalanceRequest,
+  type RebalanceResult,
   type PlanningToolName,
 } from "../contract/planning";
 import { assertNoPII, auditCall } from "./compliance";
@@ -262,6 +268,33 @@ export const planning = {
   ) =>
     callTool<PortfolioXrayRequest, PortfolioXrayResult>(
       PLANNING_TOOLS.portfolioXray,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  fire: (req: Omit<FireRequest, "contractVersion">, opts?: CallOptions) =>
+    callTool<FireRequest, FireResult>(
+      PLANNING_TOOLS.fire,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  riskMetrics: (
+    req: Omit<RiskMetricsRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<RiskMetricsRequest, RiskMetricsResult>(
+      PLANNING_TOOLS.riskMetrics,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  rebalance: (
+    req: Omit<RebalanceRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<RebalanceRequest, RebalanceResult>(
+      PLANNING_TOOLS.rebalance,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),

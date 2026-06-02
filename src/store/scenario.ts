@@ -30,6 +30,9 @@ import type {
   CorrelationResult,
   RegimeReturnResult,
   PortfolioXrayResult,
+  FireResult,
+  RiskMetricsResult,
+  RebalanceResult,
   TaxWithdrawalResult,
 } from "../contract/planning";
 
@@ -46,7 +49,10 @@ export type PlanningTool =
   | "regime_swr"
   | "correlation"
   | "regime_paths"
-  | "portfolio_xray";
+  | "portfolio_xray"
+  | "fire"
+  | "risk_metrics"
+  | "rebalance";
 
 /** Glide-path shape, derived from the wire contract (no new wire type). */
 export type GlidePathShape = GlidePathRequest["shape"];
@@ -134,6 +140,28 @@ export interface RegimeGenInputs {
   paths: number;
 }
 
+export interface FireInputs {
+  currentAge: number;
+  retirementAge: number;
+  currentBalance: number;
+  annualContribution: number;
+  growthRate: number;
+  annualSpend: number;
+  swr: number;
+}
+
+export interface RiskMetricsInputs {
+  /** Comma/space-separated per-period returns (decimals), parsed at dispatch. */
+  returnsText: string;
+  riskFreeRate: number;
+  periodsPerYear: number;
+}
+
+export interface RebalanceInputs {
+  /** Target weight per shared-portfolio asset-class id; must sum to 1. */
+  targetWeights: Record<string, number>;
+}
+
 /**
  * Live, engine-sourced capital-market assumptions (the "real data, fake clients"
  * flow). Fetched from the `capital_market_assumptions` tool and threaded into the
@@ -162,6 +190,9 @@ interface ScenarioState {
   regimeSwrInputs: RegimeSwrInputs;
   correlationInputs: CorrelationInputs;
   regimeGenInputs: RegimeGenInputs;
+  fireInputs: FireInputs;
+  riskMetricsInputs: RiskMetricsInputs;
+  rebalanceInputs: RebalanceInputs;
 
   result: MonteCarloResult | null;
   glidePathResult: GlidePathResult | null;
@@ -175,6 +206,9 @@ interface ScenarioState {
   correlationResult: CorrelationResult | null;
   regimeGenResult: RegimeReturnResult | null;
   xrayResult: PortfolioXrayResult | null;
+  fireResult: FireResult | null;
+  riskMetricsResult: RiskMetricsResult | null;
+  rebalanceResult: RebalanceResult | null;
 
   /** Live engine assumptions from capital_market_assumptions; null until loaded. */
   assumptions: MarketAssumptions | null;
@@ -203,6 +237,9 @@ interface ScenarioState {
   setRegimeSwrInputs: (patch: Partial<RegimeSwrInputs>) => void;
   setCorrelationInputs: (patch: Partial<CorrelationInputs>) => void;
   setRegimeGenInputs: (patch: Partial<RegimeGenInputs>) => void;
+  setFireInputs: (patch: Partial<FireInputs>) => void;
+  setRiskMetricsInputs: (patch: Partial<RiskMetricsInputs>) => void;
+  setRebalanceInputs: (patch: Partial<RebalanceInputs>) => void;
   setResult: (r: MonteCarloResult | null) => void;
   setGlidePathResult: (r: GlidePathResult | null) => void;
   setTaxResult: (r: TaxWithdrawalResult | null) => void;
@@ -215,6 +252,9 @@ interface ScenarioState {
   setCorrelationResult: (r: CorrelationResult | null) => void;
   setRegimeGenResult: (r: RegimeReturnResult | null) => void;
   setXrayResult: (r: PortfolioXrayResult | null) => void;
+  setFireResult: (r: FireResult | null) => void;
+  setRiskMetricsResult: (r: RiskMetricsResult | null) => void;
+  setRebalanceResult: (r: RebalanceResult | null) => void;
   setAssumptions: (a: MarketAssumptions | null) => void;
   setLoadingAssumptions: (b: boolean) => void;
   setRunning: (b: boolean) => void;
@@ -335,6 +375,28 @@ const DEFAULT_REGIME_GEN: RegimeGenInputs = {
   paths: 10_000,
 };
 
+const DEFAULT_FIRE: FireInputs = {
+  currentAge: 40,
+  retirementAge: 65,
+  currentBalance: 400_000,
+  annualContribution: 30_000,
+  growthRate: 0.05,
+  annualSpend: 80_000,
+  swr: 0.04,
+};
+
+const DEFAULT_RISK_METRICS: RiskMetricsInputs = {
+  returnsText: "0.12, -0.08, 0.21, 0.15, -0.18, 0.24, 0.06, -0.03, 0.17, 0.09",
+  riskFreeRate: 0.02,
+  periodsPerYear: 1,
+};
+
+const DEFAULT_REBALANCE: RebalanceInputs = {
+  // Keyed to the shared portfolio's default asset classes; the form renders one
+  // editable target per current asset-class id (missing ids default to 0).
+  targetWeights: { us_equity: 0.6, us_bonds: 0.4 },
+};
+
 export const useScenario = create<ScenarioState>((set) => ({
   tool: "monte_carlo",
 
@@ -349,6 +411,9 @@ export const useScenario = create<ScenarioState>((set) => ({
   regimeSwrInputs: DEFAULT_REGIME_SWR,
   correlationInputs: DEFAULT_CORRELATION,
   regimeGenInputs: DEFAULT_REGIME_GEN,
+  fireInputs: DEFAULT_FIRE,
+  riskMetricsInputs: DEFAULT_RISK_METRICS,
+  rebalanceInputs: DEFAULT_REBALANCE,
 
   result: null,
   glidePathResult: null,
@@ -362,6 +427,9 @@ export const useScenario = create<ScenarioState>((set) => ({
   correlationResult: null,
   regimeGenResult: null,
   xrayResult: null,
+  fireResult: null,
+  riskMetricsResult: null,
+  rebalanceResult: null,
 
   assumptions: null,
   loadingAssumptions: false,
@@ -410,6 +478,12 @@ export const useScenario = create<ScenarioState>((set) => ({
     set((s) => ({ correlationInputs: { ...s.correlationInputs, ...patch } })),
   setRegimeGenInputs: (patch) =>
     set((s) => ({ regimeGenInputs: { ...s.regimeGenInputs, ...patch } })),
+  setFireInputs: (patch) =>
+    set((s) => ({ fireInputs: { ...s.fireInputs, ...patch } })),
+  setRiskMetricsInputs: (patch) =>
+    set((s) => ({ riskMetricsInputs: { ...s.riskMetricsInputs, ...patch } })),
+  setRebalanceInputs: (patch) =>
+    set((s) => ({ rebalanceInputs: { ...s.rebalanceInputs, ...patch } })),
   setResult: (result) => set({ result }),
   setGlidePathResult: (glidePathResult) => set({ glidePathResult }),
   setTaxResult: (taxResult) => set({ taxResult }),
@@ -423,6 +497,9 @@ export const useScenario = create<ScenarioState>((set) => ({
   setCorrelationResult: (correlationResult) => set({ correlationResult }),
   setRegimeGenResult: (regimeGenResult) => set({ regimeGenResult }),
   setXrayResult: (xrayResult) => set({ xrayResult }),
+  setFireResult: (fireResult) => set({ fireResult }),
+  setRiskMetricsResult: (riskMetricsResult) => set({ riskMetricsResult }),
+  setRebalanceResult: (rebalanceResult) => set({ rebalanceResult }),
   setAssumptions: (assumptions) => set({ assumptions }),
   setLoadingAssumptions: (loadingAssumptions) => set({ loadingAssumptions }),
   setRunning: (running) => set({ running }),

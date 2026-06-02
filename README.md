@@ -105,24 +105,27 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The contract covers **13 planning tools**, **all surfaced in the UI** — twelve as
+The contract covers **16 planning tools**, **all surfaced in the UI** — fifteen as
 tabs plus the `capital_market_assumptions` control inside the Monte Carlo tab.
 
-| Tool                         | Purpose                                              | UI         |
-| ---------------------------- | ---------------------------------------------------- | ---------- |
-| `monte_carlo_decumulation`   | Path simulation with tax-aware spend-down            | tab        |
-| `glide_path`                 | Target equity weight by age                          | tab        |
-| `tax_aware_withdrawal`       | Per-year withdrawal ordering + RMD                   | tab        |
-| `roth_conversion`            | Convert-now vs. leave-pre-tax after-tax comparison   | tab        |
-| `sequence_of_returns_stress` | Ordering effect on a fixed return set                | tab        |
-| `rmd`                        | Required minimum distribution (Uniform Lifetime)     | tab        |
-| `tax_bracket_headroom`       | Marginal bracket + room to the next rate (Roth-fill) | tab        |
-| `social_security_claiming`   | Benefit by claim age 62–70 + breakeven ages          | tab        |
-| `regime_conditioned_swr`     | Base SWR adjusted for the live macro regime          | tab        |
-| `correlation_matrix`         | Real-data return correlations (shrinkage optional)   | tab        |
-| `regime_return_generator`    | Live regime + transition matrix + path cache key     | tab        |
-| `portfolio_xray`             | Regime-aware structural diagnostics + findings       | tab        |
-| `capital_market_assumptions` | Real returns / vols / λ / correlations               | MC control |
+| Tool                         | Purpose                                               | UI         |
+| ---------------------------- | ----------------------------------------------------- | ---------- |
+| `monte_carlo_decumulation`   | Path simulation with tax-aware spend-down             | tab        |
+| `glide_path`                 | Target equity weight by age                           | tab        |
+| `tax_aware_withdrawal`       | Per-year withdrawal ordering + RMD                    | tab        |
+| `roth_conversion`            | Convert-now vs. leave-pre-tax after-tax comparison    | tab        |
+| `sequence_of_returns_stress` | Ordering effect on a fixed return set                 | tab        |
+| `rmd`                        | Required minimum distribution (Uniform Lifetime)      | tab        |
+| `tax_bracket_headroom`       | Marginal bracket + room to the next rate (Roth-fill)  | tab        |
+| `social_security_claiming`   | Benefit by claim age 62–70 + breakeven ages           | tab        |
+| `regime_conditioned_swr`     | Base SWR adjusted for the live macro regime           | tab        |
+| `correlation_matrix`         | Real-data return correlations (shrinkage optional)    | tab        |
+| `regime_return_generator`    | Live regime + transition matrix + path cache key      | tab        |
+| `portfolio_xray`             | Regime-aware structural diagnostics + findings        | tab        |
+| `fire`                       | FIRE / Coast-FIRE number + years to independence      | tab        |
+| `risk_metrics`               | Sharpe / Sortino / drawdown / VaR for a return series | tab        |
+| `rebalance`                  | Drift + self-financing trades to target weights       | tab        |
+| `capital_market_assumptions` | Real returns / vols / λ / correlations                | MC control |
 
 ## Stack
 

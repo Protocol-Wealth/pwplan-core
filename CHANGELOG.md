@@ -9,6 +9,20 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **FIRE, Risk-metrics, and Rebalance tabs — three more tools (16 contract
+  tools, 15 UI tabs).** Each adds a contract request/result pair, a
+  `planning.*` gateway method, a store input + result slot, a pure validator,
+  and a UI tab. No version bump (additive tool ids). Engine side in nexus-core
+  PR #117; the tabs work once that deploys. +16 tests (173 total).
+  - **FIRE** (`planning.fire`): FIRE number (spend ÷ SWR), the coast number
+    needed today, projected balance at retirement, and years/age to financial
+    independence with level contributions.
+  - **Risk metrics** (`planning.riskMetrics`): a return-series text input →
+    annualized return/vol, Sharpe, Sortino, max drawdown, and historical
+    VaR/CVaR (95%); reuses the shared `parseReturns`.
+  - **Rebalance** (`planning.rebalance`): an editable target weight per shared
+    asset class → per-asset drift + the self-financing buy/sell trade list +
+    one-way turnover, over the same blended portfolio.
 - **Portfolio X-ray tab — regime-aware structural diagnostics (13th tool, 12th
   UI tab).** A new tab that runs `planning.portfolioXray` over the **shared Monte
   Carlo portfolio** (asset classes + accounts; no separate inputs) and renders:

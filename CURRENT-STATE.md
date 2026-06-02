@@ -1,11 +1,11 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-06-02 (added the regime-aware Portfolio X-ray tab — analyzes the shared Monte Carlo portfolio and renders the live regime + severity-coded findings (concentration, tax-location, growth posture, regime sensitivity) + metrics; 13th contract tool, 12 UI tabs. Engine side nexus-core #116. Earlier this session: Correlation + Regime-paths tabs (shared `MatrixTable`), the four calculator tabs, Roth + Sequence, the `0.1.0` additions, the CMA control, vitest-4 Dependabot fix. No version bump). Session-start snapshot; maintain it._
+_Last updated: 2026-06-02 (added FIRE, Risk-metrics, and Rebalance tabs — 14th/15th/16th contract tools, 15 UI tabs; engine side nexus-core #117. Earlier this session: the regime-aware Portfolio X-ray tab (#116), Correlation + Regime-paths tabs (shared `MatrixTable`), the four calculator tabs, Roth + Sequence, the `0.1.0` additions, the CMA control, vitest-4 Dependabot fix. No version bump). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 157 tests
-pass (8 test files), build succeeds (~273 kB / ~79 kB gzip). **This repo is now
+Verified green locally: typecheck clean, lint clean, prettier clean, 173 tests
+pass (8 test files), build succeeds (~287 kB / ~82 kB gzip). **This repo is now
 positioned as demo / case-study tooling**: it runs
 against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
 `.env` needed) with de-identified / fake client data. The production compliance
@@ -42,19 +42,20 @@ they go live on the next deploy.
 
 _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 
-- `src/contract/planning.ts` — wire contract v0.1.0; **13 tools**; PII-free invariant.
+- `src/contract/planning.ts` — wire contract v0.1.0; **16 tools**; PII-free invariant.
   `MonteCarloRequest` carries an optional `retirementAge?` + `pathCacheKey?`.
   `CapitalMarketAssumptionsRequest`/`Result` source real returns/vols/λ/correlations
   that drop straight into a `MonteCarloRequest`. Plus `RothConversionRequest`/`Result`,
   `SequenceOfReturnsStressRequest`/`Result` (+ `SequenceOutcome`), `RmdRequest`/`Result`,
   `TaxBracketHeadroomRequest`/`Result`, `SocialSecurityClaimingRequest`/`Result`
   (+ `SocialSecurityClaimRow`/`Breakeven`), `RegimeConditionedSwrRequest`/`Result`,
-  `PortfolioXrayRequest`/`Result` (+ `XrayFinding`/`XraySeverity`).
+  `PortfolioXrayRequest`/`Result` (+ `XrayFinding`/`XraySeverity`), `FireRequest`/`Result`,
+  `RiskMetricsRequest`/`Result`, `RebalanceRequest`/`Result` (+ `RebalanceRow`).
 - `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
-- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; one `planning.*` method per tool (13).
-- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 13 tools, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks, pw-api seam; 20 tests.
+- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; one `planning.*` method per tool (16).
+- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 16 tools, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks, pw-api seam; 23 tests.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
-- `src/store/scenario.ts` — Zustand store: active `tool` (12 UI tools) + per-tool inputs (scenario / glidePath / tax / roth / sor / rmd / bracket / socialSecurity / regimeSwr / correlation / regimeGen) + result slots (incl. `xrayResult`); the Portfolio X-ray reuses the shared scenario portfolio (no own inputs). Accounts/asset classes are one shared portfolio. Seeded valid defaults. Plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions — outside `ScenarioInputs` (re-fetched, not persisted; cleared on snapshot load).
+- `src/store/scenario.ts` — Zustand store: active `tool` (15 UI tools) + per-tool inputs (scenario / glidePath / tax / roth / sor / rmd / bracket / socialSecurity / regimeSwr / correlation / regimeGen / fire / riskMetrics / rebalance) + result slots (incl. `xrayResult` / `fireResult` / `riskMetricsResult` / `rebalanceResult`); the Portfolio X-ray + Rebalance reuse the shared scenario portfolio. Accounts/asset classes are one shared portfolio. Seeded valid defaults. Plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions — outside `ScenarioInputs` (re-fetched, not persisted; cleared on snapshot load).
 - `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity. Includes the **"Load real market assumptions"** control (calls `capital_market_assumptions`, drops real returns/vols/λ onto the current portfolio + carries the engine correlation matrix into the run; provenance `asOf` line + the shared `MatrixTable`).
 - `src/components/MatrixTable.tsx` — generic read-only square-matrix renderer (ids × ids → numbers); shared by the CMA control, the Correlation tab, and the Regime-paths transition matrix.
 - `src/components/GlidePathTool.tsx` — glide-path form + equity-weight-by-age line chart (fixed 0–1 axis).
@@ -68,11 +69,14 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/components/CorrelationTool.tsx` — correlation-matrix form (asset-class ids, lookback, shrinkage toggle) + results (`MatrixTable` of the real-data ρ matrix + `asOf`).
 - `src/components/RegimeReturnTool.tsx` — regime-return-generator form (horizon, paths; over the shared portfolio's λ-bearing asset classes) + results (current regime, transition `MatrixTable`, `pathCacheKey`).
 - `src/components/PortfolioXrayTool.tsx` — regime-aware X-ray over the shared Monte Carlo portfolio (no own inputs) + results (live regime, severity-coded findings, weighted return/vol, portfolio λ, growth sleeve, concentration, account mix). `validatePortfolioXray` reuses `isAllocationBalanced`.
+- `src/components/FireTool.tsx` — FIRE / Coast-FIRE form (age/balance/contribution/growth/spend/SWR) + results (FIRE number, coast number + reached flag, projected balance, surplus/gap, years/age to FI). `validateFire`.
+- `src/components/RiskMetricsTool.tsx` — risk-metrics form (returns text + risk-free rate + periods/year) + results (annualized return/vol, Sharpe, Sortino, max drawdown, VaR/CVaR). Reuses `parseReturns`; `validateRiskMetrics`.
+- `src/components/RebalanceTool.tsx` — rebalance form (an editable target weight per shared asset class; live target-sum readout) + results (one-way turnover, per-asset current/target/trade table). `validateRebalance`.
 - `src/components/scenario-io.ts` / `.test.ts` — pure, versioned, PII-free serialize/parse for plan inputs (fail-closed `assertNoPII` on save + on the raw input at load); 13 tests. No browser storage.
 - `src/components/scenario-presets.ts` / `.test.ts` — three built-in case-study snapshots (accumulator / near-retiree / crisis-stress), each validator-clean and round-trip-safe; 15 tests.
 - `src/components/ScenarioIO.tsx` — Save (Blob download) / Load (file input) / preset picker; uses the store's `loadSnapshot`.
 - `src/components/scenario-validation.ts` / `.test.ts` — pure scenario request-shape validation (allocation-sums-to-1, unique ids, known-id refs, age ordering `currentAge ≤ retirementAge < horizonAge`); 20 tests. No quant logic.
-- `src/components/tool-validation.ts` / `.test.ts` — pure request-shape validation for glide-path, tax, Roth, sequence-stress (`parseReturns`), RMD, bracket-headroom, Social Security, regime-SWR, correlation (`validateCorrelation` + `parseIdList`), and regime-gen (`validateRegimeGen`), and portfolio X-ray (`validatePortfolioXray`, reusing `isAllocationBalanced`); ranges, age ordering, portfolio presence, list parsing, λ presence; 47 tests. No quant logic.
+- `src/components/tool-validation.ts` / `.test.ts` — pure request-shape validation for glide-path, tax, Roth, sequence-stress (`parseReturns`), RMD, bracket-headroom, Social Security, regime-SWR, correlation (`validateCorrelation` + `parseIdList`), regime-gen (`validateRegimeGen`), portfolio X-ray (`validatePortfolioXray`, reusing `isAllocationBalanced`), FIRE (`validateFire`), risk-metrics (`validateRiskMetrics`), and rebalance (`validateRebalance`); ranges, age ordering, portfolio presence, list parsing, λ presence, target-weight sums; 60 tests. No quant logic.
 - `src/components/ResultsPanel.tsx` — Monte Carlo results: success probability + 3 hand-rolled charts (median-balance line/area, terminal percentile bars, regime strip when present). Inline SVG/CSS, no chart lib.
 - `src/components/results-viz.ts` / `.test.ts` — pure geometry helpers (seriesGeometry incl. forcedMax, percentileBars, regimeRuns, ageWeightSeries); 20 tests. Presentation math only.
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
@@ -107,11 +111,12 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   the _live_ `nexusmcp.site` (deliberate — a flaky external engine must not gate
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
 - `NOTICE` patent application number is a placeholder (blocked on the maintainer).
-- **All 13 contract tools are surfaced in the UI** — 12 tabs +
+- **All 16 contract tools are surfaced in the UI** — 15 tabs +
   `capital_market_assumptions` (the Monte Carlo "Load real market assumptions"
   control). No gateway-only tools.
-- The Portfolio X-ray tab (#116) + the #115 dependency batch are merged-but-not-
-  yet-deployed; they work against the live engine on the next `gcloud run deploy`.
+- The FIRE / Risk-metrics / Rebalance tabs (#117), the Portfolio X-ray tab (#116),
+  and the #115 dependency batch are merged-but-not-yet-deployed; they work against
+  the live engine on the next `gcloud run deploy`.
 
 ## Next planned work
 
@@ -135,6 +140,10 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - **Regime-aware Portfolio X-ray tab — DONE (2026-06-02).** Analyzes the shared MC
   portfolio → live regime + severity-coded findings + metrics. 13th tool, 12 UI
   tabs. Engine side nexus-core #116; smoke-verify on the next deploy.
+- **FIRE, Risk-metrics, Rebalance tabs — DONE (2026-06-02).** FIRE/Coast-FIRE
+  numbers; return-series risk stats (Sharpe/Sortino/drawdown/VaR); rebalance-to-
+  target drift + trades over the shared portfolio. 16 contract tools, 15 UI tabs.
+  Engine side nexus-core #117; smoke-verify on the next deploy.
 - **Theming** to the `-core` family visual language — _next up; needs a design
   reference (held for input)._
 - **NOTICE patent number** when issued.

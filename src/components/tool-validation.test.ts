@@ -7,10 +7,13 @@ import {
   parseReturns,
   validateBracketHeadroom,
   validateCorrelation,
+  validateFire,
   validateGlidePath,
   validatePortfolioXray,
+  validateRebalance,
   validateRegimeGen,
   validateRegimeSwr,
+  validateRiskMetrics,
   validateRmd,
   validateRoth,
   validateSequenceStress,
@@ -20,9 +23,12 @@ import {
 import type {
   BracketHeadroomInputs,
   CorrelationInputs,
+  FireInputs,
   GlidePathInputs,
+  RebalanceInputs,
   RegimeGenInputs,
   RegimeSwrInputs,
+  RiskMetricsInputs,
   RmdInputs,
   RothInputs,
   SocialSecurityInputs,
@@ -414,6 +420,102 @@ describe("validatePortfolioXray", () => {
     ];
     expect(validatePortfolioXray(xrayAssets, bad)).toContain(
       "An account references an unknown asset class.",
+    );
+  });
+});
+
+const validFire: FireInputs = {
+  currentAge: 40,
+  retirementAge: 65,
+  currentBalance: 400_000,
+  annualContribution: 30_000,
+  growthRate: 0.05,
+  annualSpend: 80_000,
+  swr: 0.04,
+};
+
+describe("validateFire", () => {
+  it("accepts a well-formed request", () => {
+    expect(validateFire(validFire)).toEqual([]);
+  });
+  it("requires retirement age at or above current age", () => {
+    expect(validateFire({ ...validFire, retirementAge: 30 })).toContain(
+      "Retirement age must be a whole number at or above current age.",
+    );
+  });
+  it("rejects a non-positive annual spend", () => {
+    expect(validateFire({ ...validFire, annualSpend: 0 })).toContain(
+      "Annual spend must be greater than zero.",
+    );
+  });
+  it("rejects a swr outside (0, 1)", () => {
+    expect(validateFire({ ...validFire, swr: 1.5 })).toContain(
+      "Safe withdrawal rate must be between 0 and 1.",
+    );
+  });
+});
+
+const validRisk: RiskMetricsInputs = {
+  returnsText: "0.12, -0.08, 0.15",
+  riskFreeRate: 0.02,
+  periodsPerYear: 1,
+};
+
+describe("validateRiskMetrics", () => {
+  it("accepts a well-formed request", () => {
+    expect(validateRiskMetrics(validRisk)).toEqual([]);
+  });
+  it("requires at least two returns", () => {
+    expect(validateRiskMetrics({ ...validRisk, returnsText: "0.1" })).toContain(
+      "Enter at least two returns.",
+    );
+  });
+  it("rejects a non-numeric return list", () => {
+    expect(
+      validateRiskMetrics({ ...validRisk, returnsText: "0.1, oops" }),
+    ).toContain("Returns must be a list of numbers (e.g. 0.07, -0.1).");
+  });
+  it("rejects a return at or below -1", () => {
+    expect(
+      validateRiskMetrics({ ...validRisk, returnsText: "0.1, -1.0" }),
+    ).toContain("Each return must be greater than -1.");
+  });
+  it("rejects periods-per-year below 1", () => {
+    expect(validateRiskMetrics({ ...validRisk, periodsPerYear: 0 })).toContain(
+      "Periods per year must be a whole number, one or more.",
+    );
+  });
+});
+
+describe("validateRebalance", () => {
+  const balanced: RebalanceInputs = {
+    targetWeights: { us_equity: 0.6, us_bonds: 0.4 },
+  };
+  it("accepts targets that sum to 1 over the shared portfolio", () => {
+    expect(validateRebalance(balanced, xrayAssets, xrayAccounts)).toEqual([]);
+  });
+  it("requires target weights to sum to 1", () => {
+    const off: RebalanceInputs = {
+      targetWeights: { us_equity: 0.6, us_bonds: 0.3 },
+    };
+    expect(validateRebalance(off, xrayAssets, xrayAccounts)).toContain(
+      "Target weights must sum to 1.",
+    );
+  });
+  it("rejects negative target weights", () => {
+    const neg: RebalanceInputs = {
+      targetWeights: { us_equity: 1.2, us_bonds: -0.2 },
+    };
+    expect(validateRebalance(neg, xrayAssets, xrayAccounts)).toContain(
+      "Target weights cannot be negative.",
+    );
+  });
+  it("requires asset classes and accounts", () => {
+    expect(validateRebalance(balanced, [], [])).toContain(
+      "Add asset classes in the Monte Carlo tab.",
+    );
+    expect(validateRebalance(balanced, [], [])).toContain(
+      "Add accounts in the Monte Carlo tab.",
     );
   });
 });

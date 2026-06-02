@@ -14,9 +14,12 @@ import type { Account, AssetClass } from "../contract/planning";
 import type {
   BracketHeadroomInputs,
   CorrelationInputs,
+  FireInputs,
   GlidePathInputs,
+  RebalanceInputs,
   RegimeGenInputs,
   RegimeSwrInputs,
+  RiskMetricsInputs,
   RmdInputs,
   RothInputs,
   SocialSecurityInputs,
@@ -256,6 +259,89 @@ export function validatePortfolioXray(
     if (Object.keys(acct.allocation).some((id) => !known.has(id))) {
       issues.push("An account references an unknown asset class.");
       break;
+    }
+  }
+  return issues;
+}
+
+/** Reasons a FIRE / Coast-FIRE request cannot be dispatched, in display order. */
+export function validateFire(f: FireInputs): string[] {
+  const issues: string[] = [];
+  if (!Number.isInteger(f.currentAge) || f.currentAge < 0) {
+    issues.push("Current age must be a whole number, zero or more.");
+  }
+  if (!Number.isInteger(f.retirementAge) || f.retirementAge < f.currentAge) {
+    issues.push(
+      "Retirement age must be a whole number at or above current age.",
+    );
+  }
+  if (f.currentBalance < 0) issues.push("Current balance cannot be negative.");
+  if (f.annualContribution < 0) {
+    issues.push("Annual contribution cannot be negative.");
+  }
+  if (f.growthRate <= -1) issues.push("Growth rate must be greater than -1.");
+  if (f.annualSpend <= 0)
+    issues.push("Annual spend must be greater than zero.");
+  if (f.swr <= 0 || f.swr >= 1) {
+    issues.push("Safe withdrawal rate must be between 0 and 1.");
+  }
+  return issues;
+}
+
+/** Reasons a risk-metrics request cannot be dispatched, in display order. */
+export function validateRiskMetrics(r: RiskMetricsInputs): string[] {
+  const issues: string[] = [];
+  const returns = parseReturns(r.returnsText);
+  if (returns === null) {
+    issues.push("Returns must be a list of numbers (e.g. 0.07, -0.1).");
+  } else if (returns.length < 2) {
+    issues.push("Enter at least two returns.");
+  } else if (returns.some((x) => x <= -1)) {
+    issues.push("Each return must be greater than -1.");
+  }
+  if (!Number.isFinite(r.riskFreeRate)) {
+    issues.push("Risk-free rate must be a number.");
+  }
+  if (!Number.isInteger(r.periodsPerYear) || r.periodsPerYear < 1) {
+    issues.push("Periods per year must be a whole number, one or more.");
+  }
+  return issues;
+}
+
+/**
+ * Reasons a rebalance request cannot be dispatched. Current holdings come from
+ * the shared portfolio (accounts × allocations); `targetWeights` is the desired
+ * allocation over the current asset-class ids and must sum to 1.
+ */
+export function validateRebalance(
+  rb: RebalanceInputs,
+  assetClasses: AssetClass[],
+  accounts: Account[],
+): string[] {
+  const issues: string[] = [];
+  if (assetClasses.length === 0) {
+    issues.push("Add asset classes in the Monte Carlo tab.");
+  }
+  if (accounts.length === 0) {
+    issues.push("Add accounts in the Monte Carlo tab.");
+  }
+  for (const acct of accounts) {
+    if (!isAllocationBalanced(acct)) {
+      issues.push("Each account's allocation must sum to 1.");
+      break;
+    }
+  }
+  if (assetClasses.length > 0) {
+    let sum = 0;
+    let negative = false;
+    for (const ac of assetClasses) {
+      const w = rb.targetWeights[ac.id] ?? 0;
+      if (!Number.isFinite(w) || w < 0) negative = true;
+      sum += w;
+    }
+    if (negative) issues.push("Target weights cannot be negative.");
+    if (Math.abs(sum - 1) > 1e-6) {
+      issues.push("Target weights must sum to 1.");
     }
   }
   return issues;
