@@ -128,6 +128,8 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "monte_carlo",
   "glide_path",
   "tax_withdrawal",
+  "roth_conversion",
+  "sequence_stress",
 ];
 
 function parseAssetClass(v: unknown): AssetClass | null {

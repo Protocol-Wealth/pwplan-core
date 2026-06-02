@@ -39,6 +39,10 @@ import {
   type RegimeReturnResult,
   type CapitalMarketAssumptionsRequest,
   type CapitalMarketAssumptionsResult,
+  type RothConversionRequest,
+  type RothConversionResult,
+  type SequenceOfReturnsStressRequest,
+  type SequenceOfReturnsStressResult,
   type PlanningToolName,
 } from "../contract/planning";
 import { assertNoPII, auditCall } from "./compliance";
@@ -181,6 +185,26 @@ export const planning = {
   ) =>
     callTool<CapitalMarketAssumptionsRequest, CapitalMarketAssumptionsResult>(
       PLANNING_TOOLS.capitalMarketAssumptions,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  rothConversion: (
+    req: Omit<RothConversionRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<RothConversionRequest, RothConversionResult>(
+      PLANNING_TOOLS.rothConversion,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  sequenceOfReturnsStress: (
+    req: Omit<SequenceOfReturnsStressRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<SequenceOfReturnsStressRequest, SequenceOfReturnsStressResult>(
+      PLANNING_TOOLS.sequenceOfReturnsStress,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),

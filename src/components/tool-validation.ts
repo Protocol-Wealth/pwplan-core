@@ -10,7 +10,12 @@
  */
 
 import type { Account } from "../contract/planning";
-import type { GlidePathInputs, TaxWithdrawalInputs } from "../store/scenario";
+import type {
+  GlidePathInputs,
+  RothInputs,
+  SorInputs,
+  TaxWithdrawalInputs,
+} from "../store/scenario";
 
 function isWeight(n: number): boolean {
   return Number.isFinite(n) && n >= 0 && n <= 1;
@@ -58,6 +63,62 @@ export function validateTaxWithdrawal(
   if (t.grossNeed <= 0) issues.push("Gross need must be greater than zero.");
   if (t.otherTaxableIncome < 0) {
     issues.push("Other taxable income cannot be negative.");
+  }
+
+  return issues;
+}
+
+/** Reasons a Roth-conversion request cannot be dispatched, in display order. */
+export function validateRoth(r: RothInputs): string[] {
+  const issues: string[] = [];
+
+  if (r.currentTaxableIncome < 0) {
+    issues.push("Current taxable income cannot be negative.");
+  }
+  if (r.conversionAmount <= 0) {
+    issues.push("Conversion amount must be greater than zero.");
+  }
+  if (r.growthRate <= -1) issues.push("Growth rate must be greater than -1.");
+  if (!Number.isInteger(r.years) || r.years < 0) {
+    issues.push("Years must be a whole number, zero or more.");
+  }
+  if (r.retirementMarginalRate < 0 || r.retirementMarginalRate >= 1) {
+    issues.push("Retirement marginal rate must be between 0 and 1.");
+  }
+
+  return issues;
+}
+
+/**
+ * Parse a comma/space-separated list of decimal returns into numbers. Returns
+ * null if any token is not a finite number (so callers can flag the input).
+ * Pure — no quant logic, only shape parsing.
+ */
+export function parseReturns(text: string): number[] | null {
+  const tokens = text.split(/[,\s]+/).filter((t) => t.length > 0);
+  if (tokens.length === 0) return null;
+  const out: number[] = [];
+  for (const tok of tokens) {
+    const n = Number(tok);
+    if (!Number.isFinite(n)) return null;
+    out.push(n);
+  }
+  return out;
+}
+
+/** Reasons a sequence-of-returns-stress request cannot be dispatched. */
+export function validateSequenceStress(s: SorInputs): string[] {
+  const issues: string[] = [];
+
+  if (s.initialBalance <= 0) {
+    issues.push("Initial balance must be greater than zero.");
+  }
+  if (s.annualSpend < 0) issues.push("Annual spend cannot be negative.");
+  const returns = parseReturns(s.returnsText);
+  if (returns === null) {
+    issues.push("Annual returns must be a list of numbers (e.g. 0.07, -0.1).");
+  } else if (returns.some((r) => r <= -1)) {
+    issues.push("Each annual return must be greater than -1.");
   }
 
   return issues;

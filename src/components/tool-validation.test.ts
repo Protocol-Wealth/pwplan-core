@@ -2,8 +2,19 @@
 // Copyright 2026 Protocol Wealth, LLC
 
 import { describe, it, expect } from "vitest";
-import { validateGlidePath, validateTaxWithdrawal } from "./tool-validation";
-import type { GlidePathInputs, TaxWithdrawalInputs } from "../store/scenario";
+import {
+  parseReturns,
+  validateGlidePath,
+  validateRoth,
+  validateSequenceStress,
+  validateTaxWithdrawal,
+} from "./tool-validation";
+import type {
+  GlidePathInputs,
+  RothInputs,
+  SorInputs,
+  TaxWithdrawalInputs,
+} from "../store/scenario";
 import type { Account } from "../contract/planning";
 
 const validGlide: GlidePathInputs = {
@@ -91,5 +102,83 @@ describe("validateTaxWithdrawal", () => {
     expect(
       validateTaxWithdrawal({ ...validTax, year: 1800 }, accounts),
     ).toContain("Enter a valid tax year.");
+  });
+});
+
+const validRoth: RothInputs = {
+  currentTaxableIncome: 150_000,
+  filingStatus: "married_joint",
+  conversionAmount: 100_000,
+  growthRate: 0.06,
+  years: 15,
+  retirementMarginalRate: 0.24,
+  taxesPaidFromConversion: false,
+};
+
+describe("validateRoth", () => {
+  it("accepts a well-formed request", () => {
+    expect(validateRoth(validRoth)).toEqual([]);
+  });
+
+  it("rejects a non-positive conversion amount", () => {
+    expect(validateRoth({ ...validRoth, conversionAmount: 0 })).toContain(
+      "Conversion amount must be greater than zero.",
+    );
+  });
+
+  it("rejects a retirement marginal rate at or above 1", () => {
+    expect(validateRoth({ ...validRoth, retirementMarginalRate: 1 })).toContain(
+      "Retirement marginal rate must be between 0 and 1.",
+    );
+  });
+
+  it("rejects fractional years", () => {
+    expect(validateRoth({ ...validRoth, years: 1.5 })).toContain(
+      "Years must be a whole number, zero or more.",
+    );
+  });
+});
+
+const validSor: SorInputs = {
+  initialBalance: 1_000_000,
+  annualSpend: 50_000,
+  returnsText: "0.07, 0.05, -0.10",
+};
+
+describe("parseReturns", () => {
+  it("parses comma- and space-separated decimals", () => {
+    expect(parseReturns("0.07, 0.05 -0.1")).toEqual([0.07, 0.05, -0.1]);
+  });
+
+  it("returns null on a non-numeric token", () => {
+    expect(parseReturns("0.07, banana")).toBeNull();
+  });
+
+  it("returns null on empty input", () => {
+    expect(parseReturns("   ")).toBeNull();
+  });
+});
+
+describe("validateSequenceStress", () => {
+  it("accepts a well-formed request", () => {
+    expect(validateSequenceStress(validSor)).toEqual([]);
+  });
+
+  it("rejects a non-positive initial balance", () => {
+    expect(
+      validateSequenceStress({ ...validSor, initialBalance: 0 }),
+    ).toContain("Initial balance must be greater than zero.");
+  });
+
+  it("rejects unparseable returns", () => {
+    expect(
+      validateSequenceStress({ ...validSor, returnsText: "n/a" }),
+    ).toContain("Annual returns must be a list of numbers (e.g. 0.07, -0.1).");
+  });
+
+  it("rejects a return at or below -1", () => {
+    expect(
+      validateSequenceStress({ ...validSor, returnsText: "0.05, -1" }),
+    ).toContain("Each annual return must be greater than -1.");
   });
 });

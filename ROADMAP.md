@@ -55,6 +55,11 @@ on completion and note the version in CHANGELOG.md._
       `correlations` onto a de-identified portfolio. _(done 2026-06-01:
       `ScenarioForm` "Load real market assumptions" + provenance + correlation
       matrix; ephemeral store `assumptions` slice; verified end-to-end live.)_
+- [x] Roth conversion + Sequence-of-returns-stress tools, wired end to end
+      (contract → gateway → UI tabs). _(done 2026-06-01: 8 tools total; new
+      `RothConversionTool` + `SequenceStressTool` tabs + `validateRoth` /
+      `validateSequenceStress` / `parseReturns`; +13 tests. Engine side in
+      nexus-core PR #100; tabs go live on its deploy.)_
 - [ ] Standalone `correlation_matrix` / `regime_return_generator` UI tabs
       (optional, lower priority — engine-internal; the latter would close the
       `pathCacheKey` reuse loop).

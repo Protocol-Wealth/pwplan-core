@@ -28,6 +28,8 @@ import {
   type CorrelationRequest,
   type RegimeReturnRequest,
   type CapitalMarketAssumptionsRequest,
+  type RothConversionRequest,
+  type SequenceOfReturnsStressRequest,
 } from "../contract/planning";
 
 // --- Minimal, well-typed requests (shape only; the engine does the math). ---
@@ -78,6 +80,21 @@ const regReq: Omit<RegimeReturnRequest, "contractVersion"> = {
 
 const cmaReq: Omit<CapitalMarketAssumptionsRequest, "contractVersion"> = {
   assetClassIds: ["us_equity", "us_bonds"],
+};
+
+const rothReq: Omit<RothConversionRequest, "contractVersion"> = {
+  currentTaxableIncome: 150_000,
+  filingStatus: "married_joint",
+  conversionAmount: 100_000,
+  growthRate: 0.06,
+  years: 15,
+  retirementMarginalRate: 0.24,
+};
+
+const sorReq: Omit<SequenceOfReturnsStressRequest, "contractVersion"> = {
+  initialBalance: 1_000_000,
+  netSpendByYear: [50_000, 50_000],
+  annualReturns: [0.07, -0.05],
 };
 
 /** Stub global fetch with a single canned response and return the spy. */
@@ -208,6 +225,14 @@ describe("planning gateway dispatch", () => {
         id: "capital_market_assumptions",
         call: () => planning.capitalMarketAssumptions(cmaReq),
       },
+      {
+        id: "roth_conversion",
+        call: () => planning.rothConversion(rothReq),
+      },
+      {
+        id: "sequence_of_returns_stress",
+        call: () => planning.sequenceOfReturnsStress(sorReq),
+      },
     ];
 
     for (const { id, call } of dispatches) {
@@ -259,6 +284,54 @@ describe("planning gateway dispatch", () => {
     await planning.monteCarlo({ ...mcReq, pathCacheKey: "emf-cache-xyz" });
     const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(sent.pathCacheKey).toBe("emf-cache-xyz");
+  });
+
+  it("dispatches roth_conversion and returns the comparison fields", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      conversionTax: 24000,
+      effectiveConversionRate: 0.24,
+      rothSeed: 100000,
+      externalTaxPaidToday: 24000,
+      convertedAfterTaxValue: 239655.82,
+      notConvertedAfterTaxValue: 182138.42,
+      netBenefit: 57517.4,
+      breakevenRetirementRate: 0.24,
+    });
+
+    const result = await planning.rothConversion(rothReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/roth_conversion",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.contractVersion).toBe(PLANNING_CONTRACT_VERSION);
+    expect(sent.conversionAmount).toBe(100_000);
+    expect(result.netBenefit).toBe(57517.4);
+    expect(result.breakevenRetirementRate).toBe(0.24);
+  });
+
+  it("dispatches sequence_of_returns_stress and returns the orderings", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      years: 2,
+      meanAnnualReturn: 0.01,
+      worstFirst: { terminalBalance: 0, depletedYear: 1 },
+      bestFirst: { terminalBalance: 12345, depletedYear: null },
+      asGiven: { terminalBalance: 9000, depletedYear: null },
+      sequenceRiskGap: 12345,
+    });
+
+    const result = await planning.sequenceOfReturnsStress(sorReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/sequence_of_returns_stress",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.annualReturns).toEqual([0.07, -0.05]);
+    expect(result.worstFirst.depletedYear).toBe(1);
+    expect(result.bestFirst.depletedYear).toBeNull();
+    expect(result.sequenceRiskGap).toBe(12345);
   });
 
   it("defaults the active backend to nexus-mcp", () => {

@@ -247,6 +247,78 @@ export interface CapitalMarketAssumptionsResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: roth_conversion
+// ---------------------------------------------------------------------------
+
+/** Convert pre-tax (traditional) dollars to Roth now, paying ordinary tax this
+ *  year, vs. leaving them pre-tax and taxing them in retirement. The engine
+ *  computes the conversion's TRUE incremental federal tax (bracket creep), not a
+ *  flat marginal rate. Educational — not tax advice. */
+export interface RothConversionRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  /** This year's ordinary income before the conversion (gross; the engine
+   *  applies the standard deduction). */
+  currentTaxableIncome: number;
+  filingStatus: FilingStatus;
+  conversionAmount: number;
+  growthRate: number; // annual, decimal
+  years: number; // until withdrawal
+  /** Marginal rate the traditional dollars would face at withdrawal, decimal. */
+  retirementMarginalRate: number;
+  /** Pay the conversion tax from the converted amount (true) or outside funds
+   *  (false, default). */
+  taxesPaidFromConversion?: boolean;
+}
+
+export interface RothConversionResult {
+  contractVersion: string;
+  conversionTax: number;
+  effectiveConversionRate: number;
+  rothSeed: number;
+  externalTaxPaidToday: number;
+  convertedAfterTaxValue: number;
+  notConvertedAfterTaxValue: number;
+  /** convertedAfterTaxValue − notConvertedAfterTaxValue (positive favors converting). */
+  netBenefit: number;
+  /** Retirement marginal rate above which converting wins (= effective rate). */
+  breakevenRetirementRate: number;
+}
+
+// ---------------------------------------------------------------------------
+// Tool: sequence_of_returns_stress
+// ---------------------------------------------------------------------------
+
+/** One ordering's outcome: terminal balance + the 0-based year it depleted
+ *  (null if it funded the full horizon). */
+export interface SequenceOutcome {
+  terminalBalance: number;
+  depletedYear: number | null;
+}
+
+/** Replay one fixed multiset of annual returns under different orderings to
+ *  isolate sequence-of-returns risk. The mean is order-invariant, so the
+ *  best-first vs worst-first terminal spread is pure ordering effect. */
+export interface SequenceOfReturnsStressRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  initialBalance: number;
+  /** Per-year net withdrawal; length defines the horizon. */
+  netSpendByYear: number[];
+  /** Annual returns (decimal), one per year; same length as netSpendByYear. */
+  annualReturns: number[];
+}
+
+export interface SequenceOfReturnsStressResult {
+  contractVersion: string;
+  years: number;
+  meanAnnualReturn: number;
+  worstFirst: SequenceOutcome;
+  bestFirst: SequenceOutcome;
+  asGiven: SequenceOutcome;
+  /** bestFirst.terminalBalance − worstFirst.terminalBalance. */
+  sequenceRiskGap: number;
+}
+
+// ---------------------------------------------------------------------------
 // Tool registry — names MUST match nexus-core MCP tool ids exactly.
 // ---------------------------------------------------------------------------
 
@@ -257,6 +329,8 @@ export const PLANNING_TOOLS = {
   correlationMatrix: "correlation_matrix",
   regimeReturnGenerator: "regime_return_generator",
   capitalMarketAssumptions: "capital_market_assumptions",
+  rothConversion: "roth_conversion",
+  sequenceOfReturnsStress: "sequence_of_returns_stress",
 } as const;
 
 export type PlanningToolName =

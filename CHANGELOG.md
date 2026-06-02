@@ -9,6 +9,25 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Roth conversion + Sequence-of-returns-stress tools — wired end to end (contract
+  → gateway → UI tabs).** Two new planning tools surfaced as their own tabs:
+  - **Roth conversion** (`planning.rothConversion`): convert-now vs. leave-pre-tax
+    after-tax comparison. Form (income, filing status, conversion amount, growth,
+    years, retirement marginal rate, pay-tax-from-conversion toggle) + a results
+    panel showing the net benefit, the breakeven retirement rate, the incremental
+    conversion tax + effective rate, and both terminal after-tax values.
+  - **Sequence risk** (`planning.sequenceOfReturnsStress`): replays one return set
+    worst-first / best-first / as-entered. Form (initial balance, constant annual
+    spend, comma-separated returns) + a panel showing the sequence-risk gap and
+    each ordering's terminal balance + depletion year.
+  - `RothConversionRequest`/`Result` + `SequenceOfReturnsStressRequest`/`Result`
+    (+ `SequenceOutcome`) added to the contract; `rothConversion` +
+    `sequenceOfReturnsStress` in `PLANNING_TOOLS` (8 tools) and the gateway.
+  - Pure `validateRoth` / `validateSequenceStress` / `parseReturns` in
+    `tool-validation.ts`; store gained `rothInputs`/`sorInputs` (+ results);
+    `scenario-io` tolerates the new active-tab pointer. +13 tests (124 total).
+  - No version bump (additive tool ids, contract `0.1.0`). These call the matching
+    nexus-core tools, which go live when nexus-core PR #100 merges and deploys.
 - **"Real data, fake clients" UI — a _Load real market assumptions_ control on the
   Monte Carlo form** (`ScenarioForm`). It calls `planning.capitalMarketAssumptions`
   for the current asset-class ids (or the engine's full default universe when

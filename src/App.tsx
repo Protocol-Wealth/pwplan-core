@@ -8,6 +8,14 @@ import {
   TaxWithdrawalForm,
   TaxWithdrawalResults,
 } from "./components/TaxWithdrawalTool";
+import {
+  RothConversionForm,
+  RothConversionResults,
+} from "./components/RothConversionTool";
+import {
+  SequenceStressForm,
+  SequenceStressResults,
+} from "./components/SequenceStressTool";
 import { ScenarioIO } from "./components/ScenarioIO";
 import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
@@ -16,6 +24,8 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "monte_carlo", label: "Monte Carlo" },
   { value: "glide_path", label: "Glide path" },
   { value: "tax_withdrawal", label: "Tax withdrawal" },
+  { value: "roth_conversion", label: "Roth conversion" },
+  { value: "sequence_stress", label: "Sequence risk" },
 ];
 
 function ToolTabs() {
@@ -56,6 +66,20 @@ function ActiveTool() {
         <>
           <TaxWithdrawalForm />
           <TaxWithdrawalResults />
+        </>
+      );
+    case "roth_conversion":
+      return (
+        <>
+          <RothConversionForm />
+          <RothConversionResults />
+        </>
+      );
+    case "sequence_stress":
+      return (
+        <>
+          <SequenceStressForm />
+          <SequenceStressResults />
         </>
       );
     case "monte_carlo":

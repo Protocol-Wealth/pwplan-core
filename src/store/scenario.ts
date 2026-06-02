@@ -21,11 +21,18 @@ import type {
   GuaranteedIncome,
   MonteCarloResult,
   ReturnModel,
+  RothConversionResult,
+  SequenceOfReturnsStressResult,
   TaxWithdrawalResult,
 } from "../contract/planning";
 
 /** Which planning tool the UI is currently showing. */
-export type PlanningTool = "monte_carlo" | "glide_path" | "tax_withdrawal";
+export type PlanningTool =
+  | "monte_carlo"
+  | "glide_path"
+  | "tax_withdrawal"
+  | "roth_conversion"
+  | "sequence_stress";
 
 /** Glide-path shape, derived from the wire contract (no new wire type). */
 export type GlidePathShape = GlidePathRequest["shape"];
@@ -61,6 +68,24 @@ export interface TaxWithdrawalInputs {
   otherTaxableIncome: number;
 }
 
+export interface RothInputs {
+  currentTaxableIncome: number;
+  filingStatus: FilingStatus;
+  conversionAmount: number;
+  growthRate: number;
+  years: number;
+  retirementMarginalRate: number;
+  taxesPaidFromConversion: boolean;
+}
+
+export interface SorInputs {
+  initialBalance: number;
+  /** Constant net withdrawal applied each year (kept simple for the demo UI). */
+  annualSpend: number;
+  /** Comma/space-separated annual returns (decimals), parsed at dispatch. */
+  returnsText: string;
+}
+
 /**
  * Live, engine-sourced capital-market assumptions (the "real data, fake clients"
  * flow). Fetched from the `capital_market_assumptions` tool and threaded into the
@@ -81,10 +106,14 @@ interface ScenarioState {
   inputs: ScenarioInputs;
   glidePathInputs: GlidePathInputs;
   taxInputs: TaxWithdrawalInputs;
+  rothInputs: RothInputs;
+  sorInputs: SorInputs;
 
   result: MonteCarloResult | null;
   glidePathResult: GlidePathResult | null;
   taxResult: TaxWithdrawalResult | null;
+  rothResult: RothConversionResult | null;
+  sorResult: SequenceOfReturnsStressResult | null;
 
   /** Live engine assumptions from capital_market_assumptions; null until loaded. */
   assumptions: MarketAssumptions | null;
@@ -105,9 +134,13 @@ interface ScenarioState {
   setInputs: (patch: Partial<ScenarioInputs>) => void;
   setGlidePathInputs: (patch: Partial<GlidePathInputs>) => void;
   setTaxInputs: (patch: Partial<TaxWithdrawalInputs>) => void;
+  setRothInputs: (patch: Partial<RothInputs>) => void;
+  setSorInputs: (patch: Partial<SorInputs>) => void;
   setResult: (r: MonteCarloResult | null) => void;
   setGlidePathResult: (r: GlidePathResult | null) => void;
   setTaxResult: (r: TaxWithdrawalResult | null) => void;
+  setRothResult: (r: RothConversionResult | null) => void;
+  setSorResult: (r: SequenceOfReturnsStressResult | null) => void;
   setAssumptions: (a: MarketAssumptions | null) => void;
   setLoadingAssumptions: (b: boolean) => void;
   setRunning: (b: boolean) => void;
@@ -180,16 +213,36 @@ const DEFAULT_TAX: TaxWithdrawalInputs = {
   otherTaxableIncome: 0,
 };
 
+const DEFAULT_ROTH: RothInputs = {
+  currentTaxableIncome: 150_000,
+  filingStatus: "married_joint",
+  conversionAmount: 100_000,
+  growthRate: 0.06,
+  years: 15,
+  retirementMarginalRate: 0.24,
+  taxesPaidFromConversion: false,
+};
+
+const DEFAULT_SOR: SorInputs = {
+  initialBalance: 1_000_000,
+  annualSpend: 50_000,
+  returnsText: "0.07, 0.05, -0.10, 0.12, 0.04, -0.03, 0.09, 0.06, 0.02, 0.08",
+};
+
 export const useScenario = create<ScenarioState>((set) => ({
   tool: "monte_carlo",
 
   inputs: DEFAULT_INPUTS,
   glidePathInputs: DEFAULT_GLIDE_PATH,
   taxInputs: DEFAULT_TAX,
+  rothInputs: DEFAULT_ROTH,
+  sorInputs: DEFAULT_SOR,
 
   result: null,
   glidePathResult: null,
   taxResult: null,
+  rothResult: null,
+  sorResult: null,
 
   assumptions: null,
   loadingAssumptions: false,
@@ -220,9 +273,15 @@ export const useScenario = create<ScenarioState>((set) => ({
     set((s) => ({ glidePathInputs: { ...s.glidePathInputs, ...patch } })),
   setTaxInputs: (patch) =>
     set((s) => ({ taxInputs: { ...s.taxInputs, ...patch } })),
+  setRothInputs: (patch) =>
+    set((s) => ({ rothInputs: { ...s.rothInputs, ...patch } })),
+  setSorInputs: (patch) =>
+    set((s) => ({ sorInputs: { ...s.sorInputs, ...patch } })),
   setResult: (result) => set({ result }),
   setGlidePathResult: (glidePathResult) => set({ glidePathResult }),
   setTaxResult: (taxResult) => set({ taxResult }),
+  setRothResult: (rothResult) => set({ rothResult }),
+  setSorResult: (sorResult) => set({ sorResult }),
   setAssumptions: (assumptions) => set({ assumptions }),
   setLoadingAssumptions: (loadingAssumptions) => set({ loadingAssumptions }),
   setRunning: (running) => set({ running }),
