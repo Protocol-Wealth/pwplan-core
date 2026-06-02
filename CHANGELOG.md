@@ -89,6 +89,15 @@ Semantic Versioning. The planning wire contract is versioned separately as
   (after the shebang), and the root `vite.config.ts` / `eslint.config.js`. The
   `NOTICE` patent application number remains a `<PATENT_APP_NO>` placeholder.
 
+### Security
+
+- **vitest `3.2.4` → `4.1.8`** — clears two critical Dependabot alerts (GHSA: the
+  Vitest UI server can read/execute arbitrary files when listening; patched in
+  `4.1.0`). Dev-only dependency and the repo runs `vitest run` (never `--ui`), so
+  real exposure was low, but the bump is clean: major 3→4 with no config changes
+  (no `test` block in `vite.config.ts`), all 124 tests pass, `npm audit` reports
+  0 vulnerabilities.
+
 ### Changed
 
 - `docs/nexus-core-requirements.md`: pinned the two former "gaps" into contract
