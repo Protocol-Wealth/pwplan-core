@@ -56,10 +56,14 @@ on completion and note the version in CHANGELOG.md._
       `ScenarioForm` "Load real market assumptions" + provenance + correlation
       matrix; ephemeral store `assumptions` slice; verified end-to-end live.)_
 - [x] Roth conversion + Sequence-of-returns-stress tools, wired end to end
-      (contract → gateway → UI tabs). _(done 2026-06-01: 8 tools total; new
-      `RothConversionTool` + `SequenceStressTool` tabs + `validateRoth` /
-      `validateSequenceStress` / `parseReturns`; +13 tests. Engine side in
-      nexus-core PR #100; tabs go live on its deploy.)_
+      (contract → gateway → UI tabs). _(done 2026-06-01: new `RothConversionTool` + `SequenceStressTool` tabs + validators; engine side nexus-core PR #100,
+      merged + deployed; smoke-verified live.)_
+- [x] RMD, Tax-bracket-headroom/Roth-fill, Social Security claiming, and
+      Regime-conditioned SWR tabs, wired end to end. _(done 2026-06-02: 12 tools
+      total, 9 UI tabs; new `RmdTool` / `BracketHeadroomTool` /
+      `SocialSecurityTool` / `RegimeSwrTool` + validators; +16 tests. Engine side
+      nexus-core PR #101, merged + deployed (rev nexus-core-00041); all six newest
+      tools smoke-verified live.)_
 - [ ] Standalone `correlation_matrix` / `regime_return_generator` UI tabs
       (optional, lower priority — engine-internal; the latter would close the
       `pathCacheKey` reuse loop).
@@ -67,8 +71,10 @@ on completion and note the version in CHANGELOG.md._
 
 ## Dependency on other repos (track, do not build here)
 
-- **nexus-core:** implement the server side of contract v0.1.0 (the 5 planning
-  MCP tools) at nexusmcp.site so the open demo has a live engine.
+- **nexus-core:** server side of contract v0.1.0 — **done + live** at
+  nexusmcp.site (12 planning MCP tools, rev nexus-core-00041). New tools land
+  there first (engine + tool), then get a matching pwplan-core contract type +
+  gateway method (+ optional UI tab).
 - **pwos-core:** PII-guard + audit-log packages — consumed by the private fork,
   not by this OSS repo.
 

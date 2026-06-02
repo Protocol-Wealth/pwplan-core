@@ -4,14 +4,22 @@
 import { describe, it, expect } from "vitest";
 import {
   parseReturns,
+  validateBracketHeadroom,
   validateGlidePath,
+  validateRegimeSwr,
+  validateRmd,
   validateRoth,
   validateSequenceStress,
+  validateSocialSecurity,
   validateTaxWithdrawal,
 } from "./tool-validation";
 import type {
+  BracketHeadroomInputs,
   GlidePathInputs,
+  RegimeSwrInputs,
+  RmdInputs,
   RothInputs,
+  SocialSecurityInputs,
   SorInputs,
   TaxWithdrawalInputs,
 } from "../store/scenario";
@@ -180,5 +188,84 @@ describe("validateSequenceStress", () => {
     expect(
       validateSequenceStress({ ...validSor, returnsText: "0.05, -1" }),
     ).toContain("Each annual return must be greater than -1.");
+  });
+});
+
+const validRmd: RmdInputs = { age: 73, balance: 500_000 };
+
+describe("validateRmd", () => {
+  it("accepts a well-formed request", () => {
+    expect(validateRmd(validRmd)).toEqual([]);
+  });
+  it("rejects a fractional age", () => {
+    expect(validateRmd({ ...validRmd, age: 73.5 })).toContain(
+      "Age must be a whole number, zero or more.",
+    );
+  });
+  it("rejects a negative balance", () => {
+    expect(validateRmd({ ...validRmd, balance: -1 })).toContain(
+      "Balance cannot be negative.",
+    );
+  });
+});
+
+const validBracket: BracketHeadroomInputs = {
+  taxableIncome: 100_000,
+  filingStatus: "married_joint",
+  targetRate: 0.24,
+};
+
+describe("validateBracketHeadroom", () => {
+  it("accepts a well-formed request", () => {
+    expect(validateBracketHeadroom(validBracket)).toEqual([]);
+  });
+  it("rejects a negative income", () => {
+    expect(
+      validateBracketHeadroom({ ...validBracket, taxableIncome: -1 }),
+    ).toContain("Taxable income cannot be negative.");
+  });
+  it("rejects a target rate at or above 1", () => {
+    expect(
+      validateBracketHeadroom({ ...validBracket, targetRate: 1 }),
+    ).toContain("Target rate must be between 0 and 1.");
+  });
+});
+
+const validSs: SocialSecurityInputs = { piaMonthly: 2_500, fraAge: 67 };
+
+describe("validateSocialSecurity", () => {
+  it("accepts a well-formed request", () => {
+    expect(validateSocialSecurity(validSs)).toEqual([]);
+  });
+  it("rejects a non-positive PIA", () => {
+    expect(validateSocialSecurity({ ...validSs, piaMonthly: 0 })).toContain(
+      "Monthly PIA must be greater than zero.",
+    );
+  });
+  it("rejects an out-of-range FRA", () => {
+    expect(validateSocialSecurity({ ...validSs, fraAge: 71 })).toContain(
+      "Full retirement age must be a whole number in (62, 70].",
+    );
+  });
+});
+
+const validRegimeSwr: RegimeSwrInputs = {
+  baseSwr: 0.04,
+  portfolioBalance: 1_000_000,
+};
+
+describe("validateRegimeSwr", () => {
+  it("accepts a well-formed request", () => {
+    expect(validateRegimeSwr(validRegimeSwr)).toEqual([]);
+  });
+  it("rejects a base rate at or above 1", () => {
+    expect(validateRegimeSwr({ ...validRegimeSwr, baseSwr: 1 })).toContain(
+      "Base withdrawal rate must be between 0 and 1.",
+    );
+  });
+  it("rejects a negative balance", () => {
+    expect(
+      validateRegimeSwr({ ...validRegimeSwr, portfolioBalance: -1 }),
+    ).toContain("Portfolio balance cannot be negative.");
   });
 });

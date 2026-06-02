@@ -11,8 +11,12 @@
 
 import type { Account } from "../contract/planning";
 import type {
+  BracketHeadroomInputs,
   GlidePathInputs,
+  RegimeSwrInputs,
+  RmdInputs,
   RothInputs,
+  SocialSecurityInputs,
   SorInputs,
   TaxWithdrawalInputs,
 } from "../store/scenario";
@@ -121,5 +125,47 @@ export function validateSequenceStress(s: SorInputs): string[] {
     issues.push("Each annual return must be greater than -1.");
   }
 
+  return issues;
+}
+
+/** Reasons an RMD request cannot be dispatched, in display order. */
+export function validateRmd(r: RmdInputs): string[] {
+  const issues: string[] = [];
+  if (!Number.isInteger(r.age) || r.age < 0) {
+    issues.push("Age must be a whole number, zero or more.");
+  }
+  if (r.balance < 0) issues.push("Balance cannot be negative.");
+  return issues;
+}
+
+/** Reasons a bracket-headroom request cannot be dispatched, in display order. */
+export function validateBracketHeadroom(b: BracketHeadroomInputs): string[] {
+  const issues: string[] = [];
+  if (b.taxableIncome < 0) issues.push("Taxable income cannot be negative.");
+  if (b.targetRate < 0 || b.targetRate >= 1) {
+    issues.push("Target rate must be between 0 and 1.");
+  }
+  return issues;
+}
+
+/** Reasons a Social-Security request cannot be dispatched, in display order. */
+export function validateSocialSecurity(s: SocialSecurityInputs): string[] {
+  const issues: string[] = [];
+  if (s.piaMonthly <= 0) issues.push("Monthly PIA must be greater than zero.");
+  if (!Number.isInteger(s.fraAge) || s.fraAge <= 62 || s.fraAge > 70) {
+    issues.push("Full retirement age must be a whole number in (62, 70].");
+  }
+  return issues;
+}
+
+/** Reasons a regime-conditioned-SWR request cannot be dispatched. */
+export function validateRegimeSwr(r: RegimeSwrInputs): string[] {
+  const issues: string[] = [];
+  if (r.baseSwr <= 0 || r.baseSwr >= 1) {
+    issues.push("Base withdrawal rate must be between 0 and 1.");
+  }
+  if (r.portfolioBalance < 0) {
+    issues.push("Portfolio balance cannot be negative.");
+  }
   return issues;
 }

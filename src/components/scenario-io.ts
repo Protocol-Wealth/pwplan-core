@@ -130,6 +130,10 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "tax_withdrawal",
   "roth_conversion",
   "sequence_stress",
+  "rmd",
+  "bracket_headroom",
+  "social_security",
+  "regime_swr",
 ];
 
 function parseAssetClass(v: unknown): AssetClass | null {

@@ -43,6 +43,14 @@ import {
   type RothConversionResult,
   type SequenceOfReturnsStressRequest,
   type SequenceOfReturnsStressResult,
+  type RmdRequest,
+  type RmdResult,
+  type TaxBracketHeadroomRequest,
+  type TaxBracketHeadroomResult,
+  type SocialSecurityClaimingRequest,
+  type SocialSecurityClaimingResult,
+  type RegimeConditionedSwrRequest,
+  type RegimeConditionedSwrResult,
   type PlanningToolName,
 } from "../contract/planning";
 import { assertNoPII, auditCall } from "./compliance";
@@ -205,6 +213,43 @@ export const planning = {
   ) =>
     callTool<SequenceOfReturnsStressRequest, SequenceOfReturnsStressResult>(
       PLANNING_TOOLS.sequenceOfReturnsStress,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  rmd: (req: Omit<RmdRequest, "contractVersion">, opts?: CallOptions) =>
+    callTool<RmdRequest, RmdResult>(
+      PLANNING_TOOLS.rmd,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  taxBracketHeadroom: (
+    req: Omit<TaxBracketHeadroomRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<TaxBracketHeadroomRequest, TaxBracketHeadroomResult>(
+      PLANNING_TOOLS.taxBracketHeadroom,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  socialSecurityClaiming: (
+    req: Omit<SocialSecurityClaimingRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<SocialSecurityClaimingRequest, SocialSecurityClaimingResult>(
+      PLANNING_TOOLS.socialSecurityClaiming,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  regimeConditionedSwr: (
+    req: Omit<RegimeConditionedSwrRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<RegimeConditionedSwrRequest, RegimeConditionedSwrResult>(
+      PLANNING_TOOLS.regimeConditionedSwr,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),

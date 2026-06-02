@@ -30,6 +30,10 @@ import {
   type CapitalMarketAssumptionsRequest,
   type RothConversionRequest,
   type SequenceOfReturnsStressRequest,
+  type RmdRequest,
+  type TaxBracketHeadroomRequest,
+  type SocialSecurityClaimingRequest,
+  type RegimeConditionedSwrRequest,
 } from "../contract/planning";
 
 // --- Minimal, well-typed requests (shape only; the engine does the math). ---
@@ -95,6 +99,27 @@ const sorReq: Omit<SequenceOfReturnsStressRequest, "contractVersion"> = {
   initialBalance: 1_000_000,
   netSpendByYear: [50_000, 50_000],
   annualReturns: [0.07, -0.05],
+};
+
+const rmdReq: Omit<RmdRequest, "contractVersion"> = {
+  age: 73,
+  balance: 500_000,
+};
+
+const bracketReq: Omit<TaxBracketHeadroomRequest, "contractVersion"> = {
+  taxableIncome: 100_000,
+  filingStatus: "single",
+  targetRate: 0.24,
+};
+
+const ssReq: Omit<SocialSecurityClaimingRequest, "contractVersion"> = {
+  piaMonthly: 2_000,
+  fraAge: 67,
+};
+
+const regimeSwrReq: Omit<RegimeConditionedSwrRequest, "contractVersion"> = {
+  baseSwr: 0.04,
+  portfolioBalance: 1_000_000,
 };
 
 /** Stub global fetch with a single canned response and return the spy. */
@@ -233,6 +258,19 @@ describe("planning gateway dispatch", () => {
         id: "sequence_of_returns_stress",
         call: () => planning.sequenceOfReturnsStress(sorReq),
       },
+      { id: "rmd", call: () => planning.rmd(rmdReq) },
+      {
+        id: "tax_bracket_headroom",
+        call: () => planning.taxBracketHeadroom(bracketReq),
+      },
+      {
+        id: "social_security_claiming",
+        call: () => planning.socialSecurityClaiming(ssReq),
+      },
+      {
+        id: "regime_conditioned_swr",
+        call: () => planning.regimeConditionedSwr(regimeSwrReq),
+      },
     ];
 
     for (const { id, call } of dispatches) {
@@ -332,6 +370,88 @@ describe("planning gateway dispatch", () => {
     expect(result.worstFirst.depletedYear).toBe(1);
     expect(result.bestFirst.depletedYear).toBeNull();
     expect(result.sequenceRiskGap).toBe(12345);
+  });
+
+  it("dispatches rmd and returns the distribution fields", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      rmdStartAge: 73,
+      applies: true,
+      distributionPeriod: 26.5,
+      rmdAmount: 18867.92,
+      effectiveRate: 0.0377,
+    });
+    const result = await planning.rmd(rmdReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/rmd",
+    );
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).age).toBe(73);
+    expect(result.rmdAmount).toBe(18867.92);
+    expect(result.applies).toBe(true);
+  });
+
+  it("dispatches tax_bracket_headroom incl. the optional targetRate", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      taxableIncome: 85000,
+      marginalRate: 0.22,
+      bracketFloor: 48475,
+      bracketCeiling: 103350,
+      roomToNextBracket: 18350,
+      nextRate: 0.24,
+      targetRate: 0.24,
+      roomToTargetRate: 112300,
+    });
+    const result = await planning.taxBracketHeadroom(bracketReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/tax_bracket_headroom",
+    );
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).targetRate).toBe(0.24);
+    expect(result.roomToNextBracket).toBe(18350);
+    expect(result.roomToTargetRate).toBe(112300);
+  });
+
+  it("dispatches social_security_claiming and returns the claim table", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      fraAge: 67,
+      pia: 2000,
+      byClaimAge: [
+        {
+          claimAge: 62,
+          monthlyBenefit: 1400,
+          annualBenefit: 16800,
+          pctOfPia: 0.7,
+        },
+      ],
+      breakevens: [{ earlier: 62, later: 67, breakevenAge: 78.7 }],
+    });
+    const result = await planning.socialSecurityClaiming(ssReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/social_security_claiming",
+    );
+    expect(result.byClaimAge[0].monthlyBenefit).toBe(1400);
+    expect(result.breakevens[0].breakevenAge).toBe(78.7);
+  });
+
+  it("dispatches regime_conditioned_swr and returns the live regime + adjusted rate", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      regime: "crisis",
+      baseSwr: 0.04,
+      regimeMultiplier: 0.75,
+      adjustedSwr: 0.03,
+      firstYearWithdrawal: 30000,
+    });
+    const result = await planning.regimeConditionedSwr(regimeSwrReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/regime_conditioned_swr",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.baseSwr).toBe(0.04);
+    expect(result.regime).toBe("crisis");
+    expect(result.adjustedSwr).toBe(0.03);
+    expect(result.firstYearWithdrawal).toBe(30000);
   });
 
   it("defaults the active backend to nexus-mcp", () => {

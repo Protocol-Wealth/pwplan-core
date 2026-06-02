@@ -23,6 +23,10 @@ import type {
   ReturnModel,
   RothConversionResult,
   SequenceOfReturnsStressResult,
+  RmdResult,
+  TaxBracketHeadroomResult,
+  SocialSecurityClaimingResult,
+  RegimeConditionedSwrResult,
   TaxWithdrawalResult,
 } from "../contract/planning";
 
@@ -32,7 +36,11 @@ export type PlanningTool =
   | "glide_path"
   | "tax_withdrawal"
   | "roth_conversion"
-  | "sequence_stress";
+  | "sequence_stress"
+  | "rmd"
+  | "bracket_headroom"
+  | "social_security"
+  | "regime_swr";
 
 /** Glide-path shape, derived from the wire contract (no new wire type). */
 export type GlidePathShape = GlidePathRequest["shape"];
@@ -86,6 +94,27 @@ export interface SorInputs {
   returnsText: string;
 }
 
+export interface RmdInputs {
+  age: number;
+  balance: number;
+}
+
+export interface BracketHeadroomInputs {
+  taxableIncome: number;
+  filingStatus: FilingStatus;
+  targetRate: number;
+}
+
+export interface SocialSecurityInputs {
+  piaMonthly: number;
+  fraAge: number;
+}
+
+export interface RegimeSwrInputs {
+  baseSwr: number;
+  portfolioBalance: number;
+}
+
 /**
  * Live, engine-sourced capital-market assumptions (the "real data, fake clients"
  * flow). Fetched from the `capital_market_assumptions` tool and threaded into the
@@ -108,12 +137,20 @@ interface ScenarioState {
   taxInputs: TaxWithdrawalInputs;
   rothInputs: RothInputs;
   sorInputs: SorInputs;
+  rmdInputs: RmdInputs;
+  bracketInputs: BracketHeadroomInputs;
+  socialSecurityInputs: SocialSecurityInputs;
+  regimeSwrInputs: RegimeSwrInputs;
 
   result: MonteCarloResult | null;
   glidePathResult: GlidePathResult | null;
   taxResult: TaxWithdrawalResult | null;
   rothResult: RothConversionResult | null;
   sorResult: SequenceOfReturnsStressResult | null;
+  rmdResult: RmdResult | null;
+  bracketResult: TaxBracketHeadroomResult | null;
+  socialSecurityResult: SocialSecurityClaimingResult | null;
+  regimeSwrResult: RegimeConditionedSwrResult | null;
 
   /** Live engine assumptions from capital_market_assumptions; null until loaded. */
   assumptions: MarketAssumptions | null;
@@ -136,11 +173,19 @@ interface ScenarioState {
   setTaxInputs: (patch: Partial<TaxWithdrawalInputs>) => void;
   setRothInputs: (patch: Partial<RothInputs>) => void;
   setSorInputs: (patch: Partial<SorInputs>) => void;
+  setRmdInputs: (patch: Partial<RmdInputs>) => void;
+  setBracketInputs: (patch: Partial<BracketHeadroomInputs>) => void;
+  setSocialSecurityInputs: (patch: Partial<SocialSecurityInputs>) => void;
+  setRegimeSwrInputs: (patch: Partial<RegimeSwrInputs>) => void;
   setResult: (r: MonteCarloResult | null) => void;
   setGlidePathResult: (r: GlidePathResult | null) => void;
   setTaxResult: (r: TaxWithdrawalResult | null) => void;
   setRothResult: (r: RothConversionResult | null) => void;
   setSorResult: (r: SequenceOfReturnsStressResult | null) => void;
+  setRmdResult: (r: RmdResult | null) => void;
+  setBracketResult: (r: TaxBracketHeadroomResult | null) => void;
+  setSocialSecurityResult: (r: SocialSecurityClaimingResult | null) => void;
+  setRegimeSwrResult: (r: RegimeConditionedSwrResult | null) => void;
   setAssumptions: (a: MarketAssumptions | null) => void;
   setLoadingAssumptions: (b: boolean) => void;
   setRunning: (b: boolean) => void;
@@ -229,6 +274,27 @@ const DEFAULT_SOR: SorInputs = {
   returnsText: "0.07, 0.05, -0.10, 0.12, 0.04, -0.03, 0.09, 0.06, 0.02, 0.08",
 };
 
+const DEFAULT_RMD: RmdInputs = {
+  age: 73,
+  balance: 500_000,
+};
+
+const DEFAULT_BRACKET: BracketHeadroomInputs = {
+  taxableIncome: 100_000,
+  filingStatus: "married_joint",
+  targetRate: 0.24,
+};
+
+const DEFAULT_SOCIAL_SECURITY: SocialSecurityInputs = {
+  piaMonthly: 2_500,
+  fraAge: 67,
+};
+
+const DEFAULT_REGIME_SWR: RegimeSwrInputs = {
+  baseSwr: 0.04,
+  portfolioBalance: 1_000_000,
+};
+
 export const useScenario = create<ScenarioState>((set) => ({
   tool: "monte_carlo",
 
@@ -237,12 +303,20 @@ export const useScenario = create<ScenarioState>((set) => ({
   taxInputs: DEFAULT_TAX,
   rothInputs: DEFAULT_ROTH,
   sorInputs: DEFAULT_SOR,
+  rmdInputs: DEFAULT_RMD,
+  bracketInputs: DEFAULT_BRACKET,
+  socialSecurityInputs: DEFAULT_SOCIAL_SECURITY,
+  regimeSwrInputs: DEFAULT_REGIME_SWR,
 
   result: null,
   glidePathResult: null,
   taxResult: null,
   rothResult: null,
   sorResult: null,
+  rmdResult: null,
+  bracketResult: null,
+  socialSecurityResult: null,
+  regimeSwrResult: null,
 
   assumptions: null,
   loadingAssumptions: false,
@@ -277,11 +351,26 @@ export const useScenario = create<ScenarioState>((set) => ({
     set((s) => ({ rothInputs: { ...s.rothInputs, ...patch } })),
   setSorInputs: (patch) =>
     set((s) => ({ sorInputs: { ...s.sorInputs, ...patch } })),
+  setRmdInputs: (patch) =>
+    set((s) => ({ rmdInputs: { ...s.rmdInputs, ...patch } })),
+  setBracketInputs: (patch) =>
+    set((s) => ({ bracketInputs: { ...s.bracketInputs, ...patch } })),
+  setSocialSecurityInputs: (patch) =>
+    set((s) => ({
+      socialSecurityInputs: { ...s.socialSecurityInputs, ...patch },
+    })),
+  setRegimeSwrInputs: (patch) =>
+    set((s) => ({ regimeSwrInputs: { ...s.regimeSwrInputs, ...patch } })),
   setResult: (result) => set({ result }),
   setGlidePathResult: (glidePathResult) => set({ glidePathResult }),
   setTaxResult: (taxResult) => set({ taxResult }),
   setRothResult: (rothResult) => set({ rothResult }),
   setSorResult: (sorResult) => set({ sorResult }),
+  setRmdResult: (rmdResult) => set({ rmdResult }),
+  setBracketResult: (bracketResult) => set({ bracketResult }),
+  setSocialSecurityResult: (socialSecurityResult) =>
+    set({ socialSecurityResult }),
+  setRegimeSwrResult: (regimeSwrResult) => set({ regimeSwrResult }),
   setAssumptions: (assumptions) => set({ assumptions }),
   setLoadingAssumptions: (loadingAssumptions) => set({ loadingAssumptions }),
   setRunning: (running) => set({ running }),

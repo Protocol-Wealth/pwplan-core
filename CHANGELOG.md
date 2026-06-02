@@ -9,6 +9,28 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Four calculator tabs — RMD, Tax-bracket headroom / Roth-fill, Social Security
+  claiming, and Regime-conditioned SWR — wired end to end (contract → gateway →
+  UI).** The contract + gateway now cover all **12** engine tools, and the tab bar
+  exposes **9** (it wraps to a second row). Each is the established thin-shell
+  pattern (pure request-shape validation, no quant):
+  - **RMD** (`planning.rmd`): age + prior-year-end balance → RMD amount,
+    distribution period, effective rate; "no RMD before 73" when it doesn't apply.
+  - **Tax-bracket headroom / Roth-fill** (`planning.taxBracketHeadroom`): income +
+    filing status + target rate → marginal rate, room to the next bracket, room to
+    fill the target rate.
+  - **Social Security claiming** (`planning.socialSecurityClaiming`): PIA + FRA →
+    a benefit-by-claim-age bar chart (62–70) + breakeven ages.
+  - **Regime-conditioned SWR** (`planning.regimeConditionedSwr`): base rate +
+    balance → the **live** regime (classified server-side), multiplier, adjusted
+    rate, first-year withdrawal.
+  - Contract types + `PLANNING_TOOLS` entries (`rmd` / `tax_bracket_headroom` /
+    `social_security_claiming` / `regime_conditioned_swr`), gateway methods, store
+    inputs/results/setters (+ `PlanningTool` union), pure validators
+    (`validateRmd` / `validateBracketHeadroom` / `validateSocialSecurity` /
+    `validateRegimeSwr`), and `scenario-io` tolerance for the new tab pointers.
+  - +16 tests (140 total). No version bump (additive tool ids, contract `0.1.0`);
+    the engine tools are live at `nexusmcp.site` (nexus-core #101).
 - **Roth conversion + Sequence-of-returns-stress tools — wired end to end (contract
   → gateway → UI tabs).** Two new planning tools surfaced as their own tabs:
   - **Roth conversion** (`planning.rothConversion`): convert-now vs. leave-pre-tax

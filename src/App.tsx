@@ -16,6 +16,16 @@ import {
   SequenceStressForm,
   SequenceStressResults,
 } from "./components/SequenceStressTool";
+import { RmdForm, RmdResults } from "./components/RmdTool";
+import {
+  BracketHeadroomForm,
+  BracketHeadroomResults,
+} from "./components/BracketHeadroomTool";
+import {
+  SocialSecurityForm,
+  SocialSecurityResults,
+} from "./components/SocialSecurityTool";
+import { RegimeSwrForm, RegimeSwrResults } from "./components/RegimeSwrTool";
 import { ScenarioIO } from "./components/ScenarioIO";
 import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
@@ -26,19 +36,23 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "tax_withdrawal", label: "Tax withdrawal" },
   { value: "roth_conversion", label: "Roth conversion" },
   { value: "sequence_stress", label: "Sequence risk" },
+  { value: "rmd", label: "RMD" },
+  { value: "bracket_headroom", label: "Bracket room" },
+  { value: "social_security", label: "Social Security" },
+  { value: "regime_swr", label: "Regime SWR" },
 ];
 
 function ToolTabs() {
   const { tool, setTool } = useScenario();
   return (
-    <nav className="mb-8 flex gap-px border border-stone-300 bg-stone-200">
+    <nav className="mb-8 flex flex-wrap gap-px border border-stone-300 bg-stone-200">
       {TOOLS.map((t) => (
         <button
           key={t.value}
           type="button"
           onClick={() => setTool(t.value)}
           aria-current={tool === t.value ? "page" : undefined}
-          className={`flex-1 px-4 py-2 font-mono text-xs uppercase tracking-wider transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-900 ${
+          className={`flex-1 whitespace-nowrap px-4 py-2 font-mono text-xs uppercase tracking-wider transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-900 ${
             tool === t.value
               ? "bg-stone-900 text-stone-50"
               : "bg-white text-stone-600 hover:bg-stone-100"
@@ -80,6 +94,34 @@ function ActiveTool() {
         <>
           <SequenceStressForm />
           <SequenceStressResults />
+        </>
+      );
+    case "rmd":
+      return (
+        <>
+          <RmdForm />
+          <RmdResults />
+        </>
+      );
+    case "bracket_headroom":
+      return (
+        <>
+          <BracketHeadroomForm />
+          <BracketHeadroomResults />
+        </>
+      );
+    case "social_security":
+      return (
+        <>
+          <SocialSecurityForm />
+          <SocialSecurityResults />
+        </>
+      );
+    case "regime_swr":
+      return (
+        <>
+          <RegimeSwrForm />
+          <RegimeSwrResults />
         </>
       );
     case "monte_carlo":

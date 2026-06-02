@@ -319,6 +319,108 @@ export interface SequenceOfReturnsStressResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: rmd
+// ---------------------------------------------------------------------------
+
+/** Required Minimum Distribution on a traditional (pre-tax) account, via the IRS
+ *  Uniform Lifetime Table. Educational — not tax advice. */
+export interface RmdRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  age: number; // owner's age at year end
+  balance: number; // prior-year-end traditional balance
+}
+
+export interface RmdResult {
+  contractVersion: string;
+  rmdStartAge: number; // SECURE 2.0 start age (73)
+  applies: boolean; // false before the start age
+  distributionPeriod: number; // IRS Uniform Lifetime Table factor
+  rmdAmount: number; // 0 before the start age
+  effectiveRate: number; // rmdAmount / balance
+}
+
+// ---------------------------------------------------------------------------
+// Tool: tax_bracket_headroom (Roth-fill)
+// ---------------------------------------------------------------------------
+
+/** Marginal federal bracket + how much more ordinary income (e.g. a Roth
+ *  conversion) fits before the next rate, or up to a target rate. */
+export interface TaxBracketHeadroomRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  taxableIncome: number; // gross ordinary income (engine applies the std deduction)
+  filingStatus: FilingStatus;
+  /** Optional: also report room to fill up to this marginal rate ("Roth-fill"). */
+  targetRate?: number;
+}
+
+export interface TaxBracketHeadroomResult {
+  contractVersion: string;
+  taxableIncome: number; // after the standard deduction
+  marginalRate: number;
+  bracketFloor: number;
+  bracketCeiling: number | null; // null in the top bracket
+  roomToNextBracket: number | null; // null in the top bracket
+  nextRate: number | null; // null in the top bracket
+  targetRate?: number; // echoed when requested
+  roomToTargetRate?: number | null; // null when the target is at/above the top rate
+}
+
+// ---------------------------------------------------------------------------
+// Tool: social_security_claiming
+// ---------------------------------------------------------------------------
+
+export interface SocialSecurityClaimRow {
+  claimAge: number;
+  monthlyBenefit: number;
+  annualBenefit: number;
+  pctOfPia: number;
+}
+
+export interface SocialSecurityBreakeven {
+  earlier: number;
+  later: number;
+  breakevenAge: number | null;
+}
+
+/** Benefit at each claim age 62–70 from the Primary Insurance Amount (the FRA
+ *  benefit) + breakeven ages between strategies. Nominal; educational. */
+export interface SocialSecurityClaimingRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  piaMonthly: number; // monthly benefit at full retirement age
+  fraAge?: number; // full retirement age (default 67)
+}
+
+export interface SocialSecurityClaimingResult {
+  contractVersion: string;
+  fraAge: number;
+  pia: number;
+  byClaimAge: SocialSecurityClaimRow[];
+  breakevens: SocialSecurityBreakeven[];
+}
+
+// ---------------------------------------------------------------------------
+// Tool: regime_conditioned_swr
+// ---------------------------------------------------------------------------
+
+/** A base safe withdrawal rate adjusted for the LIVE macro regime (the engine
+ *  classifies the regime server-side; the client supplies only the base rate /
+ *  balance). Illustrative overlay — not advice. */
+export interface RegimeConditionedSwrRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  baseSwr?: number; // default 0.04
+  portfolioBalance?: number; // optional, for a first-year withdrawal figure
+}
+
+export interface RegimeConditionedSwrResult {
+  contractVersion: string;
+  regime: Regime; // the live regime the engine classified
+  baseSwr: number;
+  regimeMultiplier: number;
+  adjustedSwr: number;
+  firstYearWithdrawal?: number; // present when a balance was supplied
+}
+
+// ---------------------------------------------------------------------------
 // Tool registry — names MUST match nexus-core MCP tool ids exactly.
 // ---------------------------------------------------------------------------
 
@@ -331,6 +433,10 @@ export const PLANNING_TOOLS = {
   capitalMarketAssumptions: "capital_market_assumptions",
   rothConversion: "roth_conversion",
   sequenceOfReturnsStress: "sequence_of_returns_stress",
+  rmd: "rmd",
+  taxBracketHeadroom: "tax_bracket_headroom",
+  socialSecurityClaiming: "social_security_claiming",
+  regimeConditionedSwr: "regime_conditioned_swr",
 } as const;
 
 export type PlanningToolName =
