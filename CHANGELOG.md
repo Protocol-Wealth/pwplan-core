@@ -9,6 +9,18 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Portfolio X-ray tab — regime-aware structural diagnostics (13th tool, 12th
+  UI tab).** A new tab that runs `planning.portfolioXray` over the **shared Monte
+  Carlo portfolio** (asset classes + accounts; no separate inputs) and renders:
+  the **live regime**, severity-coded **findings** (concentration, tax-location
+  spread, growth posture, and the differentiator — **regime sensitivity** vs the
+  live regime), plus portfolio metrics (weighted return, weighted-avg vol,
+  portfolio λ, growth sleeve, concentration via Herfindahl/effective-holdings,
+  account mix). Contract `PortfolioXrayRequest`/`Result` + `XrayFinding` +
+  `portfolioXray` in `PLANNING_TOOLS`/gateway; store result slot; pure
+  `validatePortfolioXray` (reuses `isAllocationBalanced`); `scenario-io` tolerance.
+  +6 tests (157 total). No version bump (additive tool id). Engine side in
+  nexus-core PR #116; the tab works once that deploys.
 - **Correlation matrix + Regime return generator tabs — the last two contract
   tools now have UI; all 12 tools are surfaced (11 tabs + the CMA control).**
   - **Correlation** (`planning.correlationMatrix`): asset-class ids +

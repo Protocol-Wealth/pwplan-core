@@ -34,6 +34,10 @@ import {
   RegimeReturnForm,
   RegimeReturnResults,
 } from "./components/RegimeReturnTool";
+import {
+  PortfolioXrayForm,
+  PortfolioXrayResults,
+} from "./components/PortfolioXrayTool";
 import { ScenarioIO } from "./components/ScenarioIO";
 import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
@@ -50,6 +54,7 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "regime_swr", label: "Regime SWR" },
   { value: "correlation", label: "Correlation" },
   { value: "regime_paths", label: "Regime paths" },
+  { value: "portfolio_xray", label: "X-ray" },
 ];
 
 function ToolTabs() {
@@ -146,6 +151,13 @@ function ActiveTool() {
         <>
           <RegimeReturnForm />
           <RegimeReturnResults />
+        </>
+      );
+    case "portfolio_xray":
+      return (
+        <>
+          <PortfolioXrayForm />
+          <PortfolioXrayResults />
         </>
       );
     case "monte_carlo":

@@ -105,7 +105,7 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The contract covers **12 planning tools**, **all surfaced in the UI** — eleven as
+The contract covers **13 planning tools**, **all surfaced in the UI** — twelve as
 tabs plus the `capital_market_assumptions` control inside the Monte Carlo tab.
 
 | Tool                         | Purpose                                              | UI         |
@@ -121,6 +121,7 @@ tabs plus the `capital_market_assumptions` control inside the Monte Carlo tab.
 | `regime_conditioned_swr`     | Base SWR adjusted for the live macro regime          | tab        |
 | `correlation_matrix`         | Real-data return correlations (shrinkage optional)   | tab        |
 | `regime_return_generator`    | Live regime + transition matrix + path cache key     | tab        |
+| `portfolio_xray`             | Regime-aware structural diagnostics + findings       | tab        |
 | `capital_market_assumptions` | Real returns / vols / λ / correlations               | MC control |
 
 ## Stack

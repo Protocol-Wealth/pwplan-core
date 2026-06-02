@@ -51,6 +51,8 @@ import {
   type SocialSecurityClaimingResult,
   type RegimeConditionedSwrRequest,
   type RegimeConditionedSwrResult,
+  type PortfolioXrayRequest,
+  type PortfolioXrayResult,
   type PlanningToolName,
 } from "../contract/planning";
 import { assertNoPII, auditCall } from "./compliance";
@@ -250,6 +252,16 @@ export const planning = {
   ) =>
     callTool<RegimeConditionedSwrRequest, RegimeConditionedSwrResult>(
       PLANNING_TOOLS.regimeConditionedSwr,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  portfolioXray: (
+    req: Omit<PortfolioXrayRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<PortfolioXrayRequest, PortfolioXrayResult>(
+      PLANNING_TOOLS.portfolioXray,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),

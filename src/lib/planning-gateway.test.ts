@@ -34,6 +34,7 @@ import {
   type TaxBracketHeadroomRequest,
   type SocialSecurityClaimingRequest,
   type RegimeConditionedSwrRequest,
+  type PortfolioXrayRequest,
 } from "../contract/planning";
 
 // --- Minimal, well-typed requests (shape only; the engine does the math). ---
@@ -120,6 +121,19 @@ const ssReq: Omit<SocialSecurityClaimingRequest, "contractVersion"> = {
 const regimeSwrReq: Omit<RegimeConditionedSwrRequest, "contractVersion"> = {
   baseSwr: 0.04,
   portfolioBalance: 1_000_000,
+};
+
+const xrayReq: Omit<PortfolioXrayRequest, "contractVersion"> = {
+  assetClasses: [
+    {
+      id: "us_equity",
+      label: "US Equity",
+      expectedReturn: 0.07,
+      volatility: 0.16,
+      lambda: 0.35,
+    },
+  ],
+  accounts: [{ type: "roth", balance: 100_000, allocation: { us_equity: 1 } }],
 };
 
 /** Stub global fetch with a single canned response and return the spy. */
@@ -270,6 +284,10 @@ describe("planning gateway dispatch", () => {
       {
         id: "regime_conditioned_swr",
         call: () => planning.regimeConditionedSwr(regimeSwrReq),
+      },
+      {
+        id: "portfolio_xray",
+        call: () => planning.portfolioXray(xrayReq),
       },
     ];
 
@@ -481,6 +499,39 @@ describe("planning gateway dispatch", () => {
     );
     expect(result.currentRegime).toBe("crisis");
     expect(result.pathCacheKey).toBe("emf-v1-777");
+  });
+
+  it("dispatches portfolio_xray and returns regime + metrics + findings", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      regime: "crisis",
+      weightedExpectedReturn: 0.056,
+      weightedAvgVolatility: 0.1215,
+      portfolioLambda: 0.2625,
+      growthAllocation: 0.65,
+      concentration: {
+        maxWeight: 0.65,
+        maxWeightAsset: "us_equity",
+        herfindahl: 0.545,
+        effectiveHoldings: 1.83,
+      },
+      accountMix: { taxable: 0, traditional: 0, roth: 1 },
+      findings: [
+        {
+          id: "regime_sensitivity",
+          severity: "warn",
+          title: "Moderate",
+          detail: "λ",
+        },
+      ],
+    });
+    const result = await planning.portfolioXray(xrayReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/portfolio_xray",
+    );
+    expect(result.regime).toBe("crisis");
+    expect(result.concentration.maxWeightAsset).toBe("us_equity");
+    expect(result.findings[0].severity).toBe("warn");
   });
 
   it("defaults the active backend to nexus-mcp", () => {

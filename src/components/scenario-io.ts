@@ -136,6 +136,7 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "regime_swr",
   "correlation",
   "regime_paths",
+  "portfolio_xray",
 ];
 
 function parseAssetClass(v: unknown): AssetClass | null {

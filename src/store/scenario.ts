@@ -29,6 +29,7 @@ import type {
   RegimeConditionedSwrResult,
   CorrelationResult,
   RegimeReturnResult,
+  PortfolioXrayResult,
   TaxWithdrawalResult,
 } from "../contract/planning";
 
@@ -44,7 +45,8 @@ export type PlanningTool =
   | "social_security"
   | "regime_swr"
   | "correlation"
-  | "regime_paths";
+  | "regime_paths"
+  | "portfolio_xray";
 
 /** Glide-path shape, derived from the wire contract (no new wire type). */
 export type GlidePathShape = GlidePathRequest["shape"];
@@ -172,6 +174,7 @@ interface ScenarioState {
   regimeSwrResult: RegimeConditionedSwrResult | null;
   correlationResult: CorrelationResult | null;
   regimeGenResult: RegimeReturnResult | null;
+  xrayResult: PortfolioXrayResult | null;
 
   /** Live engine assumptions from capital_market_assumptions; null until loaded. */
   assumptions: MarketAssumptions | null;
@@ -211,6 +214,7 @@ interface ScenarioState {
   setRegimeSwrResult: (r: RegimeConditionedSwrResult | null) => void;
   setCorrelationResult: (r: CorrelationResult | null) => void;
   setRegimeGenResult: (r: RegimeReturnResult | null) => void;
+  setXrayResult: (r: PortfolioXrayResult | null) => void;
   setAssumptions: (a: MarketAssumptions | null) => void;
   setLoadingAssumptions: (b: boolean) => void;
   setRunning: (b: boolean) => void;
@@ -357,6 +361,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   regimeSwrResult: null,
   correlationResult: null,
   regimeGenResult: null,
+  xrayResult: null,
 
   assumptions: null,
   loadingAssumptions: false,
@@ -417,6 +422,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   setRegimeSwrResult: (regimeSwrResult) => set({ regimeSwrResult }),
   setCorrelationResult: (correlationResult) => set({ correlationResult }),
   setRegimeGenResult: (regimeGenResult) => set({ regimeGenResult }),
+  setXrayResult: (xrayResult) => set({ xrayResult }),
   setAssumptions: (assumptions) => set({ assumptions }),
   setLoadingAssumptions: (loadingAssumptions) => set({ loadingAssumptions }),
   setRunning: (running) => set({ running }),

@@ -9,6 +9,7 @@
  * in nexus-core.
  */
 
+import { isAllocationBalanced } from "./scenario-validation";
 import type { Account, AssetClass } from "../contract/planning";
 import type {
   BracketHeadroomInputs,
@@ -223,6 +224,39 @@ export function validateRegimeGen(
   }
   if (!Number.isInteger(g.paths) || g.paths < 1 || g.paths > 50_000) {
     issues.push("Paths must be a whole number in [1, 50000].");
+  }
+  return issues;
+}
+
+/**
+ * Reasons a portfolio X-ray cannot be dispatched. Analyzes the shared Monte
+ * Carlo portfolio (asset classes + accounts), so it validates the same shape:
+ * both present, allocations balanced, and only known asset-class ids referenced.
+ */
+export function validatePortfolioXray(
+  assetClasses: AssetClass[],
+  accounts: Account[],
+): string[] {
+  const issues: string[] = [];
+  if (assetClasses.length === 0) {
+    issues.push("Add asset classes in the Monte Carlo tab.");
+  }
+  if (accounts.length === 0) {
+    issues.push("Add accounts in the Monte Carlo tab.");
+    return issues;
+  }
+  const known = new Set(assetClasses.map((ac) => ac.id.trim()).filter(Boolean));
+  for (const acct of accounts) {
+    if (!isAllocationBalanced(acct)) {
+      issues.push("Each account's allocation must sum to 1.");
+      break;
+    }
+  }
+  for (const acct of accounts) {
+    if (Object.keys(acct.allocation).some((id) => !known.has(id))) {
+      issues.push("An account references an unknown asset class.");
+      break;
+    }
   }
   return issues;
 }

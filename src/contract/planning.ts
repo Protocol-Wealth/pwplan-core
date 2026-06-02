@@ -421,6 +421,46 @@ export interface RegimeConditionedSwrResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: portfolio_xray
+// ---------------------------------------------------------------------------
+
+export type XraySeverity = "info" | "warn" | "alert";
+
+export interface XrayFinding {
+  id: string;
+  severity: XraySeverity;
+  title: string;
+  detail: string;
+}
+
+/** Regime-aware structural diagnostics for a de-identified portfolio. Takes the
+ *  same shared portfolio as Monte Carlo (asset classes + accounts); the engine
+ *  classifies the LIVE regime server-side and conditions the findings on it. */
+export interface PortfolioXrayRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  assetClasses: AssetClass[];
+  accounts: Account[];
+}
+
+export interface PortfolioXrayResult {
+  contractVersion: string;
+  regime: Regime; // the live regime the findings are conditioned on
+  weightedExpectedReturn: number;
+  /** Weight-weighted average asset volatility (diversification-naive; an upper bound). */
+  weightedAvgVolatility: number;
+  portfolioLambda: number; // EMF regime sensitivity
+  growthAllocation: number; // weight in assets with vol >= ~12%
+  concentration: {
+    maxWeight: number;
+    maxWeightAsset: string;
+    herfindahl: number;
+    effectiveHoldings: number;
+  };
+  accountMix: { taxable: number; traditional: number; roth: number };
+  findings: XrayFinding[];
+}
+
+// ---------------------------------------------------------------------------
 // Tool registry — names MUST match nexus-core MCP tool ids exactly.
 // ---------------------------------------------------------------------------
 
@@ -437,6 +477,7 @@ export const PLANNING_TOOLS = {
   taxBracketHeadroom: "tax_bracket_headroom",
   socialSecurityClaiming: "social_security_claiming",
   regimeConditionedSwr: "regime_conditioned_swr",
+  portfolioXray: "portfolio_xray",
 } as const;
 
 export type PlanningToolName =

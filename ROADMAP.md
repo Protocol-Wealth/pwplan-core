@@ -69,8 +69,15 @@ on completion and note the version in CHANGELOG.md._
       `MatrixTable` (extracted from ScenarioForm); the Regime-paths tab surfaces
       the `pathCacheKey` for replay in a Monte Carlo run; +11 tests; both
       smoke-verified live. All 12 contract tools are now surfaced.)_
+- [x] Regime-aware Portfolio X-ray tab. _(done 2026-06-02: `PortfolioXrayTool`
+      analyzes the shared Monte Carlo portfolio → live regime + severity-coded
+      findings (concentration, tax-location, growth posture, regime sensitivity) +
+      metrics; engine side nexus-core #116. 13th tool, 12 UI tabs; +6 tests.)_
 - [ ] Theming to match the `-core` family visual language (needs a design
       reference — held for input).
+- [ ] Optional further calculators inspired by OSS finance apps (risk metrics,
+      FIRE/Coast, rebalance-to-target, dividend income) — see the feature-ideas
+      memo. Net-worth/holdings tracking stays OUT of scope (PII/production).
 
 ## Dependency on other repos (track, do not build here)
 

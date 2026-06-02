@@ -8,6 +8,7 @@ import {
   validateBracketHeadroom,
   validateCorrelation,
   validateGlidePath,
+  validatePortfolioXray,
   validateRegimeGen,
   validateRegimeSwr,
   validateRmd,
@@ -354,5 +355,65 @@ describe("validateRegimeGen", () => {
         assetClassesWithLambda,
       ),
     ).toContain("Horizon years must be a whole number in [1, 200].");
+  });
+});
+
+const xrayAssets: AssetClass[] = [
+  {
+    id: "us_equity",
+    label: "US Equity",
+    expectedReturn: 0.07,
+    volatility: 0.16,
+    lambda: 0.35,
+  },
+  {
+    id: "us_bonds",
+    label: "US Bonds",
+    expectedReturn: 0.03,
+    volatility: 0.05,
+    lambda: 0.1,
+  },
+];
+const xrayAccounts: Account[] = [
+  {
+    type: "traditional",
+    balance: 700_000,
+    allocation: { us_equity: 0.6, us_bonds: 0.4 },
+  },
+];
+
+describe("validatePortfolioXray", () => {
+  it("accepts a well-formed shared portfolio", () => {
+    expect(validatePortfolioXray(xrayAssets, xrayAccounts)).toEqual([]);
+  });
+  it("requires asset classes", () => {
+    expect(validatePortfolioXray([], xrayAccounts)).toContain(
+      "Add asset classes in the Monte Carlo tab.",
+    );
+  });
+  it("requires accounts", () => {
+    expect(validatePortfolioXray(xrayAssets, [])).toContain(
+      "Add accounts in the Monte Carlo tab.",
+    );
+  });
+  it("rejects an unbalanced allocation", () => {
+    const bad: Account[] = [
+      {
+        type: "roth",
+        balance: 100,
+        allocation: { us_equity: 0.5, us_bonds: 0.4 },
+      },
+    ];
+    expect(validatePortfolioXray(xrayAssets, bad)).toContain(
+      "Each account's allocation must sum to 1.",
+    );
+  });
+  it("rejects an unknown asset-class reference", () => {
+    const bad: Account[] = [
+      { type: "roth", balance: 100, allocation: { mystery: 1 } },
+    ];
+    expect(validatePortfolioXray(xrayAssets, bad)).toContain(
+      "An account references an unknown asset class.",
+    );
   });
 });
