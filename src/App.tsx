@@ -13,6 +13,10 @@ import {
   RothConversionResults,
 } from "./components/RothConversionTool";
 import {
+  RothIrmaaForm,
+  RothIrmaaResults,
+} from "./components/RothIrmaaPlannerTool";
+import {
   SequenceStressForm,
   SequenceStressResults,
 } from "./components/SequenceStressTool";
@@ -53,6 +57,7 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "glide_path", label: "Glide path" },
   { value: "tax_withdrawal", label: "Tax withdrawal" },
   { value: "roth_conversion", label: "Roth conversion" },
+  { value: "roth_irmaa", label: "Roth · IRMAA" },
   { value: "sequence_stress", label: "Sequence risk" },
   { value: "rmd", label: "RMD" },
   { value: "bracket_headroom", label: "Bracket room" },
@@ -111,6 +116,13 @@ function ActiveTool() {
         <>
           <RothConversionForm />
           <RothConversionResults />
+        </>
+      );
+    case "roth_irmaa":
+      return (
+        <>
+          <RothIrmaaForm />
+          <RothIrmaaResults />
         </>
       );
     case "sequence_stress":
