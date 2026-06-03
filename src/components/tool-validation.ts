@@ -22,6 +22,7 @@ import type {
   RiskMetricsInputs,
   RmdInputs,
   RothInputs,
+  RothIrmaaInputs,
   SocialSecurityInputs,
   SorInputs,
   TaxWithdrawalInputs,
@@ -95,6 +96,69 @@ export function validateRoth(r: RothInputs): string[] {
   if (r.retirementMarginalRate < 0 || r.retirementMarginalRate >= 1) {
     issues.push("Retirement marginal rate must be between 0 and 1.");
   }
+
+  return issues;
+}
+
+/** Reasons a composite Roth/IRMAA request cannot be dispatched, in display order.
+ *  Structural sanity only (the engine does the real validation + planning math). */
+export function validateRothIrmaa(r: RothIrmaaInputs): string[] {
+  const issues: string[] = [];
+
+  if (!Number.isInteger(r.taxYear) || r.taxYear < 2000 || r.taxYear > 2100) {
+    issues.push("Tax year must be a plausible year.");
+  }
+  if (!/^[A-Za-z]{2}$/.test(r.stateCode)) {
+    issues.push("State code must be two letters (e.g. PA).");
+  }
+  if (
+    !Number.isInteger(r.birthYearSelf) ||
+    r.birthYearSelf < 1900 ||
+    r.birthYearSelf > r.taxYear
+  ) {
+    issues.push(
+      "Self birth year must be a plausible year at/ before the tax year.",
+    );
+  }
+  if (r.filingStatus === "mfj") {
+    if (
+      !Number.isInteger(r.birthYearSpouse) ||
+      r.birthYearSpouse < 1900 ||
+      r.birthYearSpouse > r.taxYear
+    ) {
+      issues.push("Married-joint needs a plausible spouse birth year.");
+    }
+  }
+  if (
+    !Number.isInteger(r.conversionYears) ||
+    r.conversionYears < 1 ||
+    r.conversionYears > 5
+  ) {
+    issues.push("Conversion years must be a whole number from 1 to 5.");
+  }
+  if (r.tradIraAggregate <= 0) {
+    issues.push("Traditional IRA aggregate must be greater than zero.");
+  }
+  if (r.nondeductibleBasis < 0 || r.nondeductibleBasis > r.tradIraAggregate) {
+    issues.push("Nondeductible basis must be between 0 and the IRA aggregate.");
+  }
+  if (r.taxableLiquidity < 0)
+    issues.push("Taxable liquidity cannot be negative.");
+  if (r.qualifiedDividends > r.ordinaryDividends) {
+    issues.push("Qualified dividends cannot exceed ordinary dividends.");
+  }
+  if (
+    r.targetRule === "fill_to_rate" &&
+    (r.targetRate <= 0 || r.targetRate >= 1)
+  ) {
+    issues.push("Fill-to-rate needs a target rate between 0 and 1.");
+  }
+  if (r.targetRule === "fixed_amount" && r.fixedAmount <= 0) {
+    issues.push("Fixed amount must be greater than zero.");
+  }
+  if (r.irmaaInflation <= -1)
+    issues.push("IRMAA inflation must be greater than -1.");
+  if (r.irmaaBuffer < 0) issues.push("IRMAA buffer cannot be negative.");
 
   return issues;
 }

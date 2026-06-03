@@ -61,6 +61,10 @@ import {
   type RebalanceResult,
   type PlanningToolName,
 } from "../contract/planning";
+import type {
+  AnalyzeRothConversionRequest,
+  RothConversionAnalysis,
+} from "../contract/roth-conversion";
 import { assertNoPII, auditCall } from "./compliance";
 
 type Backend = "nexus-mcp" | "pw-api";
@@ -299,5 +303,56 @@ export const planning = {
       opts,
     ),
 };
+
+/**
+ * Composite Roth-conversion + IRMAA analysis. Uses the same PII-free,
+ * envelope-versioned transport as the per-tool calls, but the body carries a
+ * PlanningContract under `contract` (the case contract, v1.0.0) rather than a
+ * flat per-tool request. The engine fills reference tax/IRMAA tables when none
+ * are injected; the result's `snapshot` records which were used.
+ */
+export async function analyzeRothConversion(
+  req: AnalyzeRothConversionRequest,
+  opts: CallOptions = {},
+): Promise<RothConversionAnalysis> {
+  const safe = assertNoPII(req);
+  const auditId = await auditCall({
+    tool: "analyze_roth_conversion",
+    contractVersion: PLANNING_CONTRACT_VERSION,
+  });
+
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    "x-pw-audit-id": auditId,
+    "x-pw-contract-version": PLANNING_CONTRACT_VERSION,
+  };
+  if (opts.subjectRef) headers["x-pw-subject-ref"] = opts.subjectRef;
+
+  const path =
+    BACKEND === "nexus-mcp"
+      ? "/mcp/tools/analyze_roth_conversion"
+      : "/v1/planning/analyze_roth_conversion";
+  const res = await fetch(`${GATEWAY_URL}${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(safe),
+  });
+  if (!res.ok) {
+    throw new Error(`planning gateway ${res.status}: ${await res.text()}`);
+  }
+
+  const data = (await res.json()) as RothConversionAnalysis;
+  // The gateway echoes the per-tool envelope version (0.1.0) on every response.
+  if (
+    data.contractVersion &&
+    data.contractVersion !== PLANNING_CONTRACT_VERSION
+  ) {
+    throw new ContractMismatchError(
+      PLANNING_CONTRACT_VERSION,
+      data.contractVersion,
+    );
+  }
+  return data;
+}
 
 export const ACTIVE_BACKEND = BACKEND;

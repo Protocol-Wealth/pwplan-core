@@ -35,6 +35,11 @@ import type {
   RebalanceResult,
   TaxWithdrawalResult,
 } from "../contract/planning";
+import type {
+  ContractFilingStatus,
+  RothConversionAnalysis,
+  TargetRule,
+} from "../contract/roth-conversion";
 
 /** Which planning tool the UI is currently showing. */
 export type PlanningTool =
@@ -42,6 +47,7 @@ export type PlanningTool =
   | "glide_path"
   | "tax_withdrawal"
   | "roth_conversion"
+  | "roth_irmaa"
   | "sequence_stress"
   | "rmd"
   | "bracket_headroom"
@@ -96,6 +102,38 @@ export interface RothInputs {
   years: number;
   retirementMarginalRate: number;
   taxesPaidFromConversion: boolean;
+}
+
+/** Form state for the composite Roth/IRMAA planner. Maps to a PlanningContract
+ *  (case contract v1.0.0); `case_id` is generated opaquely at dispatch, never
+ *  collected here. */
+export interface RothIrmaaInputs {
+  taxYear: number;
+  filingStatus: ContractFilingStatus;
+  stateCode: string;
+  birthYearSelf: number;
+  birthYearSpouse: number;
+  medicareEnrolled: number;
+  /** 1..3 conversion years starting at taxYear. */
+  conversionYears: number;
+  targetRule: TargetRule;
+  targetRate: number;
+  fixedAmount: number;
+  // income (ex-conversion)
+  pension: number;
+  socialSecurityGross: number;
+  taxableInterest: number;
+  taxExemptInterest: number;
+  ordinaryDividends: number;
+  qualifiedDividends: number;
+  longTermGains: number;
+  // accounts
+  tradIraAggregate: number;
+  nondeductibleBasis: number;
+  taxableLiquidity: number;
+  // assumptions (snapshotted in the result)
+  irmaaInflation: number;
+  irmaaBuffer: number;
 }
 
 export interface SorInputs {
@@ -183,6 +221,7 @@ interface ScenarioState {
   glidePathInputs: GlidePathInputs;
   taxInputs: TaxWithdrawalInputs;
   rothInputs: RothInputs;
+  rothIrmaaInputs: RothIrmaaInputs;
   sorInputs: SorInputs;
   rmdInputs: RmdInputs;
   bracketInputs: BracketHeadroomInputs;
@@ -198,6 +237,7 @@ interface ScenarioState {
   glidePathResult: GlidePathResult | null;
   taxResult: TaxWithdrawalResult | null;
   rothResult: RothConversionResult | null;
+  rothIrmaaResult: RothConversionAnalysis | null;
   sorResult: SequenceOfReturnsStressResult | null;
   rmdResult: RmdResult | null;
   bracketResult: TaxBracketHeadroomResult | null;
@@ -230,6 +270,7 @@ interface ScenarioState {
   setGlidePathInputs: (patch: Partial<GlidePathInputs>) => void;
   setTaxInputs: (patch: Partial<TaxWithdrawalInputs>) => void;
   setRothInputs: (patch: Partial<RothInputs>) => void;
+  setRothIrmaaInputs: (patch: Partial<RothIrmaaInputs>) => void;
   setSorInputs: (patch: Partial<SorInputs>) => void;
   setRmdInputs: (patch: Partial<RmdInputs>) => void;
   setBracketInputs: (patch: Partial<BracketHeadroomInputs>) => void;
@@ -244,6 +285,7 @@ interface ScenarioState {
   setGlidePathResult: (r: GlidePathResult | null) => void;
   setTaxResult: (r: TaxWithdrawalResult | null) => void;
   setRothResult: (r: RothConversionResult | null) => void;
+  setRothIrmaaResult: (r: RothConversionAnalysis | null) => void;
   setSorResult: (r: SequenceOfReturnsStressResult | null) => void;
   setRmdResult: (r: RmdResult | null) => void;
   setBracketResult: (r: TaxBracketHeadroomResult | null) => void;
@@ -337,6 +379,32 @@ const DEFAULT_ROTH: RothInputs = {
   taxesPaidFromConversion: false,
 };
 
+const DEFAULT_ROTH_IRMAA: RothIrmaaInputs = {
+  // A ~60-something MFJ retiree converting over 2026 + 2027, IRMAA-constrained.
+  taxYear: 2026,
+  filingStatus: "mfj",
+  stateCode: "PA",
+  birthYearSelf: 1962,
+  birthYearSpouse: 1963,
+  medicareEnrolled: 2,
+  conversionYears: 2,
+  targetRule: "fill_to_irmaa_tier",
+  targetRate: 0.24,
+  fixedAmount: 100_000,
+  pension: 30_000,
+  socialSecurityGross: 48_000,
+  taxableInterest: 5_000,
+  taxExemptInterest: 8_000,
+  ordinaryDividends: 12_000,
+  qualifiedDividends: 9_000,
+  longTermGains: 10_000,
+  tradIraAggregate: 1_400_000,
+  nondeductibleBasis: 0,
+  taxableLiquidity: 250_000,
+  irmaaInflation: 0.03,
+  irmaaBuffer: 5_000,
+};
+
 const DEFAULT_SOR: SorInputs = {
   initialBalance: 1_000_000,
   annualSpend: 50_000,
@@ -404,6 +472,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   glidePathInputs: DEFAULT_GLIDE_PATH,
   taxInputs: DEFAULT_TAX,
   rothInputs: DEFAULT_ROTH,
+  rothIrmaaInputs: DEFAULT_ROTH_IRMAA,
   sorInputs: DEFAULT_SOR,
   rmdInputs: DEFAULT_RMD,
   bracketInputs: DEFAULT_BRACKET,
@@ -419,6 +488,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   glidePathResult: null,
   taxResult: null,
   rothResult: null,
+  rothIrmaaResult: null,
   sorResult: null,
   rmdResult: null,
   bracketResult: null,
@@ -462,6 +532,8 @@ export const useScenario = create<ScenarioState>((set) => ({
     set((s) => ({ taxInputs: { ...s.taxInputs, ...patch } })),
   setRothInputs: (patch) =>
     set((s) => ({ rothInputs: { ...s.rothInputs, ...patch } })),
+  setRothIrmaaInputs: (patch) =>
+    set((s) => ({ rothIrmaaInputs: { ...s.rothIrmaaInputs, ...patch } })),
   setSorInputs: (patch) =>
     set((s) => ({ sorInputs: { ...s.sorInputs, ...patch } })),
   setRmdInputs: (patch) =>
@@ -488,6 +560,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   setGlidePathResult: (glidePathResult) => set({ glidePathResult }),
   setTaxResult: (taxResult) => set({ taxResult }),
   setRothResult: (rothResult) => set({ rothResult }),
+  setRothIrmaaResult: (rothIrmaaResult) => set({ rothIrmaaResult }),
   setSorResult: (sorResult) => set({ sorResult }),
   setRmdResult: (rmdResult) => set({ rmdResult }),
   setBracketResult: (bracketResult) => set({ bracketResult }),

@@ -9,6 +9,24 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Roth · IRMAA planner tab — the composite multi-year analysis (PlanningContract
+  v1.0.0).** A new tab that sizes a Roth conversion for a ~60-something retiree
+  across multiple years when the binding constraint is **IRMAA (Medicare
+  surcharges), not the tax bracket**. Consumes the new case contract
+  (`src/contract/roth-conversion.ts`, a UI-side mirror of
+  `@protocolwealthos/planning-contract` / the nexus-core JSON-Schema), versioned
+  separately as `PLANNING_CASE_CONTRACT_VERSION = 1.0.0`. Renders, per year: the
+  recommended amount under fill-to-22% / fill-to-24% / just-under-the-IRMAA-tier
+  (with a "crosses IRMAA" flag), the IRMAA cliff cost if crossed, the incremental
+  federal + state tax, the NIIT and LTCG-stacking deltas, the breakeven rate, and
+  the binding constraint; plus the multi-year roll-up and the do-nothing RMD-drag
+  projection. The **projected-IRMAA-with-buffer assumption is shown as a prominent
+  fiduciary disclosure banner**, not fine print. New `analyzeRothConversion`
+  gateway method (PII-free, opaque `case_id` generated at dispatch), `validateRothIrmaa`
+  validator, store slice, and `RothIrmaaPlannerTool` form + results. Components are
+  contract-typed, so a breaking contract change is a compile error. Engine side in
+  nexus-core (`analyze_roth_conversion`); the tab works once that deploys. +12 tests.
+
 - **FIRE, Risk-metrics, and Rebalance tabs — three more tools (16 contract
   tools, 15 UI tabs).** Each adds a contract request/result pair, a
   `planning.*` gateway method, a store input + result slot, a pure validator,
