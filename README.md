@@ -1,5 +1,8 @@
 # pwplan-core
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Patent Pending](https://img.shields.io/badge/Patent-Pending-orange.svg)](https://patentcenter.uspto.gov/applications/64082241)
+[![OIN Member](https://img.shields.io/badge/OIN-Member-green.svg)](https://openinventionnetwork.com)
 [![GitHub stars](https://img.shields.io/github/stars/Protocol-Wealth/pwplan-core?style=social)](https://github.com/Protocol-Wealth/pwplan-core/stargazers)
 
 **Open-source, regime-adaptive financial planning — a privacy-first thin UI.**
