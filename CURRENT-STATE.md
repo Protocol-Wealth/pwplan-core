@@ -86,7 +86,7 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `docs/nexus-core-requirements.md` — the original consumer-side spec handed to nexus-core (the first 6 tools, enums, CORS/determinism). Historical: the engine has since grown to 12 tools; `src/contract/planning.ts` is the source of truth.
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.
 - CI: `.github/workflows/ci.yml` (7 jobs).
-- `LICENSE` (Apache-2.0), `NOTICE` (patent TODO), `README.md`, `CONTRIBUTING.md`.
+- `LICENSE` (Apache-2.0), `NOTICE` (patent #64/082,241), `README.md`, `CONTRIBUTING.md`.
 - Governance: `CLAUDE.md`, `CURRENT-STATE.md`, `CHANGELOG.md`, `ROADMAP.md`.
 
 ## Wired vs stubbed
@@ -111,7 +111,8 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   (`planning-gateway.test.ts`, fetch mocked). There is no automated test against
   the _live_ `nexusmcp.site` (deliberate — a flaky external engine must not gate
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
-- `NOTICE` patent application number is a placeholder (blocked on the maintainer).
+- `NOTICE` patent application number is USPTO #64/082,241 (PW-PROV-003, filed
+  2026-06-04; conversion deadline 2027-06-04).
 - **All 16 wire-contract tools are surfaced in the UI** — 15 tabs +
   `capital_market_assumptions` (the Monte Carlo "Load real market assumptions"
   control); no gateway-only tools. Plus a **16th tab — Roth · IRMAA** — for the
@@ -150,4 +151,5 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   Engine side nexus-core #117; smoke-verify on the next deploy.
 - **Theming** to the `-core` family visual language — _next up; needs a design
   reference (held for input)._
-- **NOTICE patent number** when issued.
+- **NOTICE patent number** — filed 2026-06-04 as USPTO #64/082,241 (PW-PROV-003
+  provisional); 12-month conversion deadline 2027-06-04.

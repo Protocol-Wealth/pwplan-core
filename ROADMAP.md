@@ -21,7 +21,9 @@ on completion and note the version in CHANGELOG.md._
       offline `planning-gateway.test.ts` mocks fetch and covers both error paths
       plus tool-id/path/header wiring and the pw-api seam, 9 tests; opt-in live
       round-trip in `scripts/smoke-nexus.mjs`, never in CI.)_
-- [ ] Fill the `NOTICE` patent application number (supplied by maintainer).
+- [x] Fill the `NOTICE` patent application number. _(done 2026-06-04: USPTO
+      #64/082,241 / PW-PROV-003 filed 2026-06-04 for pwplan-core/pw-planner;
+      12-month conversion deadline 2027-06-04.)_
 
 ### Out of scope here (private fork only)
 

@@ -7,6 +7,16 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Changed
+
+- **Defensive patent posture — application number filed + recorded.** `NOTICE`
+  now cites USPTO provisional **#64/082,241** (PW-PROV-003, filed 2026-06-04 for
+  the privacy-by-construction planning architecture — PII-free compute plane +
+  two-deployment gateway), replacing the prior TODO placeholder. 12-month
+  non-provisional / PCT conversion deadline 2027-06-04. Protocol Wealth's OIN 2.0
+  membership is executed. The `-core` patent family is now three provisionals:
+  pwos-core #64/034,215 + nexus-core #64/034,229 + pwplan-core #64/082,241.
+
 ### Added
 
 - **Case contract v1.1.0 (additive).** Mirror the nexus-core v1.1.0 bump in

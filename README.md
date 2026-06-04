@@ -142,8 +142,31 @@ exists now), [`CHANGELOG.md`](CHANGELOG.md) (history), and
 are how a stateless CLI keeps continuity across sessions. Start a session by
 reading CLAUDE.md.
 
+## Patent & IP
+
+**Patent Pending** — USPTO Application #64/082,241 (PW-PROV-003)
+
+- [Patent disclosure](https://protocolwealthllc.com/patent) · [USPTO Patent Center](https://patentcenter.uspto.gov/applications/64082241)
+- Applicant: Protocol Wealth, LLC
+- Inventor: Nicholas Rygiel
+- Filed: June 4, 2026
+- Status: Patent Pending (provisional; 12-month conversion deadline 2027-06-04)
+
+The architecture relied on by this project — a privacy-by-construction
+financial-planning system in which the planning compute plane never receives PII
+by construction (opaque subject references and non-identifying derived
+attributes), with a two-deployment gateway separating a public PII-free compute
+plane from a firm-side production plane — is filed **defensively** under
+Apache-2.0. The Apache-2.0 patent grant (Section 3) confers an automatic,
+perpetual, royalty-free patent license to all users, with a retaliation clause
+that terminates that grant for any party initiating patent litigation over the
+Work.
+
+**Open Invention Network (OIN) Member** — Protocol Wealth LLC is a member of the
+Open Invention Network (OIN). See [NOTICE](NOTICE) for the full posture.
+
 ## License
 
 Apache-2.0 with a defensive patent posture. See [LICENSE](LICENSE) and
-[NOTICE](NOTICE). Protocol Wealth is a member of the Open Invention Network.
-Leverage it freely alongside pwos-core and nexus-core.
+[NOTICE](NOTICE). Protocol Wealth LLC is a member of the Open Invention Network
+(OIN). Leverage it freely alongside pwos-core and nexus-core.
