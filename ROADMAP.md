@@ -76,6 +76,14 @@ on completion and note the version in CHANGELOG.md._
 - [x] FIRE/Coast, risk-metrics, and rebalance-to-target tabs. _(done 2026-06-02:
       `FireTool` / `RiskMetricsTool` / `RebalanceTool`; engine side nexus-core
       #117. 16 contract tools, 15 UI tabs; +16 tests.)_
+- [x] Roth · IRMAA composite-planner tab. _(done 2026-06-03: `RothIrmaaPlannerTool` + the case contract `src/contract/roth-conversion.ts`
+      (`PLANNING_CASE_CONTRACT_VERSION = 1.0.0`, mirror of
+      `@protocolwealthos/planning-contract`) + `analyzeRothConversion` + `validateRothIrmaa`;
+      per-year per-ceiling sizing (fill-to-22 / fill-to-24 / just-under-IRMAA), cliff
+      cost, fed+state tax, NIIT/LTCG deltas, breakeven, do-nothing RMD drag, with the
+      projected-IRMAA-with-buffer assumption shown as a fiduciary disclosure. 16th UI
+      tab; +12 tests. Engine side nexus-core `analyze_roth_conversion`; the tab works
+      once that deploys.)_
 - [ ] Theming to match the `-core` family visual language (needs a design
       reference — held for input).
 - [ ] Optional further calculators inspired by OSS finance apps (dividend income,
