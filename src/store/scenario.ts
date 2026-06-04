@@ -131,6 +131,7 @@ export interface RothIrmaaInputs {
   tradIraAggregate: number;
   nondeductibleBasis: number;
   taxableLiquidity: number;
+  employerPlanAggregate: number;
   // assumptions (snapshotted in the result)
   irmaaInflation: number;
   irmaaBuffer: number;
@@ -401,6 +402,7 @@ const DEFAULT_ROTH_IRMAA: RothIrmaaInputs = {
   tradIraAggregate: 1_400_000,
   nondeductibleBasis: 0,
   taxableLiquidity: 250_000,
+  employerPlanAggregate: 0,
   irmaaInflation: 0.03,
   irmaaBuffer: 5_000,
 };

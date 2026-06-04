@@ -11,9 +11,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const contractSrc = readFileSync(join(__dirname, "roth-conversion.ts"), "utf8");
 
 describe("roth-conversion case contract", () => {
-  it("exposes a semver case-contract version (1.0.0)", () => {
+  it("exposes a semver case-contract version (1.1.0)", () => {
     expect(PLANNING_CASE_CONTRACT_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
-    expect(PLANNING_CASE_CONTRACT_VERSION).toBe("1.0.0");
+    expect(PLANNING_CASE_CONTRACT_VERSION).toBe("1.1.0");
   });
 });
 
