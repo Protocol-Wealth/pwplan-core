@@ -48,8 +48,8 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
    of scope** (it would require PII / production data). Each new tool follows the
    established pattern: contract type → gateway method → store slice → pure
    validator → UI tab → tests → docs; engine side ships in nexus-core first.
-3. **`NOTICE` patent application number** — a placeholder; the maintainer supplies
-   the verified number (do not invent one).
+3. **`NOTICE` patent application number** — DONE: filed 2026-06-04 as USPTO
+   #64/082,241 (PW-PROV-003 provisional; conversion deadline 2027-06-04).
 
 ## Non-negotiable invariants (do not violate — see CLAUDE.md)
 

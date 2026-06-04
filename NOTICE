@@ -9,19 +9,23 @@ Licensed under the Apache License, Version 2.0 (the "License").
 ------------------------------------------------------------------------------
 Defensive patent posture
 ------------------------------------------------------------------------------
-Protocol Wealth pursues a defensive patent strategy. Architectures in the
-`-core` family — including the pwos-core multi-layer PII guard pipeline and the
-append-only audit hash chain (used by Protocol Wealth's private deployment, not
-shipped in this open-source repo) — are the subject of one or more United States
-patent applications and are published as Apache-2.0 prior art.
+Protocol Wealth pursues a defensive patent strategy. The architecture relied on
+by this project — a privacy-by-construction financial-planning system in which
+the planning compute plane never receives PII by construction (opaque subject
+references and non-identifying derived attributes), with a two-deployment
+gateway separating a public PII-free compute plane from a firm-side production
+plane — is the subject of a United States patent application and is published
+here as Apache-2.0 prior art.
 
-  USPTO Application No.: <PATENT_APP_NO>   # TODO(nrygiel): insert verified no.
+  USPTO Application No.: 64/082,241  (Provisional; Attorney Docket PW-PROV-003)
 
 The Apache-2.0 patent grant (Section 3) confers an automatic, perpetual,
 royalty-free patent license to all users, with a retaliation clause that
 terminates that grant for any party initiating patent litigation over the Work.
 
-Protocol Wealth is a member of the Open Invention Network (OIN).
+Protocol Wealth LLC is a member of the Open Invention Network (OIN).
+See https://openinventionnetwork.com for details, and the PATENTS file for the
+full non-assertion pledge.
 
 ------------------------------------------------------------------------------
 Third-party engine dependency

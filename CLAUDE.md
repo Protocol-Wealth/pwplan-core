@@ -99,8 +99,11 @@ PII / audit / pw-api work is out of scope here (private fork + pwos-core).
 
 ## Defensive patent
 
-`NOTICE` carries `<PATENT_APP_NO>` as a TODO. Do not invent a number; leave the
-placeholder until the verified application number is supplied by the maintainer.
+`NOTICE` cites USPTO provisional application **#64/082,241** (PW-PROV-003, filed
+2026-06-04) — the planning-domain member of the `-core` patent family alongside
+pwos-core #64/034,215 and nexus-core #64/034,229. 12-month non-provisional / PCT
+conversion deadline: **2027-06-04**. Do not alter the number; any change to the
+public patent posture is HITL Tier 2 (CCO review before publication).
 
 ## Pointers
 
