@@ -2,7 +2,7 @@
 // Copyright 2026 Protocol Wealth, LLC
 
 /**
- * Roth-conversion + IRMAA contract (PlanningContract v1.0.0) — UI-side mirror.
+ * Roth-conversion + IRMAA contract (PlanningContract v1.1.0) — UI-side mirror.
  * ----------------------------------------------------------------------------
  * The composite planning capability: size a Roth conversion for a ~60-something
  * retiree across multiple years when the binding constraint is IRMAA (Medicare
@@ -20,7 +20,7 @@
  * `case_id` (never identity-derived), birth YEARS not dates of birth, aggregated
  * balances. Enforced by roth-conversion.test.ts.
  *
- * This case contract (1.0.0) is distinct from the per-tool gateway envelope
+ * This case contract (1.1.0) is distinct from the per-tool gateway envelope
  * version (PLANNING_CONTRACT_VERSION = 0.1.0 in ./planning.ts) and versions on
  * its own timeline.
  */
