@@ -146,7 +146,7 @@ reading CLAUDE.md.
 
 **Patent Pending** — USPTO Application #64/082,241 (PW-PROV-003)
 
-- [Patent disclosure](https://protocolwealthllc.com/patent) · [USPTO Patent Center](https://patentcenter.uspto.gov/applications/64082241)
+- [Patent disclosure](https://protocolwealthllc.com/patent) · [USPTO Patent Center](https://patentcenter.uspto.gov/applications/64082241) · [Figure 1 — system drawing (PDF)](docs/PW-PROV-003-FIG1.pdf)
 - Applicant: Protocol Wealth, LLC
 - Inventor: Nicholas Rygiel
 - Filed: June 4, 2026
