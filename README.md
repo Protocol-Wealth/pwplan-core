@@ -1,5 +1,7 @@
 # pwplan-core
 
+[![GitHub stars](https://img.shields.io/github/stars/Protocol-Wealth/pwplan-core?style=social)](https://github.com/Protocol-Wealth/pwplan-core/stargazers)
+
 **Open-source, regime-adaptive financial planning — a privacy-first thin UI.**
 The third member of the `-core` family alongside
 [`pwos-core`](https://github.com/Protocol-Wealth) and
