@@ -1,6 +1,6 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-06-02 (added FIRE, Risk-metrics, and Rebalance tabs — 14th/15th/16th contract tools, 15 UI tabs; engine side nexus-core #117. Earlier this session: the regime-aware Portfolio X-ray tab (#116), Correlation + Regime-paths tabs (shared `MatrixTable`), the four calculator tabs, Roth + Sequence, the `0.1.0` additions, the CMA control, vitest-4 Dependabot fix. No version bump). Session-start snapshot; maintain it._
+_Last updated: 2026-06-03 (added the **Roth · IRMAA** composite-planner tab — 16th UI tab — consuming the new **case contract** `src/contract/roth-conversion.ts` (`PLANNING_CASE_CONTRACT_VERSION = 1.0.0`), distinct from the v0.1.0 wire contract; new `analyzeRothConversion` gateway method + `validateRothIrmaa` + `RothIrmaaPlannerTool`; +12 tests. Earlier 2026-06-02: FIRE/Risk-metrics/Rebalance tabs (nexus-core #117), the regime-aware Portfolio X-ray tab (#116), Correlation + Regime-paths tabs, the four calculator tabs, Roth + Sequence, the `0.1.0` additions, the CMA control. No version bump). Session-start snapshot; maintain it._
 
 ## Status
 
@@ -52,7 +52,8 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   `PortfolioXrayRequest`/`Result` (+ `XrayFinding`/`XraySeverity`), `FireRequest`/`Result`,
   `RiskMetricsRequest`/`Result`, `RebalanceRequest`/`Result` (+ `RebalanceRow`).
 - `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
-- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; one `planning.*` method per tool (16).
+- `src/contract/roth-conversion.ts` — the **case contract** `PLANNING_CASE_CONTRACT_VERSION = 1.0.0` (a mirror of `@protocolwealthos/planning-contract` / the nexus-core JSON-Schema): `PlanningContract` + `RothConversionAnalysis` (+ nested) for the composite Roth/IRMAA analysis. Distinct from the v0.1.0 wire contract; PII-free. `roth-conversion.test.ts` enforces semver + the PII-free invariant.
+- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; one `planning.*` method per wire tool (16) + the composite `analyzeRothConversion(req)` (POST `/mcp/tools/analyze_roth_conversion`; opaque `case_id` minted at dispatch).
 - `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 16 tools, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks, pw-api seam; 23 tests.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
 - `src/store/scenario.ts` — Zustand store: active `tool` (15 UI tools) + per-tool inputs (scenario / glidePath / tax / roth / sor / rmd / bracket / socialSecurity / regimeSwr / correlation / regimeGen / fire / riskMetrics / rebalance) + result slots (incl. `xrayResult` / `fireResult` / `riskMetricsResult` / `rebalanceResult`); the Portfolio X-ray + Rebalance reuse the shared scenario portfolio. Accounts/asset classes are one shared portfolio. Seeded valid defaults. Plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions — outside `ScenarioInputs` (re-fetched, not persisted; cleared on snapshot load).
@@ -111,12 +112,15 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   the _live_ `nexusmcp.site` (deliberate — a flaky external engine must not gate
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
 - `NOTICE` patent application number is a placeholder (blocked on the maintainer).
-- **All 16 contract tools are surfaced in the UI** — 15 tabs +
+- **All 16 wire-contract tools are surfaced in the UI** — 15 tabs +
   `capital_market_assumptions` (the Monte Carlo "Load real market assumptions"
-  control). No gateway-only tools.
+  control); no gateway-only tools. Plus a **16th tab — Roth · IRMAA** — for the
+  composite case contract (v1.0.0), which is not one of the 16 wire tools.
 - The FIRE / Risk-metrics / Rebalance tabs (#117), the Portfolio X-ray tab (#116),
-  and the #115 dependency batch are merged-but-not-yet-deployed; they work against
-  the live engine on the next `gcloud run deploy`.
+  and the **Roth · IRMAA tab** are merged-but-not-yet-deployed. The Roth · IRMAA
+  tab additionally needs the nexus-core composite tool (`analyze_roth_conversion`)
+  deployed to `nexusmcp.site` — until then it works only against a local
+  `nexus-core serve`.
 
 ## Next planned work
 
