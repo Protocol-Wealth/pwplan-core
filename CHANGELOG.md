@@ -9,6 +9,14 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Case contract v1.1.0 (additive).** Mirror the nexus-core v1.1.0 bump in
+  `src/contract/roth-conversion.ts` (`PLANNING_CASE_CONTRACT_VERSION` 1.0.0→1.1.0):
+  `accounts.employer_plan_aggregate` (401k/403b → RMD-drag pool), the structured
+  `YearAnalysis.aca` (`AcaInteraction`), and `DoNothingProjection` survivor +
+  employer-plan fields. The Roth · IRMAA tab gains an **Employer plan (401k/403b)**
+  input, and the do-nothing card now shows the surviving-spouse single-filing RMD
+  rate (joint→single compression) + the employer-plan pool. Backward-compatible.
+
 - **Roth · IRMAA planner tab — the composite multi-year analysis (PlanningContract
   v1.0.0).** A new tab that sizes a Roth conversion for a ~60-something retiree
   across multiple years when the binding constraint is **IRMAA (Medicare

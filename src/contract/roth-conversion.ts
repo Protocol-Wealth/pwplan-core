@@ -25,7 +25,7 @@
  * its own timeline.
  */
 
-export const PLANNING_CASE_CONTRACT_VERSION = "1.0.0" as const;
+export const PLANNING_CASE_CONTRACT_VERSION = "1.1.0" as const;
 
 // --- input: PlanningContract ----------------------------------------------
 
@@ -57,6 +57,9 @@ export interface AccountBalances {
   first_roth_year?: number | null;
   /** Cash OUTSIDE the IRA available to pay the conversion tax. */
   taxable_liquidity?: number;
+  /** Pre-tax employer-plan (401k/403b) balances (contract v1.1.0). Not directly
+   *  convertible (roll to an IRA first), but adds to the future RMD drag. */
+  employer_plan_aggregate?: number;
 }
 
 export interface ConversionIntent {
@@ -162,6 +165,19 @@ export type BindingConstraint =
   | "fixed_amount"
   | "none";
 
+/** ACA premium-tax-credit erosion from the conversion (contract v1.1.0); null on
+ *  `YearAnalysis.aca` unless an ACA situation is injected + someone is under 65 +
+ *  marketplace-enrolled. Flag-with-magnitude estimate, not a precise determination. */
+export interface AcaInteraction {
+  cliff_mode: string;
+  magi_pct_fpl_before: number;
+  magi_pct_fpl_after: number;
+  ptc_before: number;
+  ptc_after: number;
+  incremental_ptc_loss: number;
+  crosses_hard_cliff: boolean;
+}
+
 export interface YearAnalysis {
   year: number;
   ages: number[];
@@ -184,6 +200,8 @@ export interface YearAnalysis {
   state_tax: StateTax;
   liquidity: LiquidityGate;
   notes: string[];
+  /** ACA PTC erosion (contract v1.1.0); null unless an ACA situation is injected. */
+  aca?: AcaInteraction | null;
 }
 
 export interface DoNothingProjection {
@@ -195,6 +213,11 @@ export interface DoNothingProjection {
   first_year_rmd: number;
   first_year_rmd_marginal_rate: number;
   note: string;
+  /** Pre-tax employer-plan balance folded into the RMD-drag pool (contract v1.1.0). */
+  employer_plan_aggregate?: number;
+  /** Survivor-year compression (contract v1.1.0): the surviving-spouse single-filing
+   *  RMD marginal rate; null when already single/mfs. */
+  survivor_first_year_rmd_marginal_rate?: number | null;
 }
 
 export interface SequenceSummary {
@@ -221,7 +244,7 @@ export interface SnapshotMetadata {
 export interface RothConversionAnalysis {
   /** Envelope contract version echoed by the gateway (0.1.0). */
   contractVersion?: string;
-  /** Case contract version (1.0.0). */
+  /** Case contract version (1.1.0). */
   contract_version: string;
   engine_version: string;
   case_id: string;

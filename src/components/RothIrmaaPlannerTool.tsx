@@ -70,6 +70,7 @@ function buildContract(r: RothIrmaaInputs): PlanningContract {
       trad_ira_aggregate: r.tradIraAggregate,
       nondeductible_basis: r.nondeductibleBasis,
       taxable_liquidity: r.taxableLiquidity,
+      employer_plan_aggregate: r.employerPlanAggregate,
     },
     intent,
   };
@@ -271,6 +272,12 @@ export function RothIrmaaForm() {
           <NumberInput
             value={r.taxableLiquidity}
             onChange={(v) => setRothIrmaaInputs({ taxableLiquidity: v })}
+          />
+        </Field>
+        <Field label="Employer plan (401k/403b)">
+          <NumberInput
+            value={r.employerPlanAggregate}
+            onChange={(v) => setRothIrmaaInputs({ employerPlanAggregate: v })}
           />
         </Field>
       </Group>
@@ -522,6 +529,23 @@ function AnalysisPanel({ result }: { result: RothConversionAnalysis }) {
           <span className="font-semibold">{usd(dn.first_year_rmd)}</span> taxed
           around {pct(dn.first_year_rmd_marginal_rate)} — the drag the
           conversion window relieves.
+          {dn.employer_plan_aggregate ? (
+            <>
+              {" "}
+              Pool includes {usd(dn.employer_plan_aggregate)} of employer-plan
+              money.
+            </>
+          ) : null}
+          {dn.survivor_first_year_rmd_marginal_rate != null &&
+          dn.survivor_first_year_rmd_marginal_rate >
+            dn.first_year_rmd_marginal_rate ? (
+            <>
+              {" "}
+              If the surviving spouse later files single, that RMD lands near{" "}
+              {pct(dn.survivor_first_year_rmd_marginal_rate)} — the joint→single
+              compression.
+            </>
+          ) : null}
         </p>
       </div>
 
