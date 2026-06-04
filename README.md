@@ -145,6 +145,9 @@ reading CLAUDE.md.
 ## Patent & IP
 
 **Patent Pending** — USPTO Application #64/082,241 (PW-PROV-003)
+"Privacy-by-Construction Financial Planning System with PII-Free Compute Plane,
+Opaque Subject References, and Regime-Adaptive Projection for Regulated Financial
+Advisory Services"
 
 - [Patent disclosure](https://protocolwealthllc.com/patent) · [USPTO Patent Center](https://patentcenter.uspto.gov/applications/64082241) · [Figure 1 — system drawing (PDF)](docs/PW-PROV-003-FIG1.pdf)
 - Applicant: Protocol Wealth, LLC
@@ -155,8 +158,8 @@ reading CLAUDE.md.
 The architecture relied on by this project — a privacy-by-construction
 financial-planning system in which the planning compute plane never receives PII
 by construction (opaque subject references and non-identifying derived
-attributes), with a two-deployment gateway separating a public PII-free compute
-plane from a firm-side production plane — is filed **defensively** under
+attributes), with regime-adaptive projection, separating a public PII-free
+compute plane from a firm-side production plane — is filed **defensively** under
 Apache-2.0. The Apache-2.0 patent grant (Section 3) confers an automatic,
 perpetual, royalty-free patent license to all users, with a retaliation clause
 that terminates that grant for any party initiating patent litigation over the
