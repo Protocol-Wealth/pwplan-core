@@ -19,6 +19,27 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Two new planning tools — `optimize_allocation` + `build_planning_report`
+  (wire contract 0.1.0, additive).** Both already exist server-side in
+  nexus-core; this is the consumer-side wiring. `optimize_allocation` returns
+  mean-variance optimal weights over the engine's real-data universe: a risk
+  profile (conservative…aggressive) and/or explicit objective (max_sharpe,
+  min_volatility, max_quadratic_utility, efficient_return, efficient_risk),
+  optional asset-class subset, long-only weight bounds, and a `regimeAware`
+  toggle that lets the live EMF regime select the objective; the result panel
+  shows the per-asset weights (bar table), the expected return / volatility /
+  Sharpe frontier point, and the regime + regimeNote. `build_planning_report`
+  assembles de-identified sections (`kind` + optional title + findings) into an
+  ordered report; the editor adds/removes sections and the panel renders the
+  ordered sections, findings, and the engine's assumptions list. Adds the
+  contract request/result types + two `PLANNING_TOOLS` ids, the two `planning.*`
+  gateway methods, store inputs/result slots/setters, two structural validators
+  (`validateOptimizeAllocation` + `validateBuildPlanningReport`: weight-bound and
+  section-kind sanity, no quant logic), two UI tabs (`OptimizeAllocationTool` +
+  `BuildPlanningReportTool`), and gateway + validation tests (+11). PII-free
+  invariant held (no identity fields). No version bump (additive). **18
+  wire-contract tools, 17 UI tabs.**
+
 - **Case contract v1.1.0 (additive).** Mirror the nexus-core v1.1.0 bump in
   `src/contract/roth-conversion.ts` (`PLANNING_CASE_CONTRACT_VERSION` 1.0.0→1.1.0):
   `accounts.employer_plan_aggregate` (401k/403b → RMD-drag pool), the structured
