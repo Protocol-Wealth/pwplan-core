@@ -48,6 +48,14 @@ import {
   RiskMetricsResults,
 } from "./components/RiskMetricsTool";
 import { RebalanceForm, RebalanceResults } from "./components/RebalanceTool";
+import {
+  OptimizeAllocationForm,
+  OptimizeAllocationResults,
+} from "./components/OptimizeAllocationTool";
+import {
+  BuildPlanningReportForm,
+  BuildPlanningReportResults,
+} from "./components/BuildPlanningReportTool";
 import { ScenarioIO } from "./components/ScenarioIO";
 import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
@@ -69,6 +77,8 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "fire", label: "FIRE" },
   { value: "risk_metrics", label: "Risk metrics" },
   { value: "rebalance", label: "Rebalance" },
+  { value: "optimize_allocation", label: "Optimize" },
+  { value: "build_report", label: "Report" },
 ];
 
 function ToolTabs() {
@@ -200,6 +210,20 @@ function ActiveTool() {
         <>
           <RebalanceForm />
           <RebalanceResults />
+        </>
+      );
+    case "optimize_allocation":
+      return (
+        <>
+          <OptimizeAllocationForm />
+          <OptimizeAllocationResults />
+        </>
+      );
+    case "build_report":
+      return (
+        <>
+          <BuildPlanningReportForm />
+          <BuildPlanningReportResults />
         </>
       );
     case "monte_carlo":

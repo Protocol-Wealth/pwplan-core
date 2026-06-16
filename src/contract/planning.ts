@@ -545,6 +545,127 @@ export interface RebalanceResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: optimize_allocation
+// ---------------------------------------------------------------------------
+
+/** Risk-tolerance band; the engine maps it to an objective / risk-aversion when
+ *  none is given explicitly. */
+export type RiskProfile =
+  | "conservative"
+  | "moderate_conservative"
+  | "moderate"
+  | "moderate_aggressive"
+  | "aggressive";
+
+/** Mean-variance optimization objective (the engine's PyPortfolioOpt-style set). */
+export type AllocationObjective =
+  | "max_sharpe"
+  | "min_volatility"
+  | "max_quadratic_utility"
+  | "efficient_return"
+  | "efficient_risk";
+
+/** Mean-variance optimal weights for the (real-data) asset universe. The client
+ *  picks a risk profile and/or an explicit objective; the engine sources the
+ *  expected returns / covariance and solves. `regimeAware` lets the live EMF
+ *  regime select the objective. Illustrative — not advice. */
+export interface OptimizeAllocationRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  /** Optional universe filter. Omit ⇒ the engine's full default asset universe;
+   *  when provided, the engine optimizes over exactly those ids. */
+  assetClassIds?: string[];
+  riskProfile?: RiskProfile;
+  objective?: AllocationObjective;
+  /** Risk-aversion for max_quadratic_utility (higher ⇒ more conservative). */
+  riskAversion?: number;
+  /** Target annual return for efficient_return, decimal. */
+  targetReturn?: number;
+  /** Target annual volatility for efficient_risk, decimal. */
+  targetVolatility?: number;
+  /** Per-asset [min, max] weight bounds; defaults to long-only [0, 1]. */
+  weightBounds?: [number, number];
+  returnModel?: "house_view" | "historical";
+  /** Let the live EMF regime select the objective (overrides a default). */
+  regimeAware?: boolean;
+  riskFreeRate?: number; // annual, decimal
+  lookbackDays?: number; // covariance estimation window
+  asOf?: string; // ISO date; omit ⇒ latest
+}
+
+export interface AllocationAssetClass {
+  id: string;
+  label: string;
+  expectedReturn: number; // annualized, decimal
+  volatility: number; // annualized stdev, decimal
+  weight: number; // optimal weight, decimal
+}
+
+export interface OptimizeAllocationResult {
+  contractVersion: string;
+  /** asset-class id → optimal weight. */
+  weights: Record<string, number>;
+  assetClasses: AllocationAssetClass[];
+  objective: AllocationObjective;
+  /** How the objective was chosen. */
+  objectiveSource: "explicit" | "riskProfile" | "regime" | "default";
+  returnModel: "house_view" | "historical";
+  expectedReturn: number | null;
+  expectedVolatility: number | null;
+  sharpeRatio: number | null;
+  riskFreeRate: number;
+  weightBounds: [number, number];
+  regime: string; // the live regime at solve time (provenance / regimeAware)
+  asOf: string; // ISO date of the assumptions used
+  riskProfile?: RiskProfile;
+  riskAversion?: number;
+  regimeNote?: string; // present when the regime informed the objective
+}
+
+// ---------------------------------------------------------------------------
+// Tool: build_planning_report
+// ---------------------------------------------------------------------------
+
+/** One requested report section. `kind` is a free string the engine recognizes
+ *  (e.g. "summary", "allocation"); `data` carries de-identified planning numbers
+ *  to render. PII-free by construction (see the file-level invariant). */
+export interface PlanningReportSectionInput {
+  kind: string;
+  title?: string;
+  data?: Record<string, unknown>;
+  findings?: string[];
+  assumptions?: string[];
+}
+
+/** Assemble the supplied de-identified sections into an ordered report; the
+ *  engine normalizes titles, collates findings, and (optionally) annotates the
+ *  live regime. Pure assembly — no quant logic. Educational, not advice. */
+export interface BuildPlanningReportRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  sections: PlanningReportSectionInput[];
+  title?: string;
+  includeRegime?: boolean;
+}
+
+export interface PlanningReportSection {
+  kind: string;
+  title: string;
+  findings: string[];
+  data: Record<string, unknown>;
+}
+
+export interface PlanningReport {
+  title: string;
+  sections: PlanningReportSection[];
+  assumptions: string[];
+  regime?: string; // present when includeRegime requested it
+}
+
+export interface BuildPlanningReportResult {
+  contractVersion: string;
+  report: PlanningReport;
+}
+
+// ---------------------------------------------------------------------------
 // Tool registry — names MUST match nexus-core MCP tool ids exactly.
 // ---------------------------------------------------------------------------
 
@@ -565,6 +686,8 @@ export const PLANNING_TOOLS = {
   fire: "fire",
   riskMetrics: "risk_metrics",
   rebalance: "rebalance",
+  optimizeAllocation: "optimize_allocation",
+  buildPlanningReport: "build_planning_report",
 } as const;
 
 export type PlanningToolName =

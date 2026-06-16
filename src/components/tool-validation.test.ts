@@ -6,9 +6,11 @@ import {
   parseIdList,
   parseReturns,
   validateBracketHeadroom,
+  validateBuildPlanningReport,
   validateCorrelation,
   validateFire,
   validateGlidePath,
+  validateOptimizeAllocation,
   validatePortfolioXray,
   validateRebalance,
   validateRegimeGen,
@@ -22,9 +24,11 @@ import {
 } from "./tool-validation";
 import type {
   BracketHeadroomInputs,
+  BuildPlanningReportInputs,
   CorrelationInputs,
   FireInputs,
   GlidePathInputs,
+  OptimizeAllocationInputs,
   RebalanceInputs,
   RegimeGenInputs,
   RegimeSwrInputs,
@@ -517,5 +521,87 @@ describe("validateRebalance", () => {
     expect(validateRebalance(balanced, [], [])).toContain(
       "Add accounts in the Monte Carlo tab.",
     );
+  });
+});
+
+const validOptimize: OptimizeAllocationInputs = {
+  riskProfile: "moderate",
+  objective: "",
+  assetClassIdsText: "",
+  weightMin: 0,
+  weightMax: 1,
+  returnModel: "house_view",
+  regimeAware: true,
+  riskFreeRate: 0.02,
+};
+
+describe("validateOptimizeAllocation", () => {
+  it("accepts the full-universe default (no id subset)", () => {
+    expect(validateOptimizeAllocation(validOptimize)).toEqual([]);
+  });
+  it("accepts a subset of at least two distinct ids", () => {
+    expect(
+      validateOptimizeAllocation({
+        ...validOptimize,
+        assetClassIdsText: "us_equity, us_bonds",
+      }),
+    ).toEqual([]);
+  });
+  it("rejects a single-id subset", () => {
+    expect(
+      validateOptimizeAllocation({
+        ...validOptimize,
+        assetClassIdsText: "us_equity",
+      }),
+    ).toContain("Optimize over the full universe, or name at least two ids.");
+  });
+  it("rejects duplicate ids", () => {
+    expect(
+      validateOptimizeAllocation({
+        ...validOptimize,
+        assetClassIdsText: "us_equity, us_equity",
+      }),
+    ).toContain("Asset-class ids must be distinct.");
+  });
+  it("rejects weight bounds outside 0..1", () => {
+    expect(
+      validateOptimizeAllocation({ ...validOptimize, weightMax: 1.5 }),
+    ).toContain("Weight bounds must each be between 0 and 1.");
+  });
+  it("rejects min > max", () => {
+    expect(
+      validateOptimizeAllocation({
+        ...validOptimize,
+        weightMin: 0.8,
+        weightMax: 0.2,
+      }),
+    ).toContain("Minimum weight bound cannot exceed the maximum.");
+  });
+});
+
+const validReport: BuildPlanningReportInputs = {
+  title: "Planning summary",
+  includeRegime: true,
+  sections: [
+    { kind: "summary", title: "Overview", findingsText: "funds the horizon" },
+  ],
+};
+
+describe("validateBuildPlanningReport", () => {
+  it("accepts a well-formed report", () => {
+    expect(validateBuildPlanningReport(validReport)).toEqual([]);
+  });
+  it("requires at least one section", () => {
+    expect(
+      validateBuildPlanningReport({ ...validReport, sections: [] }),
+    ).toContain("Add at least one section.");
+  });
+  it("requires a non-empty kind on every section", () => {
+    expect(
+      validateBuildPlanningReport({
+        ...validReport,
+        sections: [{ kind: "  ", title: "x", findingsText: "" }],
+      }),
+    ).toContain("Every section needs a kind.");
   });
 });

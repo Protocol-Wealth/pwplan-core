@@ -13,9 +13,11 @@ import { isAllocationBalanced } from "./scenario-validation";
 import type { Account, AssetClass } from "../contract/planning";
 import type {
   BracketHeadroomInputs,
+  BuildPlanningReportInputs,
   CorrelationInputs,
   FireInputs,
   GlidePathInputs,
+  OptimizeAllocationInputs,
   RebalanceInputs,
   RegimeGenInputs,
   RegimeSwrInputs,
@@ -407,6 +409,51 @@ export function validateRebalance(
     if (Math.abs(sum - 1) > 1e-6) {
       issues.push("Target weights must sum to 1.");
     }
+  }
+  return issues;
+}
+
+/**
+ * Reasons an optimize-allocation request cannot be dispatched, in display order.
+ * Structural sanity only — the engine sources the returns/covariance and solves.
+ * An empty id list ⇒ the engine's full default universe (valid); a non-empty list
+ * must hold at least two distinct ids.
+ */
+export function validateOptimizeAllocation(
+  o: OptimizeAllocationInputs,
+): string[] {
+  const issues: string[] = [];
+  const ids = parseIdList(o.assetClassIdsText);
+  if (ids.length === 1) {
+    issues.push("Optimize over the full universe, or name at least two ids.");
+  } else if (ids.length >= 2 && new Set(ids).size !== ids.length) {
+    issues.push("Asset-class ids must be distinct.");
+  }
+  if (!isWeight(o.weightMin) || !isWeight(o.weightMax)) {
+    issues.push("Weight bounds must each be between 0 and 1.");
+  } else if (o.weightMin > o.weightMax) {
+    issues.push("Minimum weight bound cannot exceed the maximum.");
+  }
+  if (!Number.isFinite(o.riskFreeRate) || o.riskFreeRate <= -1) {
+    issues.push("Risk-free rate must be a number greater than -1.");
+  }
+  return issues;
+}
+
+/**
+ * Reasons a build-planning-report request cannot be dispatched, in display order.
+ * Structural only: at least one section, each with a non-empty `kind`.
+ */
+export function validateBuildPlanningReport(
+  r: BuildPlanningReportInputs,
+): string[] {
+  const issues: string[] = [];
+  if (r.sections.length === 0) {
+    issues.push("Add at least one section.");
+    return issues;
+  }
+  if (r.sections.some((s) => s.kind.trim().length === 0)) {
+    issues.push("Every section needs a kind.");
   }
   return issues;
 }

@@ -38,6 +38,8 @@ import {
   type FireRequest,
   type RiskMetricsRequest,
   type RebalanceRequest,
+  type OptimizeAllocationRequest,
+  type BuildPlanningReportRequest,
 } from "../contract/planning";
 
 // --- Minimal, well-typed requests (shape only; the engine does the math). ---
@@ -178,6 +180,23 @@ const rebalanceReq: Omit<RebalanceRequest, "contractVersion"> = {
     },
   ],
   targetWeights: { us_equity: 0.6, us_bonds: 0.4 },
+};
+
+const optimizeReq: Omit<OptimizeAllocationRequest, "contractVersion"> = {
+  riskProfile: "moderate",
+  weightBounds: [0, 1],
+  returnModel: "house_view",
+  regimeAware: true,
+  riskFreeRate: 0.02,
+};
+
+const reportReq: Omit<BuildPlanningReportRequest, "contractVersion"> = {
+  title: "Planning summary",
+  includeRegime: true,
+  sections: [
+    { kind: "summary", title: "Overview", findings: ["funds the horizon"] },
+    { kind: "allocation" },
+  ],
 };
 
 /** Stub global fetch with a single canned response and return the spy. */
@@ -336,6 +355,14 @@ describe("planning gateway dispatch", () => {
       { id: "fire", call: () => planning.fire(fireReq) },
       { id: "risk_metrics", call: () => planning.riskMetrics(riskReq) },
       { id: "rebalance", call: () => planning.rebalance(rebalanceReq) },
+      {
+        id: "optimize_allocation",
+        call: () => planning.optimizeAllocation(optimizeReq),
+      },
+      {
+        id: "build_planning_report",
+        call: () => planning.buildPlanningReport(reportReq),
+      },
     ];
 
     for (const { id, call } of dispatches) {
@@ -656,6 +683,85 @@ describe("planning gateway dispatch", () => {
     expect(sent.targetWeights).toEqual({ us_equity: 0.6, us_bonds: 0.4 });
     expect(result.turnover).toBe(10_000);
     expect(result.perAsset[0].tradeAmount).toBe(-10_000);
+  });
+
+  it("dispatches optimize_allocation and returns the weights + frontier point", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      weights: { us_equity: 0.6, us_bonds: 0.4 },
+      assetClasses: [
+        {
+          id: "us_equity",
+          label: "US Equity",
+          expectedReturn: 0.07,
+          volatility: 0.16,
+          weight: 0.6,
+        },
+        {
+          id: "us_bonds",
+          label: "US Bonds",
+          expectedReturn: 0.03,
+          volatility: 0.05,
+          weight: 0.4,
+        },
+      ],
+      objective: "max_sharpe",
+      objectiveSource: "regime",
+      returnModel: "house_view",
+      expectedReturn: 0.054,
+      expectedVolatility: 0.102,
+      sharpeRatio: 0.33,
+      riskFreeRate: 0.02,
+      weightBounds: [0, 1],
+      regime: "expansion",
+      asOf: "2026-06-14",
+      riskProfile: "moderate",
+      regimeNote: "expansion favors max_sharpe",
+    });
+    const result = await planning.optimizeAllocation(optimizeReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/optimize_allocation",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.contractVersion).toBe(PLANNING_CONTRACT_VERSION);
+    expect(sent.riskProfile).toBe("moderate");
+    expect(sent.weightBounds).toEqual([0, 1]);
+    expect(sent.regimeAware).toBe(true);
+    expect(result.weights.us_equity).toBe(0.6);
+    expect(result.objectiveSource).toBe("regime");
+    expect(result.sharpeRatio).toBe(0.33);
+    expect(result.regimeNote).toBe("expansion favors max_sharpe");
+  });
+
+  it("dispatches build_planning_report and returns the ordered report", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      report: {
+        title: "Planning summary",
+        sections: [
+          {
+            kind: "summary",
+            title: "Overview",
+            findings: ["funds the horizon"],
+            data: {},
+          },
+          { kind: "allocation", title: "Allocation", findings: [], data: {} },
+        ],
+        assumptions: ["EMF regime: expansion"],
+        regime: "expansion",
+      },
+    });
+    const result = await planning.buildPlanningReport(reportReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/build_planning_report",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.contractVersion).toBe(PLANNING_CONTRACT_VERSION);
+    expect(sent.sections).toHaveLength(2);
+    expect(sent.sections[0].kind).toBe("summary");
+    expect(result.report.sections).toHaveLength(2);
+    expect(result.report.regime).toBe("expansion");
+    expect(result.report.assumptions[0]).toBe("EMF regime: expansion");
   });
 
   it("defaults the active backend to nexus-mcp", () => {

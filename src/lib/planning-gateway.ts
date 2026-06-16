@@ -59,6 +59,10 @@ import {
   type RiskMetricsResult,
   type RebalanceRequest,
   type RebalanceResult,
+  type OptimizeAllocationRequest,
+  type OptimizeAllocationResult,
+  type BuildPlanningReportRequest,
+  type BuildPlanningReportResult,
   type PlanningToolName,
 } from "../contract/planning";
 import type {
@@ -299,6 +303,26 @@ export const planning = {
   ) =>
     callTool<RebalanceRequest, RebalanceResult>(
       PLANNING_TOOLS.rebalance,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  optimizeAllocation: (
+    req: Omit<OptimizeAllocationRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<OptimizeAllocationRequest, OptimizeAllocationResult>(
+      PLANNING_TOOLS.optimizeAllocation,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  buildPlanningReport: (
+    req: Omit<BuildPlanningReportRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<BuildPlanningReportRequest, BuildPlanningReportResult>(
+      PLANNING_TOOLS.buildPlanningReport,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),

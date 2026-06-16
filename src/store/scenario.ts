@@ -33,6 +33,10 @@ import type {
   FireResult,
   RiskMetricsResult,
   RebalanceResult,
+  OptimizeAllocationResult,
+  BuildPlanningReportResult,
+  RiskProfile,
+  AllocationObjective,
   TaxWithdrawalResult,
 } from "../contract/planning";
 import type {
@@ -58,7 +62,9 @@ export type PlanningTool =
   | "portfolio_xray"
   | "fire"
   | "risk_metrics"
-  | "rebalance";
+  | "rebalance"
+  | "optimize_allocation"
+  | "build_report";
 
 /** Glide-path shape, derived from the wire contract (no new wire type). */
 export type GlidePathShape = GlidePathRequest["shape"];
@@ -201,6 +207,33 @@ export interface RebalanceInputs {
   targetWeights: Record<string, number>;
 }
 
+export interface OptimizeAllocationInputs {
+  riskProfile: RiskProfile;
+  /** "" ⇒ let the risk profile / regime choose; otherwise overrides it. */
+  objective: AllocationObjective | "";
+  /** Comma/space-separated asset-class id subset; "" ⇒ the full default universe. */
+  assetClassIdsText: string;
+  weightMin: number;
+  weightMax: number;
+  returnModel: "house_view" | "historical";
+  regimeAware: boolean;
+  riskFreeRate: number;
+}
+
+/** A single de-identified report section row in the editor. `findingsText` is
+ *  newline-separated and split at dispatch. */
+export interface ReportSectionDraft {
+  kind: string;
+  title: string;
+  findingsText: string;
+}
+
+export interface BuildPlanningReportInputs {
+  title: string;
+  includeRegime: boolean;
+  sections: ReportSectionDraft[];
+}
+
 /**
  * Live, engine-sourced capital-market assumptions (the "real data, fake clients"
  * flow). Fetched from the `capital_market_assumptions` tool and threaded into the
@@ -233,6 +266,8 @@ interface ScenarioState {
   fireInputs: FireInputs;
   riskMetricsInputs: RiskMetricsInputs;
   rebalanceInputs: RebalanceInputs;
+  optimizeAllocationInputs: OptimizeAllocationInputs;
+  buildReportInputs: BuildPlanningReportInputs;
 
   result: MonteCarloResult | null;
   glidePathResult: GlidePathResult | null;
@@ -250,6 +285,8 @@ interface ScenarioState {
   fireResult: FireResult | null;
   riskMetricsResult: RiskMetricsResult | null;
   rebalanceResult: RebalanceResult | null;
+  optimizeAllocationResult: OptimizeAllocationResult | null;
+  buildReportResult: BuildPlanningReportResult | null;
 
   /** Live engine assumptions from capital_market_assumptions; null until loaded. */
   assumptions: MarketAssumptions | null;
@@ -282,6 +319,10 @@ interface ScenarioState {
   setFireInputs: (patch: Partial<FireInputs>) => void;
   setRiskMetricsInputs: (patch: Partial<RiskMetricsInputs>) => void;
   setRebalanceInputs: (patch: Partial<RebalanceInputs>) => void;
+  setOptimizeAllocationInputs: (
+    patch: Partial<OptimizeAllocationInputs>,
+  ) => void;
+  setBuildReportInputs: (patch: Partial<BuildPlanningReportInputs>) => void;
   setResult: (r: MonteCarloResult | null) => void;
   setGlidePathResult: (r: GlidePathResult | null) => void;
   setTaxResult: (r: TaxWithdrawalResult | null) => void;
@@ -298,6 +339,8 @@ interface ScenarioState {
   setFireResult: (r: FireResult | null) => void;
   setRiskMetricsResult: (r: RiskMetricsResult | null) => void;
   setRebalanceResult: (r: RebalanceResult | null) => void;
+  setOptimizeAllocationResult: (r: OptimizeAllocationResult | null) => void;
+  setBuildReportResult: (r: BuildPlanningReportResult | null) => void;
   setAssumptions: (a: MarketAssumptions | null) => void;
   setLoadingAssumptions: (b: boolean) => void;
   setRunning: (b: boolean) => void;
@@ -467,6 +510,38 @@ const DEFAULT_REBALANCE: RebalanceInputs = {
   targetWeights: { us_equity: 0.6, us_bonds: 0.4 },
 };
 
+const DEFAULT_OPTIMIZE_ALLOCATION: OptimizeAllocationInputs = {
+  // A balanced, regime-aware default over the engine's full default universe
+  // (no id subset), long-only weight bounds.
+  riskProfile: "moderate",
+  objective: "",
+  assetClassIdsText: "",
+  weightMin: 0,
+  weightMax: 1,
+  returnModel: "house_view",
+  regimeAware: true,
+  riskFreeRate: 0.02,
+};
+
+const DEFAULT_BUILD_REPORT: BuildPlanningReportInputs = {
+  // A small example outline so the editor is usable out of the box; the engine
+  // normalizes titles and collates findings. Sections are de-identified.
+  title: "Planning summary",
+  includeRegime: true,
+  sections: [
+    {
+      kind: "summary",
+      title: "Overview",
+      findingsText: "Plan funds the full horizon in the base case.",
+    },
+    {
+      kind: "allocation",
+      title: "Allocation",
+      findingsText: "Growth sleeve sized to the moderate risk profile.",
+    },
+  ],
+};
+
 export const useScenario = create<ScenarioState>((set) => ({
   tool: "monte_carlo",
 
@@ -485,6 +560,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   fireInputs: DEFAULT_FIRE,
   riskMetricsInputs: DEFAULT_RISK_METRICS,
   rebalanceInputs: DEFAULT_REBALANCE,
+  optimizeAllocationInputs: DEFAULT_OPTIMIZE_ALLOCATION,
+  buildReportInputs: DEFAULT_BUILD_REPORT,
 
   result: null,
   glidePathResult: null,
@@ -502,6 +579,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   fireResult: null,
   riskMetricsResult: null,
   rebalanceResult: null,
+  optimizeAllocationResult: null,
+  buildReportResult: null,
 
   assumptions: null,
   loadingAssumptions: false,
@@ -558,6 +637,12 @@ export const useScenario = create<ScenarioState>((set) => ({
     set((s) => ({ riskMetricsInputs: { ...s.riskMetricsInputs, ...patch } })),
   setRebalanceInputs: (patch) =>
     set((s) => ({ rebalanceInputs: { ...s.rebalanceInputs, ...patch } })),
+  setOptimizeAllocationInputs: (patch) =>
+    set((s) => ({
+      optimizeAllocationInputs: { ...s.optimizeAllocationInputs, ...patch },
+    })),
+  setBuildReportInputs: (patch) =>
+    set((s) => ({ buildReportInputs: { ...s.buildReportInputs, ...patch } })),
   setResult: (result) => set({ result }),
   setGlidePathResult: (glidePathResult) => set({ glidePathResult }),
   setTaxResult: (taxResult) => set({ taxResult }),
@@ -575,6 +660,9 @@ export const useScenario = create<ScenarioState>((set) => ({
   setFireResult: (fireResult) => set({ fireResult }),
   setRiskMetricsResult: (riskMetricsResult) => set({ riskMetricsResult }),
   setRebalanceResult: (rebalanceResult) => set({ rebalanceResult }),
+  setOptimizeAllocationResult: (optimizeAllocationResult) =>
+    set({ optimizeAllocationResult }),
+  setBuildReportResult: (buildReportResult) => set({ buildReportResult }),
   setAssumptions: (assumptions) => set({ assumptions }),
   setLoadingAssumptions: (loadingAssumptions) => set({ loadingAssumptions }),
   setRunning: (running) => set({ running }),
