@@ -32,37 +32,42 @@ import type {
 } from "../contract/planning";
 import { assertNoPII, PiiTripwireError } from "../lib/compliance";
 import type {
+  BracketHeadroomInputs,
+  BuildPlanningReportInputs,
+  CorrelationInputs,
+  FireInputs,
   GlidePathInputs,
   GlidePathShape,
+  OptimizeAllocationInputs,
   PlanningTool,
+  RebalanceInputs,
+  RegimeGenInputs,
+  RegimeSwrInputs,
+  ReportSectionDraft,
+  RiskMetricsInputs,
+  RmdInputs,
+  RothInputs,
+  RothIrmaaInputs,
+  ScenarioSnapshot,
   ScenarioInputs,
+  SocialSecurityInputs,
+  SorInputs,
   TaxWithdrawalInputs,
 } from "../store/scenario";
+export type { ScenarioSnapshot } from "../store/scenario";
 
 /** Bump when the envelope shape changes incompatibly. */
-export const SCENARIO_FILE_VERSION = "1" as const;
+export const SCENARIO_FILE_VERSION = "2" as const;
 
 /** Tag identifying a pwplan-core scenario file, to reject unrelated JSON. */
 export const SCENARIO_FILE_KIND = "pwplan-core/scenario" as const;
 
 /** The portable, PII-free plan-inputs envelope (no engine results). */
-export interface SerializedScenario {
+export interface SerializedScenario extends ScenarioSnapshot {
   kind: typeof SCENARIO_FILE_KIND;
   fileVersion: typeof SCENARIO_FILE_VERSION;
   /** Contract version the inputs were authored against (traceability only). */
   contractVersion: string;
-  tool: PlanningTool;
-  inputs: ScenarioInputs;
-  glidePathInputs: GlidePathInputs;
-  taxInputs: TaxWithdrawalInputs;
-}
-
-/** The subset of store state a scenario file captures. */
-export interface ScenarioSnapshot {
-  tool: PlanningTool;
-  inputs: ScenarioInputs;
-  glidePathInputs: GlidePathInputs;
-  taxInputs: TaxWithdrawalInputs;
 }
 
 export type ScenarioParseResult =
@@ -81,6 +86,20 @@ export function serializeScenario(
     inputs: snapshot.inputs,
     glidePathInputs: snapshot.glidePathInputs,
     taxInputs: snapshot.taxInputs,
+    rothInputs: snapshot.rothInputs,
+    rothIrmaaInputs: snapshot.rothIrmaaInputs,
+    sorInputs: snapshot.sorInputs,
+    rmdInputs: snapshot.rmdInputs,
+    bracketInputs: snapshot.bracketInputs,
+    socialSecurityInputs: snapshot.socialSecurityInputs,
+    regimeSwrInputs: snapshot.regimeSwrInputs,
+    correlationInputs: snapshot.correlationInputs,
+    regimeGenInputs: snapshot.regimeGenInputs,
+    fireInputs: snapshot.fireInputs,
+    riskMetricsInputs: snapshot.riskMetricsInputs,
+    rebalanceInputs: snapshot.rebalanceInputs,
+    optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
+    buildReportInputs: snapshot.buildReportInputs,
   };
   // Fail-closed: never write a file that carries an identity-shaped key.
   return assertNoPII(envelope);
@@ -105,6 +124,10 @@ function isStr(v: unknown): v is string {
   return typeof v === "string";
 }
 
+function isBool(v: unknown): v is boolean {
+  return typeof v === "boolean";
+}
+
 const ACCOUNT_TYPES: AccountType[] = ["taxable", "traditional", "roth"];
 const FILING_STATUSES: FilingStatus[] = [
   "single",
@@ -124,11 +147,33 @@ const GLIDE_SHAPES: GlidePathShape[] = [
   "to_through",
   "rising_equity",
 ];
+const CASE_FILING_STATUSES = ["single", "mfj", "mfs"] as const;
+const TARGET_RULES = [
+  "fill_to_rate",
+  "fill_to_irmaa_tier",
+  "fixed_amount",
+] as const;
+const RISK_PROFILES = [
+  "conservative",
+  "moderate_conservative",
+  "moderate",
+  "moderate_aggressive",
+  "aggressive",
+] as const;
+const ALLOCATION_OBJECTIVES = [
+  "max_sharpe",
+  "min_volatility",
+  "max_quadratic_utility",
+  "efficient_return",
+  "efficient_risk",
+] as const;
+const OPTIMIZE_RETURN_MODELS = ["house_view", "historical"] as const;
 const PLANNING_TOOLS: PlanningTool[] = [
   "monte_carlo",
   "glide_path",
   "tax_withdrawal",
   "roth_conversion",
+  "roth_irmaa",
   "sequence_stress",
   "rmd",
   "bracket_headroom",
@@ -140,6 +185,8 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "fire",
   "risk_metrics",
   "rebalance",
+  "optimize_allocation",
+  "build_report",
 ];
 
 function parseAssetClass(v: unknown): AssetClass | null {
@@ -300,6 +347,268 @@ function parseTax(v: unknown): TaxWithdrawalInputs | null {
   };
 }
 
+function parseRoth(v: unknown): RothInputs | null {
+  if (!isObject(v)) return null;
+  if (
+    !isNum(v.currentTaxableIncome) ||
+    !isStr(v.filingStatus) ||
+    !FILING_STATUSES.includes(v.filingStatus as FilingStatus) ||
+    !isNum(v.conversionAmount) ||
+    !isNum(v.growthRate) ||
+    !isNum(v.years) ||
+    !isNum(v.retirementMarginalRate) ||
+    !isBool(v.taxesPaidFromConversion)
+  ) {
+    return null;
+  }
+  return {
+    currentTaxableIncome: v.currentTaxableIncome,
+    filingStatus: v.filingStatus as FilingStatus,
+    conversionAmount: v.conversionAmount,
+    growthRate: v.growthRate,
+    years: v.years,
+    retirementMarginalRate: v.retirementMarginalRate,
+    taxesPaidFromConversion: v.taxesPaidFromConversion,
+  };
+}
+
+function parseRothIrmaa(v: unknown): RothIrmaaInputs | null {
+  if (!isObject(v)) return null;
+  if (
+    !isNum(v.taxYear) ||
+    !isStr(v.filingStatus) ||
+    !(CASE_FILING_STATUSES as readonly string[]).includes(v.filingStatus) ||
+    !isStr(v.stateCode) ||
+    !isNum(v.birthYearSelf) ||
+    !isNum(v.birthYearSpouse) ||
+    !isNum(v.medicareEnrolled) ||
+    !isNum(v.conversionYears) ||
+    !isStr(v.targetRule) ||
+    !(TARGET_RULES as readonly string[]).includes(v.targetRule) ||
+    !isNum(v.targetRate) ||
+    !isNum(v.fixedAmount) ||
+    !isNum(v.pension) ||
+    !isNum(v.socialSecurityGross) ||
+    !isNum(v.taxableInterest) ||
+    !isNum(v.taxExemptInterest) ||
+    !isNum(v.ordinaryDividends) ||
+    !isNum(v.qualifiedDividends) ||
+    !isNum(v.longTermGains) ||
+    !isNum(v.tradIraAggregate) ||
+    !isNum(v.nondeductibleBasis) ||
+    !isNum(v.taxableLiquidity) ||
+    !isNum(v.employerPlanAggregate) ||
+    !isNum(v.irmaaInflation) ||
+    !isNum(v.irmaaBuffer)
+  ) {
+    return null;
+  }
+  return {
+    taxYear: v.taxYear,
+    filingStatus: v.filingStatus as RothIrmaaInputs["filingStatus"],
+    stateCode: v.stateCode,
+    birthYearSelf: v.birthYearSelf,
+    birthYearSpouse: v.birthYearSpouse,
+    medicareEnrolled: v.medicareEnrolled,
+    conversionYears: v.conversionYears,
+    targetRule: v.targetRule as RothIrmaaInputs["targetRule"],
+    targetRate: v.targetRate,
+    fixedAmount: v.fixedAmount,
+    pension: v.pension,
+    socialSecurityGross: v.socialSecurityGross,
+    taxableInterest: v.taxableInterest,
+    taxExemptInterest: v.taxExemptInterest,
+    ordinaryDividends: v.ordinaryDividends,
+    qualifiedDividends: v.qualifiedDividends,
+    longTermGains: v.longTermGains,
+    tradIraAggregate: v.tradIraAggregate,
+    nondeductibleBasis: v.nondeductibleBasis,
+    taxableLiquidity: v.taxableLiquidity,
+    employerPlanAggregate: v.employerPlanAggregate,
+    irmaaInflation: v.irmaaInflation,
+    irmaaBuffer: v.irmaaBuffer,
+  };
+}
+
+function parseSor(v: unknown): SorInputs | null {
+  if (!isObject(v)) return null;
+  if (
+    !isNum(v.initialBalance) ||
+    !isNum(v.annualSpend) ||
+    !isStr(v.returnsText)
+  ) {
+    return null;
+  }
+  return {
+    initialBalance: v.initialBalance,
+    annualSpend: v.annualSpend,
+    returnsText: v.returnsText,
+  };
+}
+
+function parseRmd(v: unknown): RmdInputs | null {
+  if (!isObject(v) || !isNum(v.age) || !isNum(v.balance)) return null;
+  return { age: v.age, balance: v.balance };
+}
+
+function parseBracket(v: unknown): BracketHeadroomInputs | null {
+  if (
+    !isObject(v) ||
+    !isNum(v.taxableIncome) ||
+    !isStr(v.filingStatus) ||
+    !FILING_STATUSES.includes(v.filingStatus as FilingStatus) ||
+    !isNum(v.targetRate)
+  ) {
+    return null;
+  }
+  return {
+    taxableIncome: v.taxableIncome,
+    filingStatus: v.filingStatus as FilingStatus,
+    targetRate: v.targetRate,
+  };
+}
+
+function parseSocialSecurity(v: unknown): SocialSecurityInputs | null {
+  if (!isObject(v) || !isNum(v.piaMonthly) || !isNum(v.fraAge)) return null;
+  return { piaMonthly: v.piaMonthly, fraAge: v.fraAge };
+}
+
+function parseRegimeSwr(v: unknown): RegimeSwrInputs | null {
+  if (!isObject(v) || !isNum(v.baseSwr) || !isNum(v.portfolioBalance)) {
+    return null;
+  }
+  return { baseSwr: v.baseSwr, portfolioBalance: v.portfolioBalance };
+}
+
+function parseCorrelation(v: unknown): CorrelationInputs | null {
+  if (
+    !isObject(v) ||
+    !isStr(v.assetClassIdsText) ||
+    !isNum(v.lookbackDays) ||
+    !isBool(v.shrinkage)
+  ) {
+    return null;
+  }
+  return {
+    assetClassIdsText: v.assetClassIdsText,
+    lookbackDays: v.lookbackDays,
+    shrinkage: v.shrinkage,
+  };
+}
+
+function parseRegimeGen(v: unknown): RegimeGenInputs | null {
+  if (!isObject(v) || !isNum(v.horizonYears) || !isNum(v.paths)) return null;
+  return { horizonYears: v.horizonYears, paths: v.paths };
+}
+
+function parseFire(v: unknown): FireInputs | null {
+  if (
+    !isObject(v) ||
+    !isNum(v.currentAge) ||
+    !isNum(v.retirementAge) ||
+    !isNum(v.currentBalance) ||
+    !isNum(v.annualContribution) ||
+    !isNum(v.growthRate) ||
+    !isNum(v.annualSpend) ||
+    !isNum(v.swr)
+  ) {
+    return null;
+  }
+  return {
+    currentAge: v.currentAge,
+    retirementAge: v.retirementAge,
+    currentBalance: v.currentBalance,
+    annualContribution: v.annualContribution,
+    growthRate: v.growthRate,
+    annualSpend: v.annualSpend,
+    swr: v.swr,
+  };
+}
+
+function parseRiskMetrics(v: unknown): RiskMetricsInputs | null {
+  if (
+    !isObject(v) ||
+    !isStr(v.returnsText) ||
+    !isNum(v.riskFreeRate) ||
+    !isNum(v.periodsPerYear)
+  ) {
+    return null;
+  }
+  return {
+    returnsText: v.returnsText,
+    riskFreeRate: v.riskFreeRate,
+    periodsPerYear: v.periodsPerYear,
+  };
+}
+
+function parseNumberRecord(v: unknown): Record<string, number> | null {
+  if (!isObject(v)) return null;
+  const out: Record<string, number> = {};
+  for (const [key, value] of Object.entries(v)) {
+    if (!isNum(value)) return null;
+    out[key] = value;
+  }
+  return out;
+}
+
+function parseRebalance(v: unknown): RebalanceInputs | null {
+  if (!isObject(v)) return null;
+  const targetWeights = parseNumberRecord(v.targetWeights);
+  if (targetWeights === null) return null;
+  return { targetWeights };
+}
+
+function parseOptimizeAllocation(v: unknown): OptimizeAllocationInputs | null {
+  if (
+    !isObject(v) ||
+    !isStr(v.riskProfile) ||
+    !(RISK_PROFILES as readonly string[]).includes(v.riskProfile) ||
+    !isStr(v.objective) ||
+    (v.objective !== "" &&
+      !(ALLOCATION_OBJECTIVES as readonly string[]).includes(v.objective)) ||
+    !isStr(v.assetClassIdsText) ||
+    !isNum(v.weightMin) ||
+    !isNum(v.weightMax) ||
+    !isStr(v.returnModel) ||
+    !(OPTIMIZE_RETURN_MODELS as readonly string[]).includes(v.returnModel) ||
+    !isBool(v.regimeAware) ||
+    !isNum(v.riskFreeRate)
+  ) {
+    return null;
+  }
+  return {
+    riskProfile: v.riskProfile as OptimizeAllocationInputs["riskProfile"],
+    objective: v.objective as OptimizeAllocationInputs["objective"],
+    assetClassIdsText: v.assetClassIdsText,
+    weightMin: v.weightMin,
+    weightMax: v.weightMax,
+    returnModel: v.returnModel as OptimizeAllocationInputs["returnModel"],
+    regimeAware: v.regimeAware,
+    riskFreeRate: v.riskFreeRate,
+  };
+}
+
+function parseReportSectionDraft(v: unknown): ReportSectionDraft | null {
+  if (
+    !isObject(v) ||
+    !isStr(v.kind) ||
+    !isStr(v.title) ||
+    !isStr(v.findingsText)
+  ) {
+    return null;
+  }
+  return { kind: v.kind, title: v.title, findingsText: v.findingsText };
+}
+
+function parseBuildReport(v: unknown): BuildPlanningReportInputs | null {
+  if (!isObject(v) || !isStr(v.title) || !isBool(v.includeRegime)) {
+    return null;
+  }
+  const sections = parseArray(v.sections, parseReportSectionDraft);
+  if (sections === null) return null;
+  return { title: v.title, includeRegime: v.includeRegime, sections };
+}
+
 /**
  * Validate and unwrap a parsed JSON value into a ScenarioSnapshot. Returns a
  * discriminated result rather than throwing for the expected failure modes
@@ -353,12 +662,90 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
   if (taxInputs === null) {
     return { ok: false, error: "Malformed or missing tax-withdrawal inputs." };
   }
+  const rothInputs = parseRoth(raw.rothInputs);
+  if (rothInputs === null) {
+    return { ok: false, error: "Malformed or missing Roth-conversion inputs." };
+  }
+  const rothIrmaaInputs = parseRothIrmaa(raw.rothIrmaaInputs);
+  if (rothIrmaaInputs === null) {
+    return { ok: false, error: "Malformed or missing Roth/IRMAA inputs." };
+  }
+  const sorInputs = parseSor(raw.sorInputs);
+  if (sorInputs === null) {
+    return { ok: false, error: "Malformed or missing sequence-risk inputs." };
+  }
+  const rmdInputs = parseRmd(raw.rmdInputs);
+  if (rmdInputs === null) {
+    return { ok: false, error: "Malformed or missing RMD inputs." };
+  }
+  const bracketInputs = parseBracket(raw.bracketInputs);
+  if (bracketInputs === null) {
+    return { ok: false, error: "Malformed or missing bracket-room inputs." };
+  }
+  const socialSecurityInputs = parseSocialSecurity(raw.socialSecurityInputs);
+  if (socialSecurityInputs === null) {
+    return {
+      ok: false,
+      error: "Malformed or missing Social Security inputs.",
+    };
+  }
+  const regimeSwrInputs = parseRegimeSwr(raw.regimeSwrInputs);
+  if (regimeSwrInputs === null) {
+    return { ok: false, error: "Malformed or missing regime-SWR inputs." };
+  }
+  const correlationInputs = parseCorrelation(raw.correlationInputs);
+  if (correlationInputs === null) {
+    return { ok: false, error: "Malformed or missing correlation inputs." };
+  }
+  const regimeGenInputs = parseRegimeGen(raw.regimeGenInputs);
+  if (regimeGenInputs === null) {
+    return { ok: false, error: "Malformed or missing regime-path inputs." };
+  }
+  const fireInputs = parseFire(raw.fireInputs);
+  if (fireInputs === null) {
+    return { ok: false, error: "Malformed or missing FIRE inputs." };
+  }
+  const riskMetricsInputs = parseRiskMetrics(raw.riskMetricsInputs);
+  if (riskMetricsInputs === null) {
+    return { ok: false, error: "Malformed or missing risk-metrics inputs." };
+  }
+  const rebalanceInputs = parseRebalance(raw.rebalanceInputs);
+  if (rebalanceInputs === null) {
+    return { ok: false, error: "Malformed or missing rebalance inputs." };
+  }
+  const optimizeAllocationInputs = parseOptimizeAllocation(
+    raw.optimizeAllocationInputs,
+  );
+  if (optimizeAllocationInputs === null) {
+    return {
+      ok: false,
+      error: "Malformed or missing optimize-allocation inputs.",
+    };
+  }
+  const buildReportInputs = parseBuildReport(raw.buildReportInputs);
+  if (buildReportInputs === null) {
+    return { ok: false, error: "Malformed or missing report-builder inputs." };
+  }
 
   const snapshot: ScenarioSnapshot = {
     tool: raw.tool as PlanningTool,
     inputs,
     glidePathInputs,
     taxInputs,
+    rothInputs,
+    rothIrmaaInputs,
+    sorInputs,
+    rmdInputs,
+    bracketInputs,
+    socialSecurityInputs,
+    regimeSwrInputs,
+    correlationInputs,
+    regimeGenInputs,
+    fireInputs,
+    riskMetricsInputs,
+    rebalanceInputs,
+    optimizeAllocationInputs,
+    buildReportInputs,
   };
 
   return { ok: true, value: snapshot };

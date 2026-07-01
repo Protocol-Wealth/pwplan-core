@@ -18,6 +18,7 @@ import {
   validateRiskMetrics,
   validateRmd,
   validateRoth,
+  validateRothIrmaa,
   validateSequenceStress,
   validateSocialSecurity,
   validateTaxWithdrawal,
@@ -35,6 +36,7 @@ import type {
   RiskMetricsInputs,
   RmdInputs,
   RothInputs,
+  RothIrmaaInputs,
   SocialSecurityInputs,
   SorInputs,
   TaxWithdrawalInputs,
@@ -160,6 +162,61 @@ describe("validateRoth", () => {
     expect(validateRoth({ ...validRoth, years: 1.5 })).toContain(
       "Years must be a whole number, zero or more.",
     );
+  });
+});
+
+const validRothIrmaa: RothIrmaaInputs = {
+  taxYear: 2026,
+  filingStatus: "mfj",
+  stateCode: "PA",
+  birthYearSelf: 1962,
+  birthYearSpouse: 1963,
+  medicareEnrolled: 2,
+  conversionYears: 2,
+  targetRule: "fill_to_irmaa_tier",
+  targetRate: 0.24,
+  fixedAmount: 100_000,
+  pension: 30_000,
+  socialSecurityGross: 48_000,
+  taxableInterest: 5_000,
+  taxExemptInterest: 8_000,
+  ordinaryDividends: 12_000,
+  qualifiedDividends: 9_000,
+  longTermGains: 10_000,
+  tradIraAggregate: 1_400_000,
+  nondeductibleBasis: 0,
+  taxableLiquidity: 250_000,
+  employerPlanAggregate: 0,
+  irmaaInflation: 0.03,
+  irmaaBuffer: 5_000,
+};
+
+describe("validateRothIrmaa", () => {
+  it("accepts a well-formed composite planner request", () => {
+    expect(validateRothIrmaa(validRothIrmaa)).toEqual([]);
+  });
+
+  it("validates spouse birth year for married filing statuses", () => {
+    expect(
+      validateRothIrmaa({
+        ...validRothIrmaa,
+        filingStatus: "mfs",
+        birthYearSpouse: 1800,
+      }),
+    ).toContain("Married filing statuses need a plausible spouse birth year.");
+  });
+
+  it("rejects Medicare enrollment counts outside the household size", () => {
+    expect(
+      validateRothIrmaa({ ...validRothIrmaa, medicareEnrolled: -1 }),
+    ).toContain("Medicare enrollment count must fit the filing household.");
+    expect(
+      validateRothIrmaa({
+        ...validRothIrmaa,
+        filingStatus: "single",
+        medicareEnrolled: 2,
+      }),
+    ).toContain("Medicare enrollment count must fit the filing household.");
   });
 });
 

@@ -70,6 +70,95 @@ const snapshot: ScenarioSnapshot = {
     grossNeed: 120_000,
     otherTaxableIncome: 0,
   },
+  rothInputs: {
+    currentTaxableIncome: 150_000,
+    filingStatus: "married_joint",
+    conversionAmount: 100_000,
+    growthRate: 0.06,
+    years: 15,
+    retirementMarginalRate: 0.24,
+    taxesPaidFromConversion: false,
+  },
+  rothIrmaaInputs: {
+    taxYear: 2026,
+    filingStatus: "mfj",
+    stateCode: "PA",
+    birthYearSelf: 1962,
+    birthYearSpouse: 1963,
+    medicareEnrolled: 2,
+    conversionYears: 2,
+    targetRule: "fill_to_irmaa_tier",
+    targetRate: 0.24,
+    fixedAmount: 100_000,
+    pension: 30_000,
+    socialSecurityGross: 48_000,
+    taxableInterest: 5_000,
+    taxExemptInterest: 8_000,
+    ordinaryDividends: 12_000,
+    qualifiedDividends: 9_000,
+    longTermGains: 10_000,
+    tradIraAggregate: 1_400_000,
+    nondeductibleBasis: 0,
+    taxableLiquidity: 250_000,
+    employerPlanAggregate: 0,
+    irmaaInflation: 0.03,
+    irmaaBuffer: 5_000,
+  },
+  sorInputs: {
+    initialBalance: 1_000_000,
+    annualSpend: 50_000,
+    returnsText: "0.07, -0.1, 0.12",
+  },
+  rmdInputs: { age: 73, balance: 500_000 },
+  bracketInputs: {
+    taxableIncome: 100_000,
+    filingStatus: "married_joint",
+    targetRate: 0.24,
+  },
+  socialSecurityInputs: { piaMonthly: 2_500, fraAge: 67 },
+  regimeSwrInputs: { baseSwr: 0.04, portfolioBalance: 1_000_000 },
+  correlationInputs: {
+    assetClassIdsText: "us_equity, us_bonds",
+    lookbackDays: 1260,
+    shrinkage: true,
+  },
+  regimeGenInputs: { horizonYears: 50, paths: 10_000 },
+  fireInputs: {
+    currentAge: 40,
+    retirementAge: 65,
+    currentBalance: 400_000,
+    annualContribution: 30_000,
+    growthRate: 0.05,
+    annualSpend: 80_000,
+    swr: 0.04,
+  },
+  riskMetricsInputs: {
+    returnsText: "0.12, -0.08, 0.15",
+    riskFreeRate: 0.02,
+    periodsPerYear: 1,
+  },
+  rebalanceInputs: { targetWeights: { us_equity: 0.6, us_bonds: 0.4 } },
+  optimizeAllocationInputs: {
+    riskProfile: "moderate",
+    objective: "",
+    assetClassIdsText: "",
+    weightMin: 0,
+    weightMax: 1,
+    returnModel: "house_view",
+    regimeAware: true,
+    riskFreeRate: 0.02,
+  },
+  buildReportInputs: {
+    title: "Planning summary",
+    includeRegime: true,
+    sections: [
+      {
+        kind: "summary",
+        title: "Overview",
+        findingsText: "Plan funds the full horizon in the base case.",
+      },
+    ],
+  },
 };
 
 describe("serializeScenario", () => {
@@ -118,6 +207,22 @@ describe("round-trip", () => {
       );
       expect(bonds?.lambda).toBeUndefined();
     }
+  });
+
+  it("round-trips newer tool selections instead of rejecting them as unknown", () => {
+    const newer: ScenarioSnapshot = {
+      ...snapshot,
+      tool: "build_report",
+      optimizeAllocationInputs: {
+        ...snapshot.optimizeAllocationInputs,
+        objective: "max_sharpe",
+      },
+    };
+
+    const result = parseScenarioJSON(toScenarioJSON(newer));
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toEqual(newer);
   });
 });
 

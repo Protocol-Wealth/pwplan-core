@@ -783,4 +783,13 @@ describe("pw-api backend seam", () => {
       "https://nexusmcp.site/v1/planning/glide_path",
     );
   });
+
+  it("fails fast on an unsupported VITE_PLANNING_BACKEND value", async () => {
+    vi.resetModules();
+    vi.stubEnv("VITE_PLANNING_BACKEND", "nexuz");
+
+    await expect(import("./planning-gateway")).rejects.toThrow(
+      /Unsupported VITE_PLANNING_BACKEND/,
+    );
+  });
 });

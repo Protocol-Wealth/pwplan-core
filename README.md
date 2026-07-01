@@ -110,8 +110,11 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The contract covers **16 planning tools**, **all surfaced in the UI** — fifteen as
-tabs plus the `capital_market_assumptions` control inside the Monte Carlo tab.
+The wire contract covers **18 planning tools**, **all surfaced in the UI** —
+seventeen as tabs plus the `capital_market_assumptions` control inside the Monte
+Carlo tab. The Roth · IRMAA tab uses a separate case contract
+(`PLANNING_CASE_CONTRACT_VERSION`) because it mirrors the canonical
+Roth-conversion planning schema.
 
 | Tool                         | Purpose                                               | UI         |
 | ---------------------------- | ----------------------------------------------------- | ---------- |
@@ -130,11 +133,13 @@ tabs plus the `capital_market_assumptions` control inside the Monte Carlo tab.
 | `fire`                       | FIRE / Coast-FIRE number + years to independence      | tab        |
 | `risk_metrics`               | Sharpe / Sortino / drawdown / VaR for a return series | tab        |
 | `rebalance`                  | Drift + self-financing trades to target weights       | tab        |
+| `optimize_allocation`        | Mean-variance allocation over engine-sourced data     | tab        |
+| `build_planning_report`      | Assemble de-identified planning sections into report  | tab        |
 | `capital_market_assumptions` | Real returns / vols / λ / correlations                | MC control |
 
 ## Stack
 
-React 19 · Vite 6 · Tailwind v4 · TypeScript · Zustand. nexus gateway / pw-api
+React 19 · Vite 8 · Tailwind v4 · TypeScript · Zustand. nexus gateway / pw-api
 on GCP Cloud Run; Cloudflare at the edge.
 
 ## Working with Claude Code
@@ -146,6 +151,17 @@ exists now), [`CHANGELOG.md`](CHANGELOG.md) (history), and
 [`ROADMAP.md`](ROADMAP.md) (what is next). These are committed on purpose; they
 are how a stateless CLI keeps continuity across sessions. Start a session by
 reading CLAUDE.md.
+
+## Current Tracking
+
+Open build and alignment work is tracked in GitHub issues:
+
+- [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) — Nexus/PWOS
+  planning surface alignment and any public-safe contract extraction decisions.
+- [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16) — `-core`
+  family visual theming.
+- [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17) — optional
+  public-safe planning calculators.
 
 ## Patent & IP
 

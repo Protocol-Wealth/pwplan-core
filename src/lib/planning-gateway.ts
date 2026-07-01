@@ -73,8 +73,17 @@ import { assertNoPII, auditCall } from "./compliance";
 
 type Backend = "nexus-mcp" | "pw-api";
 
-const BACKEND = (import.meta.env.VITE_PLANNING_BACKEND ??
-  "nexus-mcp") as Backend;
+function parseBackend(value: unknown): Backend {
+  if (value === undefined || value === "") return "nexus-mcp";
+  if (value === "nexus-mcp" || value === "pw-api") return value;
+  throw new Error(
+    `Unsupported VITE_PLANNING_BACKEND "${String(
+      value,
+    )}". Expected "nexus-mcp" or "pw-api".`,
+  );
+}
+
+const BACKEND = parseBackend(import.meta.env.VITE_PLANNING_BACKEND);
 // Defaults to the public nexus-core MCP demo endpoint so a fresh clone runs
 // against the real engine (bring de-identified / fake-client data) with no env.
 const GATEWAY_URL =
@@ -331,7 +340,7 @@ export const planning = {
 /**
  * Composite Roth-conversion + IRMAA analysis. Uses the same PII-free,
  * envelope-versioned transport as the per-tool calls, but the body carries a
- * PlanningContract under `contract` (the case contract, v1.0.0) rather than a
+ * PlanningContract under `contract` (the case contract, v1.1.0) rather than a
  * flat per-tool request. The engine fills reference tax/IRMAA tables when none
  * are injected; the result's `snapshot` records which were used.
  */

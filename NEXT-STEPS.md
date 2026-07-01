@@ -6,12 +6,13 @@ model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
 [`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
 current.
 
-_Last updated: 2026-06-02. 16 contract tools, 15 UI tabs, 173 tests green._
+_Last updated: 2026-07-01. 18 wire-contract tools, 18 UI tabs (17 wire tabs +
+Roth · IRMAA), scenario files at schema v2, 201 tests green._
 
 ## Orient yourself in 5 minutes
 
 - **What this is:** the open-source, regime-adaptive financial planning **thin
-  UI** — React 19 / Vite 6 / Tailwind v4 / TypeScript / Zustand. It ships **zero
+  UI** — React 19 / Vite 8 / Tailwind v4 / TypeScript / Zustand. It ships **zero
   quantitative logic of its own**; all the math lives in the `nexus-core` engine.
   It is demo / case-study tooling pointed at the public engine with de-identified
   or fake client data.
@@ -42,13 +43,19 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
 ## Prioritized next tasks (from ROADMAP)
 
 1. **Theming** to the `-core` family visual language — held for a design reference;
-   ask the maintainer for it before starting.
+   ask the maintainer for it before starting. Tracked in
+   [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16).
 2. **Optional further calculators** inspired by OSS finance apps (dividend income,
    a withdrawal-tax-aware Roth ladder). Net-worth / holdings tracking stays **out
    of scope** (it would require PII / production data). Each new tool follows the
    established pattern: contract type → gateway method → store slice → pure
    validator → UI tab → tests → docs; engine side ships in nexus-core first.
-3. **`NOTICE` patent application number** — DONE: filed 2026-06-04 as USPTO
+   Tracked in [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17).
+3. **Nexus/PWOS planning-surface alignment** — decide whether any additional
+   public-safe planning/report metadata surfaces belong here, without importing
+   private PWOS advisor/client workflow details. Tracked in
+   [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
+4. **`NOTICE` patent application number** — DONE: filed 2026-06-04 as USPTO
    #64/082,241 (PW-PROV-003 provisional; conversion deadline 2027-06-04).
 
 ## Non-negotiable invariants (do not violate — see CLAUDE.md)

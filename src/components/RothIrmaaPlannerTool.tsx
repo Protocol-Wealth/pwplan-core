@@ -56,7 +56,10 @@ function buildContract(r: RothIrmaaInputs): PlanningContract {
     filing_status: r.filingStatus,
     state_code: r.stateCode.toUpperCase(),
     birth_years: birthYears,
-    medicare_enrolled: Math.min(r.medicareEnrolled, birthYears.length),
+    medicare_enrolled: Math.max(
+      0,
+      Math.min(r.medicareEnrolled, birthYears.length),
+    ),
     income_ex_conversion: {
       pension: r.pension,
       social_security_gross: r.socialSecurityGross,

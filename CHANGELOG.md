@@ -7,6 +7,18 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Fixed
+
+- **Audit hardening pass (2026-07-01).** Scenario save/load now uses schema v2
+  and round-trips every current tool input (`roth_irmaa`, optimize allocation,
+  report builder, and the other post-MVP tabs included), while `loadSnapshot`
+  clears every result slot so newly loaded scenarios cannot display stale output.
+  Roth · IRMAA validation now checks spouse birth year for all married filing
+  statuses and bounds Medicare enrollment count to the filing household; the
+  gateway now fails fast on unsupported `VITE_PLANNING_BACKEND` values. Root docs
+  were reconciled to the current Vite 8 / 18-wire-tool / 201-test state, and
+  outstanding/future work is tracked in GitHub issues #15, #16, and #17.
+
 ### Changed
 
 - **Defensive patent posture — application number filed + recorded.** `NOTICE`
@@ -48,13 +60,13 @@ Semantic Versioning. The planning wire contract is versioned separately as
   input, and the do-nothing card now shows the surviving-spouse single-filing RMD
   rate (joint→single compression) + the employer-plan pool. Backward-compatible.
 
-- **Roth · IRMAA planner tab — the composite multi-year analysis (PlanningContract
-  v1.0.0).** A new tab that sizes a Roth conversion for a ~60-something retiree
+- **Roth · IRMAA planner tab — the composite multi-year analysis (initial
+  PlanningContract v1.0.0; current mirror is v1.1.0).** A new tab that sizes a Roth conversion for a ~60-something retiree
   across multiple years when the binding constraint is **IRMAA (Medicare
   surcharges), not the tax bracket**. Consumes the new case contract
   (`src/contract/roth-conversion.ts`, a UI-side mirror of
   `@protocolwealthos/planning-contract` / the nexus-core JSON-Schema), versioned
-  separately as `PLANNING_CASE_CONTRACT_VERSION = 1.0.0`. Renders, per year: the
+  separately as `PLANNING_CASE_CONTRACT_VERSION`. Renders, per year: the
   recommended amount under fill-to-22% / fill-to-24% / just-under-the-IRMAA-tier
   (with a "crosses IRMAA" flag), the IRMAA cliff cost if crossed, the incremental
   federal + state tax, the NIIT and LTCG-stacking deltas, the breakeven rate, and
@@ -66,8 +78,8 @@ Semantic Versioning. The planning wire contract is versioned separately as
   contract-typed, so a breaking contract change is a compile error. Engine side in
   nexus-core (`analyze_roth_conversion`); the tab works once that deploys. +12 tests.
 
-- **FIRE, Risk-metrics, and Rebalance tabs — three more tools (16 contract
-  tools, 15 UI tabs).** Each adds a contract request/result pair, a
+- **FIRE, Risk-metrics, and Rebalance tabs — three more tools (historical
+  milestone: 16 contract tools, 15 UI tabs at that point).** Each adds a contract request/result pair, a
   `planning.*` gateway method, a store input + result slot, a pure validator,
   and a UI tab. No version bump (additive tool ids). Engine side in nexus-core
   PR #117; the tabs work once that deploys. +16 tests (173 total).

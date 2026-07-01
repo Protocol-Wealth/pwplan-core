@@ -27,13 +27,52 @@ function snapshotFilename(tool: ScenarioSnapshot["tool"]): string {
 }
 
 export function ScenarioIO() {
-  const { tool, inputs, glidePathInputs, taxInputs, loadSnapshot, setError } =
-    useScenario();
+  const {
+    tool,
+    inputs,
+    glidePathInputs,
+    taxInputs,
+    rothInputs,
+    rothIrmaaInputs,
+    sorInputs,
+    rmdInputs,
+    bracketInputs,
+    socialSecurityInputs,
+    regimeSwrInputs,
+    correlationInputs,
+    regimeGenInputs,
+    fireInputs,
+    riskMetricsInputs,
+    rebalanceInputs,
+    optimizeAllocationInputs,
+    buildReportInputs,
+    loadSnapshot,
+    setError,
+  } = useScenario();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   function currentSnapshot(): ScenarioSnapshot {
-    return { tool, inputs, glidePathInputs, taxInputs };
+    return {
+      tool,
+      inputs,
+      glidePathInputs,
+      taxInputs,
+      rothInputs,
+      rothIrmaaInputs,
+      sorInputs,
+      rmdInputs,
+      bracketInputs,
+      socialSecurityInputs,
+      regimeSwrInputs,
+      correlationInputs,
+      regimeGenInputs,
+      fireInputs,
+      riskMetricsInputs,
+      rebalanceInputs,
+      optimizeAllocationInputs,
+      buildReportInputs,
+    };
   }
 
   function save() {

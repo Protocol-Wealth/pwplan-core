@@ -1,13 +1,10 @@
 # nexus-core MCP — requirements for pwplan-core (consumer-side spec)
 
-> **Status (2026-06-02): historical.** This was the original spec (6 tools) handed
-> to nexus-core to build the planning server; that server is now **live with 12
-> tools** at nexusmcp.site (rev nexus-core-00041) and the four newest calculators
-> (rmd, tax_bracket_headroom, social_security_claiming, regime_conditioned_swr)
-> plus roth_conversion / sequence_of_returns_stress were added directly afterward.
-> The **source of truth for the contract is now `src/contract/planning.ts`**; this
-> doc is kept for the original 0.1.0 request/response detail, not as the current
-> tool inventory.
+> **Status (2026-07-01): historical.** This was the original 6-tool consumer-side
+> spec handed to nexus-core to build the planning server. The **source of truth
+> for the current client contract is now `src/contract/planning.ts`**; this doc is
+> kept for the original 0.1.0 request/response detail, not as the current tool
+> inventory or live deployment proof.
 
 _Generated 2026-05-30 from `src/contract/planning.ts` v0.1.0, `src/lib/planning-gateway.ts`, `src/store/scenario.ts`, and the results components. This is what the **pwplan-core thin UI** needs the nexus-core MCP server (nexusmcp.site) to provide to function fully, including all demo capabilities._
 

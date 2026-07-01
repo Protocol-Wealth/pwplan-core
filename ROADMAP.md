@@ -38,7 +38,8 @@ on completion and note the version in CHANGELOG.md._
 - [x] De-identified scenario persistence: save / load plan inputs as JSON (no PII
       by contract). _(done 2026-05-30: `scenario-io.ts` versioned, fail-closed
       envelope + `ScenarioIO` save/load UI via Blob download + file input, no
-      browser storage; 13 tests.)_
+      browser storage; refreshed 2026-07-01 to schema v2 so every current tool
+      input round-trips and every result slot clears on load; 14 tests.)_
 - [x] Built-in case-study presets (accumulator / near-retiree / crisis-stress)
       loadable from the UI. _(done 2026-05-30: `scenario-presets.ts`; 15 tests
       assert each preset passes the real validators and round-trips.)_
@@ -77,27 +78,34 @@ on completion and note the version in CHANGELOG.md._
       metrics; engine side nexus-core #116. 13th tool, 12 UI tabs; +6 tests.)_
 - [x] FIRE/Coast, risk-metrics, and rebalance-to-target tabs. _(done 2026-06-02:
       `FireTool` / `RiskMetricsTool` / `RebalanceTool`; engine side nexus-core
-      #117. 16 contract tools, 15 UI tabs; +16 tests.)_
+      #117. Historical milestone that brought the wire contract to 16 tools
+      before later additions; +16 tests at the time.)_
 - [x] Roth · IRMAA composite-planner tab. _(done 2026-06-03: `RothIrmaaPlannerTool` + the case contract `src/contract/roth-conversion.ts`
-      (`PLANNING_CASE_CONTRACT_VERSION = 1.0.0`, mirror of
+      (now `PLANNING_CASE_CONTRACT_VERSION = 1.1.0`, mirror of
       `@protocolwealthos/planning-contract`) + `analyzeRothConversion` + `validateRothIrmaa`;
       per-year per-ceiling sizing (fill-to-22 / fill-to-24 / just-under-IRMAA), cliff
       cost, fed+state tax, NIIT/LTCG deltas, breakeven, do-nothing RMD drag, with the
       projected-IRMAA-with-buffer assumption shown as a fiduciary disclosure. 16th UI
       tab; +12 tests. Engine side nexus-core `analyze_roth_conversion`; the tab works
       once that deploys.)_
-- [ ] Theming to match the `-core` family visual language (needs a design
-      reference — held for input).
+- [ ] [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16) Theming
+      to match the `-core` family visual language (needs a design reference —
+      held for input).
 - [ ] Optional further calculators inspired by OSS finance apps (dividend income,
-      withdrawal-tax-aware Roth ladder) — see the feature-ideas memo.
-      Net-worth/holdings tracking stays OUT of scope (PII/production).
+      withdrawal-tax-aware Roth ladder) — tracked in
+      [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17). Net-worth
+      / holdings tracking stays OUT of scope (PII/production).
+- [ ] [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) Decide
+      whether additional Nexus/PWOS planning/report metadata surfaces should be
+      extracted into this OSS UI. Keep any extraction synthetic/de-identified and
+      outside private advisor/client workflow details.
 
 ## Dependency on other repos (track, do not build here)
 
-- **nexus-core:** server side of contract v0.1.0 — **done + live** at
-  nexusmcp.site (12 planning MCP tools, rev nexus-core-00041). New tools land
-  there first (engine + tool), then get a matching pwplan-core contract type +
-  gateway method (+ optional UI tab).
+- **nexus-core:** server side of contract v0.1.0. New tools land there first
+  (engine + tool), then get a matching pwplan-core contract type + gateway method
+  (+ optional UI tab). `src/contract/planning.ts` is this repo's current client
+  inventory; smoke-check `nexusmcp.site` when a task needs live runtime certainty.
 - **pwos-core:** PII-guard + audit-log packages — consumed by the private fork,
   not by this OSS repo.
 

@@ -122,14 +122,24 @@ export function validateRothIrmaa(r: RothIrmaaInputs): string[] {
       "Self birth year must be a plausible year at/ before the tax year.",
     );
   }
-  if (r.filingStatus === "mfj") {
+  if (r.filingStatus !== "single") {
     if (
       !Number.isInteger(r.birthYearSpouse) ||
       r.birthYearSpouse < 1900 ||
       r.birthYearSpouse > r.taxYear
     ) {
-      issues.push("Married-joint needs a plausible spouse birth year.");
+      issues.push(
+        "Married filing statuses need a plausible spouse birth year.",
+      );
     }
+  }
+  const householdSize = r.filingStatus === "single" ? 1 : 2;
+  if (
+    !Number.isInteger(r.medicareEnrolled) ||
+    r.medicareEnrolled < 0 ||
+    r.medicareEnrolled > householdSize
+  ) {
+    issues.push("Medicare enrollment count must fit the filing household.");
   }
   if (
     !Number.isInteger(r.conversionYears) ||

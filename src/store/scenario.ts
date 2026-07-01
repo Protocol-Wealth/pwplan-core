@@ -111,7 +111,7 @@ export interface RothInputs {
 }
 
 /** Form state for the composite Roth/IRMAA planner. Maps to a PlanningContract
- *  (case contract v1.0.0); `case_id` is generated opaquely at dispatch, never
+ *  (case contract v1.1.0); `case_id` is generated opaquely at dispatch, never
  *  collected here. */
 export interface RothIrmaaInputs {
   taxYear: number;
@@ -120,7 +120,7 @@ export interface RothIrmaaInputs {
   birthYearSelf: number;
   birthYearSpouse: number;
   medicareEnrolled: number;
-  /** 1..3 conversion years starting at taxYear. */
+  /** 1..5 conversion years starting at taxYear. */
   conversionYears: number;
   targetRule: TargetRule;
   targetRate: number;
@@ -248,6 +248,27 @@ export interface MarketAssumptions {
   correlations: Record<string, Record<string, number>>;
 }
 
+export interface ScenarioSnapshot {
+  tool: PlanningTool;
+  inputs: ScenarioInputs;
+  glidePathInputs: GlidePathInputs;
+  taxInputs: TaxWithdrawalInputs;
+  rothInputs: RothInputs;
+  rothIrmaaInputs: RothIrmaaInputs;
+  sorInputs: SorInputs;
+  rmdInputs: RmdInputs;
+  bracketInputs: BracketHeadroomInputs;
+  socialSecurityInputs: SocialSecurityInputs;
+  regimeSwrInputs: RegimeSwrInputs;
+  correlationInputs: CorrelationInputs;
+  regimeGenInputs: RegimeGenInputs;
+  fireInputs: FireInputs;
+  riskMetricsInputs: RiskMetricsInputs;
+  rebalanceInputs: RebalanceInputs;
+  optimizeAllocationInputs: OptimizeAllocationInputs;
+  buildReportInputs: BuildPlanningReportInputs;
+}
+
 interface ScenarioState {
   tool: PlanningTool;
 
@@ -298,12 +319,7 @@ interface ScenarioState {
   setTool: (tool: PlanningTool) => void;
   /** Replace all plan inputs at once (e.g. loading a saved scenario or a
    *  preset). Clears stale results + error so panels do not show a prior run. */
-  loadSnapshot: (snapshot: {
-    tool: PlanningTool;
-    inputs: ScenarioInputs;
-    glidePathInputs: GlidePathInputs;
-    taxInputs: TaxWithdrawalInputs;
-  }) => void;
+  loadSnapshot: (snapshot: ScenarioSnapshot) => void;
   setInputs: (patch: Partial<ScenarioInputs>) => void;
   setGlidePathInputs: (patch: Partial<GlidePathInputs>) => void;
   setTaxInputs: (patch: Partial<TaxWithdrawalInputs>) => void;
@@ -597,9 +613,38 @@ export const useScenario = create<ScenarioState>((set) => ({
       inputs: snapshot.inputs,
       glidePathInputs: snapshot.glidePathInputs,
       taxInputs: snapshot.taxInputs,
+      rothInputs: snapshot.rothInputs,
+      rothIrmaaInputs: snapshot.rothIrmaaInputs,
+      sorInputs: snapshot.sorInputs,
+      rmdInputs: snapshot.rmdInputs,
+      bracketInputs: snapshot.bracketInputs,
+      socialSecurityInputs: snapshot.socialSecurityInputs,
+      regimeSwrInputs: snapshot.regimeSwrInputs,
+      correlationInputs: snapshot.correlationInputs,
+      regimeGenInputs: snapshot.regimeGenInputs,
+      fireInputs: snapshot.fireInputs,
+      riskMetricsInputs: snapshot.riskMetricsInputs,
+      rebalanceInputs: snapshot.rebalanceInputs,
+      optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
+      buildReportInputs: snapshot.buildReportInputs,
       result: null,
       glidePathResult: null,
       taxResult: null,
+      rothResult: null,
+      rothIrmaaResult: null,
+      sorResult: null,
+      rmdResult: null,
+      bracketResult: null,
+      socialSecurityResult: null,
+      regimeSwrResult: null,
+      correlationResult: null,
+      regimeGenResult: null,
+      xrayResult: null,
+      fireResult: null,
+      riskMetricsResult: null,
+      rebalanceResult: null,
+      optimizeAllocationResult: null,
+      buildReportResult: null,
       // Assumptions are live engine data tied to the prior inputs; drop them so a
       // loaded plan does not silently reuse a stale correlation matrix.
       assumptions: null,

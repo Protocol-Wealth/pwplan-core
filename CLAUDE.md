@@ -50,7 +50,7 @@ the conflict rather than working around it.
 
 ## Stack and conventions (match pwos-core / nexus-core)
 
-- React 19, Vite 6, Tailwind v4, TypeScript (strict), Zustand. npm, Node 22.
+- React 19, Vite 8, Tailwind v4, TypeScript (strict), Zustand. npm, Node 22.
 - ESLint flat config; Prettier with `semi: true`, double quotes, `trailingComma:
 "all"`. Run `npm run format` before committing.
 - Module boundaries: `contract/` (wire types, no logic) · `lib/` (gateway +
@@ -73,9 +73,14 @@ current or the next session starts blind.
 - **ROADMAP.md** — ordered next steps. Pull the next task from here; check items
   off and re-order as priorities shift.
 
-Session protocol: (1) read CURRENT-STATE.md + ROADMAP.md; (2) do the work;
-(3) run the full check suite; (4) update CHANGELOG.md and, if state changed,
-CURRENT-STATE.md; (5) commit.
+GitHub issues track outstanding and future work. Current open lanes are #15
+(Nexus/PWOS planning-surface alignment), #16 (`-core` visual theming), and #17
+(optional public-safe calculators). Keep ROADMAP/NEXT-STEPS and issue state in
+sync when opening, completing, or deferring work.
+
+Session protocol: (1) read CURRENT-STATE.md + ROADMAP.md and check open GitHub
+issues; (2) do the work; (3) run the full check suite; (4) update CHANGELOG.md
+and, if state changed, CURRENT-STATE.md plus issue references; (5) commit.
 
 ## Before every commit
 
