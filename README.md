@@ -129,11 +129,12 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **21 planning tools**. Eighteen are surfaced in the UI —
-seventeen as tabs plus the `capital_market_assumptions` control inside the Monte
-Carlo tab. The three Cash Flow OS planning bridge tools are contract/gateway-only
-today; they are reserved for a future synthetic demo UI and accept derived
-monthly-close aggregates only. The Roth · IRMAA tab uses a separate case contract
+The wire contract covers **21 planning tools**, all surfaced in the UI: seventeen
+one-tool tabs, the `capital_market_assumptions` control inside the Monte Carlo
+tab, and one synthetic Cash Flow Bridge tab that houses the three cash-flow
+bridge tools. The Cash Flow Bridge tab uses demo monthly-close aggregates only:
+no CSV upload, transaction storage, merchant/payee/account/household fields,
+notes, approvals, release state, or audit trail. The Roth · IRMAA tab uses a separate case contract
 (`PLANNING_CASE_CONTRACT_VERSION`) because it mirrors the canonical
 Roth-conversion planning schema.
 
@@ -157,9 +158,9 @@ Roth-conversion planning schema.
 | `optimize_allocation`        | Mean-variance allocation over engine-sourced data     | tab        |
 | `build_planning_report`      | Assemble de-identified planning sections into report  | tab        |
 | `capital_market_assumptions` | Real returns / vols / λ / correlations                | MC control |
-| `cashflow_planning_bridge`   | Monthly-close aggregates → planning assumptions       | gateway    |
-| `cash_reserve_analysis`      | Reserve target / coverage / funding status            | gateway    |
-| `budget_pacing_projection`   | Month-end budget pace from aggregate spending         | gateway    |
+| `cashflow_planning_bridge`   | Monthly-close aggregates → planning assumptions       | bridge tab |
+| `cash_reserve_analysis`      | Reserve target / coverage / funding status            | bridge tab |
+| `budget_pacing_projection`   | Month-end budget pace from aggregate spending         | bridge tab |
 
 ## Stack
 

@@ -35,8 +35,15 @@ import type {
   RebalanceResult,
   OptimizeAllocationResult,
   BuildPlanningReportResult,
+  BudgetPacingProjectionRequest,
+  BudgetPacingProjectionResult,
+  CashReserveAnalysisRequest,
+  CashReserveAnalysisResult,
+  CashflowPlanningBridgeRequest,
+  CashflowPlanningBridgeResult,
   RiskProfile,
   AllocationObjective,
+  SpendingVolatility,
   TaxWithdrawalResult,
 } from "../contract/planning";
 import type {
@@ -64,7 +71,8 @@ export type PlanningTool =
   | "risk_metrics"
   | "rebalance"
   | "optimize_allocation"
-  | "build_report";
+  | "build_report"
+  | "cashflow_bridge";
 
 /** Glide-path shape, derived from the wire contract (no new wire type). */
 export type GlidePathShape = GlidePathRequest["shape"];
@@ -234,6 +242,29 @@ export interface BuildPlanningReportInputs {
   sections: ReportSectionDraft[];
 }
 
+export type CashflowPlanningBridgeInputs = Omit<
+  CashflowPlanningBridgeRequest,
+  "contractVersion" | "oneTimeExpenseAdjustment" | "spendingVolatility"
+> & {
+  oneTimeExpenseAdjustment: number;
+  spendingVolatility: SpendingVolatility;
+};
+
+export type CashReserveAnalysisInputs = Omit<
+  CashReserveAnalysisRequest,
+  "contractVersion" | "secondaryTargetMonths"
+> & {
+  secondaryTargetMonths: number;
+};
+
+export type BudgetPacingProjectionInputs = Omit<
+  BudgetPacingProjectionRequest,
+  "contractVersion" | "recurringRemaining" | "knownOneTimeRemaining"
+> & {
+  recurringRemaining: number;
+  knownOneTimeRemaining: number;
+};
+
 /**
  * Live, engine-sourced capital-market assumptions (the "real data, fake clients"
  * flow). Fetched from the `capital_market_assumptions` tool and threaded into the
@@ -267,6 +298,9 @@ export interface ScenarioSnapshot {
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
   buildReportInputs: BuildPlanningReportInputs;
+  cashflowPlanningBridgeInputs: CashflowPlanningBridgeInputs;
+  cashReserveAnalysisInputs: CashReserveAnalysisInputs;
+  budgetPacingProjectionInputs: BudgetPacingProjectionInputs;
 }
 
 interface ScenarioState {
@@ -289,6 +323,9 @@ interface ScenarioState {
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
   buildReportInputs: BuildPlanningReportInputs;
+  cashflowPlanningBridgeInputs: CashflowPlanningBridgeInputs;
+  cashReserveAnalysisInputs: CashReserveAnalysisInputs;
+  budgetPacingProjectionInputs: BudgetPacingProjectionInputs;
 
   result: MonteCarloResult | null;
   glidePathResult: GlidePathResult | null;
@@ -308,6 +345,9 @@ interface ScenarioState {
   rebalanceResult: RebalanceResult | null;
   optimizeAllocationResult: OptimizeAllocationResult | null;
   buildReportResult: BuildPlanningReportResult | null;
+  cashflowPlanningBridgeResult: CashflowPlanningBridgeResult | null;
+  cashReserveAnalysisResult: CashReserveAnalysisResult | null;
+  budgetPacingProjectionResult: BudgetPacingProjectionResult | null;
 
   /** Live engine assumptions from capital_market_assumptions; null until loaded. */
   assumptions: MarketAssumptions | null;
@@ -339,6 +379,15 @@ interface ScenarioState {
     patch: Partial<OptimizeAllocationInputs>,
   ) => void;
   setBuildReportInputs: (patch: Partial<BuildPlanningReportInputs>) => void;
+  setCashflowPlanningBridgeInputs: (
+    patch: Partial<CashflowPlanningBridgeInputs>,
+  ) => void;
+  setCashReserveAnalysisInputs: (
+    patch: Partial<CashReserveAnalysisInputs>,
+  ) => void;
+  setBudgetPacingProjectionInputs: (
+    patch: Partial<BudgetPacingProjectionInputs>,
+  ) => void;
   setResult: (r: MonteCarloResult | null) => void;
   setGlidePathResult: (r: GlidePathResult | null) => void;
   setTaxResult: (r: TaxWithdrawalResult | null) => void;
@@ -357,6 +406,13 @@ interface ScenarioState {
   setRebalanceResult: (r: RebalanceResult | null) => void;
   setOptimizeAllocationResult: (r: OptimizeAllocationResult | null) => void;
   setBuildReportResult: (r: BuildPlanningReportResult | null) => void;
+  setCashflowPlanningBridgeResult: (
+    r: CashflowPlanningBridgeResult | null,
+  ) => void;
+  setCashReserveAnalysisResult: (r: CashReserveAnalysisResult | null) => void;
+  setBudgetPacingProjectionResult: (
+    r: BudgetPacingProjectionResult | null,
+  ) => void;
   setAssumptions: (a: MarketAssumptions | null) => void;
   setLoadingAssumptions: (b: boolean) => void;
   setRunning: (b: boolean) => void;
@@ -558,6 +614,36 @@ const DEFAULT_BUILD_REPORT: BuildPlanningReportInputs = {
   ],
 };
 
+const DEFAULT_CASHFLOW_PLANNING_BRIDGE: CashflowPlanningBridgeInputs = {
+  monthsAnalyzed: 6,
+  averageMonthlySpending: 8_000,
+  essentialMonthlySpending: 5_000,
+  lifestyleMonthlySpending: 3_000,
+  averageMonthlyIncome: 12_000,
+  averageMonthlySavings: 4_000,
+  currentCashReserve: 25_000,
+  targetCashReserveMonths: 6,
+  oneTimeExpenseAdjustment: 500,
+  spendingVolatility: "medium",
+};
+
+const DEFAULT_CASH_RESERVE_ANALYSIS: CashReserveAnalysisInputs = {
+  monthlyEssentialSpending: 5_000,
+  monthlyTotalSpending: 8_000,
+  currentCashReserve: 25_000,
+  targetMonths: 6,
+  secondaryTargetMonths: 9,
+};
+
+const DEFAULT_BUDGET_PACING: BudgetPacingProjectionInputs = {
+  monthDay: 15,
+  daysInMonth: 30,
+  monthToDateSpending: 3_400,
+  monthlyBudget: 8_000,
+  recurringRemaining: 1_250,
+  knownOneTimeRemaining: 300,
+};
+
 export const useScenario = create<ScenarioState>((set) => ({
   tool: "monte_carlo",
 
@@ -578,6 +664,9 @@ export const useScenario = create<ScenarioState>((set) => ({
   rebalanceInputs: DEFAULT_REBALANCE,
   optimizeAllocationInputs: DEFAULT_OPTIMIZE_ALLOCATION,
   buildReportInputs: DEFAULT_BUILD_REPORT,
+  cashflowPlanningBridgeInputs: DEFAULT_CASHFLOW_PLANNING_BRIDGE,
+  cashReserveAnalysisInputs: DEFAULT_CASH_RESERVE_ANALYSIS,
+  budgetPacingProjectionInputs: DEFAULT_BUDGET_PACING,
 
   result: null,
   glidePathResult: null,
@@ -597,6 +686,9 @@ export const useScenario = create<ScenarioState>((set) => ({
   rebalanceResult: null,
   optimizeAllocationResult: null,
   buildReportResult: null,
+  cashflowPlanningBridgeResult: null,
+  cashReserveAnalysisResult: null,
+  budgetPacingProjectionResult: null,
 
   assumptions: null,
   loadingAssumptions: false,
@@ -627,6 +719,9 @@ export const useScenario = create<ScenarioState>((set) => ({
       rebalanceInputs: snapshot.rebalanceInputs,
       optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
       buildReportInputs: snapshot.buildReportInputs,
+      cashflowPlanningBridgeInputs: snapshot.cashflowPlanningBridgeInputs,
+      cashReserveAnalysisInputs: snapshot.cashReserveAnalysisInputs,
+      budgetPacingProjectionInputs: snapshot.budgetPacingProjectionInputs,
       result: null,
       glidePathResult: null,
       taxResult: null,
@@ -645,6 +740,9 @@ export const useScenario = create<ScenarioState>((set) => ({
       rebalanceResult: null,
       optimizeAllocationResult: null,
       buildReportResult: null,
+      cashflowPlanningBridgeResult: null,
+      cashReserveAnalysisResult: null,
+      budgetPacingProjectionResult: null,
       // Assumptions are live engine data tied to the prior inputs; drop them so a
       // loaded plan does not silently reuse a stale correlation matrix.
       assumptions: null,
@@ -688,6 +786,27 @@ export const useScenario = create<ScenarioState>((set) => ({
     })),
   setBuildReportInputs: (patch) =>
     set((s) => ({ buildReportInputs: { ...s.buildReportInputs, ...patch } })),
+  setCashflowPlanningBridgeInputs: (patch) =>
+    set((s) => ({
+      cashflowPlanningBridgeInputs: {
+        ...s.cashflowPlanningBridgeInputs,
+        ...patch,
+      },
+    })),
+  setCashReserveAnalysisInputs: (patch) =>
+    set((s) => ({
+      cashReserveAnalysisInputs: {
+        ...s.cashReserveAnalysisInputs,
+        ...patch,
+      },
+    })),
+  setBudgetPacingProjectionInputs: (patch) =>
+    set((s) => ({
+      budgetPacingProjectionInputs: {
+        ...s.budgetPacingProjectionInputs,
+        ...patch,
+      },
+    })),
   setResult: (result) => set({ result }),
   setGlidePathResult: (glidePathResult) => set({ glidePathResult }),
   setTaxResult: (taxResult) => set({ taxResult }),
@@ -708,6 +827,12 @@ export const useScenario = create<ScenarioState>((set) => ({
   setOptimizeAllocationResult: (optimizeAllocationResult) =>
     set({ optimizeAllocationResult }),
   setBuildReportResult: (buildReportResult) => set({ buildReportResult }),
+  setCashflowPlanningBridgeResult: (cashflowPlanningBridgeResult) =>
+    set({ cashflowPlanningBridgeResult }),
+  setCashReserveAnalysisResult: (cashReserveAnalysisResult) =>
+    set({ cashReserveAnalysisResult }),
+  setBudgetPacingProjectionResult: (budgetPacingProjectionResult) =>
+    set({ budgetPacingProjectionResult }),
   setAssumptions: (assumptions) => set({ assumptions }),
   setLoadingAssumptions: (loadingAssumptions) => set({ loadingAssumptions }),
   setRunning: (running) => set({ running }),

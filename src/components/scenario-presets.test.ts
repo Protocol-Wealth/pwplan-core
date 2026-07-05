@@ -4,7 +4,13 @@
 import { describe, it, expect } from "vitest";
 import { SCENARIO_PRESETS, findPreset } from "./scenario-presets";
 import { validateScenario } from "./scenario-validation";
-import { validateGlidePath, validateTaxWithdrawal } from "./tool-validation";
+import {
+  validateBudgetPacingProjection,
+  validateCashReserveAnalysis,
+  validateCashflowPlanningBridge,
+  validateGlidePath,
+  validateTaxWithdrawal,
+} from "./tool-validation";
 import { parseScenario, serializeScenario } from "./scenario-io";
 
 describe("scenario presets", () => {
@@ -42,6 +48,24 @@ describe("scenario presets", () => {
           validateTaxWithdrawal(
             preset.snapshot.taxInputs,
             preset.snapshot.inputs.accounts,
+          ),
+        ).toEqual([]);
+      });
+
+      it("passes cash-flow bridge validation", () => {
+        expect(
+          validateCashflowPlanningBridge(
+            preset.snapshot.cashflowPlanningBridgeInputs,
+          ),
+        ).toEqual([]);
+        expect(
+          validateCashReserveAnalysis(
+            preset.snapshot.cashReserveAnalysisInputs,
+          ),
+        ).toEqual([]);
+        expect(
+          validateBudgetPacingProjection(
+            preset.snapshot.budgetPacingProjectionInputs,
           ),
         ).toEqual([]);
       });

@@ -6,9 +6,9 @@ model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
 [`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
 current.
 
-_Last updated: 2026-07-05. 21 wire-contract tools, 18 UI tabs (17 wire tabs +
-Roth · IRMAA), scenario files at schema v2, and cash-flow bridge tools are
-contract/gateway-only until a future synthetic UI slice._
+_Last updated: 2026-07-05. 21 wire-contract tools, 19 UI tabs (17 one-tool wire
+tabs + Cash Flow Bridge + Roth · IRMAA), scenario files at schema v3, and live
+Nexus has not yet caught up to the three new cash-flow bridge tools._
 
 ## Orient yourself in 5 minutes
 
@@ -48,13 +48,12 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
 
 ## Prioritized next tasks (from ROADMAP)
 
-1. **Synthetic Cash Flow OS / Planning Bridge UI** — use the newly added
-   `cashflow_planning_bridge`, `cash_reserve_analysis`, and
-   `budget_pacing_projection` contract/gateway methods with demo values only.
-   Keep the UI limited to derived monthly-close aggregates and synthetic traces;
-   do not add real CSV upload, raw transactions, merchant/payee/account fields,
-   household records, notes, approvals, release state, or audit trails. Tracked
-   in [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
+1. **Cash Flow Bridge polish / live follow-up** — the synthetic tab is built with
+   demo monthly-close aggregates only. Re-check `https://nexusmcp.site/mcp/tools`
+   before any live smoke; as of this slice it still returned the older 23-tool
+   list without the three cash-flow bridge tools. Keep tests mocked/offline until
+   live Nexus catches up. Tracked in
+   [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
 2. **Theming** to the `-core` family visual language — held for a design reference;
    ask the maintainer for it before starting. Tracked in
    [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16).

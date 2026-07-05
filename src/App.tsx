@@ -56,6 +56,10 @@ import {
   BuildPlanningReportForm,
   BuildPlanningReportResults,
 } from "./components/BuildPlanningReportTool";
+import {
+  CashflowBridgeForm,
+  CashflowBridgeResults,
+} from "./components/CashflowBridgeTool";
 import { ScenarioIO } from "./components/ScenarioIO";
 import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
@@ -79,6 +83,7 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "rebalance", label: "Rebalance" },
   { value: "optimize_allocation", label: "Optimize" },
   { value: "build_report", label: "Report" },
+  { value: "cashflow_bridge", label: "Cash Flow Bridge" },
 ];
 
 function ToolTabs() {
@@ -224,6 +229,13 @@ function ActiveTool() {
         <>
           <BuildPlanningReportForm />
           <BuildPlanningReportResults />
+        </>
+      );
+    case "cashflow_bridge":
+      return (
+        <>
+          <CashflowBridgeForm />
+          <CashflowBridgeResults />
         </>
       );
     case "monte_carlo":

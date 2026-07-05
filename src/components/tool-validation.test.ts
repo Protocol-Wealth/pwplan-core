@@ -5,6 +5,9 @@ import { describe, it, expect } from "vitest";
 import {
   parseIdList,
   parseReturns,
+  validateBudgetPacingProjection,
+  validateCashReserveAnalysis,
+  validateCashflowPlanningBridge,
   validateBracketHeadroom,
   validateBuildPlanningReport,
   validateCorrelation,
@@ -26,6 +29,9 @@ import {
 import type {
   BracketHeadroomInputs,
   BuildPlanningReportInputs,
+  BudgetPacingProjectionInputs,
+  CashReserveAnalysisInputs,
+  CashflowPlanningBridgeInputs,
   CorrelationInputs,
   FireInputs,
   GlidePathInputs,
@@ -217,6 +223,133 @@ describe("validateRothIrmaa", () => {
         medicareEnrolled: 2,
       }),
     ).toContain("Medicare enrollment count must fit the filing household.");
+  });
+});
+
+const validCashflowBridge: CashflowPlanningBridgeInputs = {
+  monthsAnalyzed: 6,
+  averageMonthlySpending: 8_000,
+  essentialMonthlySpending: 5_000,
+  lifestyleMonthlySpending: 3_000,
+  averageMonthlyIncome: 12_000,
+  averageMonthlySavings: 4_000,
+  currentCashReserve: 25_000,
+  targetCashReserveMonths: 6,
+  oneTimeExpenseAdjustment: 500,
+  spendingVolatility: "medium",
+};
+
+describe("validateCashflowPlanningBridge", () => {
+  it("accepts public-safe monthly-close aggregates", () => {
+    expect(validateCashflowPlanningBridge(validCashflowBridge)).toEqual([]);
+  });
+  it("requires a positive whole months analyzed value", () => {
+    expect(
+      validateCashflowPlanningBridge({
+        ...validCashflowBridge,
+        monthsAnalyzed: 0,
+      }),
+    ).toContain("Months analyzed must be a positive whole number.");
+  });
+  it("rejects negative aggregate values", () => {
+    expect(
+      validateCashflowPlanningBridge({
+        ...validCashflowBridge,
+        averageMonthlyIncome: -1,
+      }),
+    ).toContain("Average monthly income cannot be negative.");
+  });
+  it("rejects unsupported volatility", () => {
+    const bad = {
+      ...validCashflowBridge,
+      spendingVolatility: "extreme",
+    } as unknown as CashflowPlanningBridgeInputs;
+    expect(validateCashflowPlanningBridge(bad)).toContain(
+      "Spending volatility must be low, medium, or high.",
+    );
+  });
+  it("rejects raw transaction-shaped fields", () => {
+    const bad = {
+      ...validCashflowBridge,
+      transactions: [],
+    } as unknown as CashflowPlanningBridgeInputs;
+    expect(validateCashflowPlanningBridge(bad)).toContain(
+      "Cash-flow bridge inputs must not include raw transaction fields.",
+    );
+  });
+});
+
+const validCashReserve: CashReserveAnalysisInputs = {
+  monthlyEssentialSpending: 5_000,
+  monthlyTotalSpending: 8_000,
+  currentCashReserve: 25_000,
+  targetMonths: 6,
+  secondaryTargetMonths: 9,
+};
+
+describe("validateCashReserveAnalysis", () => {
+  it("accepts aggregate reserve inputs", () => {
+    expect(validateCashReserveAnalysis(validCashReserve)).toEqual([]);
+  });
+  it("requires total spending to cover essential spending", () => {
+    expect(
+      validateCashReserveAnalysis({
+        ...validCashReserve,
+        monthlyTotalSpending: 4_000,
+      }),
+    ).toContain("Monthly total spending must be at least essential spending.");
+  });
+  it("requires positive target months", () => {
+    expect(
+      validateCashReserveAnalysis({ ...validCashReserve, targetMonths: 0 }),
+    ).toContain("Target months must be greater than zero.");
+  });
+  it("allows secondary target months to be omitted with zero", () => {
+    expect(
+      validateCashReserveAnalysis({
+        ...validCashReserve,
+        secondaryTargetMonths: 0,
+      }),
+    ).toEqual([]);
+  });
+});
+
+const validBudgetPacing: BudgetPacingProjectionInputs = {
+  monthDay: 15,
+  daysInMonth: 30,
+  monthToDateSpending: 3_400,
+  monthlyBudget: 8_000,
+  recurringRemaining: 1_250,
+  knownOneTimeRemaining: 300,
+};
+
+describe("validateBudgetPacingProjection", () => {
+  it("accepts aggregate budget pacing inputs", () => {
+    expect(validateBudgetPacingProjection(validBudgetPacing)).toEqual([]);
+  });
+  it("rejects invalid month-day bounds", () => {
+    expect(
+      validateBudgetPacingProjection({ ...validBudgetPacing, monthDay: 31 }),
+    ).toContain("Month day must be a whole number within the month.");
+  });
+  it("rejects invalid days-in-month values", () => {
+    expect(
+      validateBudgetPacingProjection({ ...validBudgetPacing, daysInMonth: 27 }),
+    ).toContain("Days in month must be a whole number in [28, 31].");
+  });
+  it("requires a positive monthly budget", () => {
+    expect(
+      validateBudgetPacingProjection({ ...validBudgetPacing, monthlyBudget: 0 }),
+    ).toContain("Monthly budget must be greater than zero.");
+  });
+  it("rejects raw CSV-shaped fields", () => {
+    const bad = {
+      ...validBudgetPacing,
+      csv: "raw",
+    } as unknown as BudgetPacingProjectionInputs;
+    expect(validateBudgetPacingProjection(bad)).toContain(
+      "Cash-flow bridge inputs must not include raw transaction fields.",
+    );
   });
 });
 

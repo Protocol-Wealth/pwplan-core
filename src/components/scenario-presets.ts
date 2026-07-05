@@ -135,6 +135,33 @@ const DEFAULT_TOOL_INPUTS: Omit<
       },
     ],
   },
+  cashflowPlanningBridgeInputs: {
+    monthsAnalyzed: 6,
+    averageMonthlySpending: 8_000,
+    essentialMonthlySpending: 5_000,
+    lifestyleMonthlySpending: 3_000,
+    averageMonthlyIncome: 12_000,
+    averageMonthlySavings: 4_000,
+    currentCashReserve: 25_000,
+    targetCashReserveMonths: 6,
+    oneTimeExpenseAdjustment: 500,
+    spendingVolatility: "medium",
+  },
+  cashReserveAnalysisInputs: {
+    monthlyEssentialSpending: 5_000,
+    monthlyTotalSpending: 8_000,
+    currentCashReserve: 25_000,
+    targetMonths: 6,
+    secondaryTargetMonths: 9,
+  },
+  budgetPacingProjectionInputs: {
+    monthDay: 15,
+    daysInMonth: 30,
+    monthToDateSpending: 3_400,
+    monthlyBudget: 8_000,
+    recurringRemaining: 1_250,
+    knownOneTimeRemaining: 300,
+  },
 };
 
 export const SCENARIO_PRESETS: ScenarioPreset[] = [

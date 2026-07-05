@@ -14,6 +14,9 @@ import type { Account, AssetClass } from "../contract/planning";
 import type {
   BracketHeadroomInputs,
   BuildPlanningReportInputs,
+  BudgetPacingProjectionInputs,
+  CashReserveAnalysisInputs,
+  CashflowPlanningBridgeInputs,
   CorrelationInputs,
   FireInputs,
   GlidePathInputs,
@@ -30,8 +33,42 @@ import type {
   TaxWithdrawalInputs,
 } from "../store/scenario";
 
+const SPENDING_VOLATILITY = new Set(["low", "medium", "high"]);
+const RAW_CASHFLOW_KEYS = new Set([
+  "merchantoriginal",
+  "accountoriginal",
+  "originalstatement",
+  "notes",
+  "rawjson",
+  "ownername",
+  "transaction",
+  "transactions",
+  "csv",
+]);
+
+function hasRawCashflowField(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(hasRawCashflowField);
+  if (value === null || typeof value !== "object") return false;
+  for (const [key, child] of Object.entries(value)) {
+    const normalized = key.toLowerCase().replace(/[\s_-]/g, "");
+    if (RAW_CASHFLOW_KEYS.has(normalized)) return true;
+    if (hasRawCashflowField(child)) return true;
+  }
+  return false;
+}
+
 function isWeight(n: number): boolean {
   return Number.isFinite(n) && n >= 0 && n <= 1;
+}
+
+function isNonNegative(n: number): boolean {
+  return Number.isFinite(n) && n >= 0;
+}
+
+function requireNoRawCashflowFields(value: unknown, issues: string[]): void {
+  if (hasRawCashflowField(value)) {
+    issues.push("Cash-flow bridge inputs must not include raw transaction fields.");
+  }
 }
 
 /** Reasons a glide-path request cannot be dispatched, in display order. */
@@ -171,6 +208,126 @@ export function validateRothIrmaa(r: RothIrmaaInputs): string[] {
   if (r.irmaaInflation <= -1)
     issues.push("IRMAA inflation must be greater than -1.");
   if (r.irmaaBuffer < 0) issues.push("IRMAA buffer cannot be negative.");
+
+  return issues;
+}
+
+/** Validate public-safe monthly-close aggregates for the planning bridge. */
+export function validateCashflowPlanningBridge(
+  c: CashflowPlanningBridgeInputs,
+): string[] {
+  const issues: string[] = [];
+  requireNoRawCashflowFields(c, issues);
+
+  if (!Number.isInteger(c.monthsAnalyzed) || c.monthsAnalyzed < 1) {
+    issues.push("Months analyzed must be a positive whole number.");
+  }
+  if (!isNonNegative(c.averageMonthlySpending)) {
+    issues.push("Average monthly spending cannot be negative.");
+  }
+  if (!isNonNegative(c.essentialMonthlySpending)) {
+    issues.push("Essential monthly spending cannot be negative.");
+  }
+  if (!isNonNegative(c.lifestyleMonthlySpending)) {
+    issues.push("Lifestyle monthly spending cannot be negative.");
+  }
+  if (!isNonNegative(c.averageMonthlyIncome)) {
+    issues.push("Average monthly income cannot be negative.");
+  }
+  if (!isNonNegative(c.averageMonthlySavings)) {
+    issues.push("Average monthly savings cannot be negative.");
+  }
+  if (!isNonNegative(c.currentCashReserve)) {
+    issues.push("Current cash reserve cannot be negative.");
+  }
+  if (
+    !Number.isFinite(c.targetCashReserveMonths) ||
+    c.targetCashReserveMonths <= 0
+  ) {
+    issues.push("Target reserve months must be greater than zero.");
+  }
+  if (
+    c.oneTimeExpenseAdjustment !== undefined &&
+    !isNonNegative(c.oneTimeExpenseAdjustment)
+  ) {
+    issues.push("One-time expense adjustment cannot be negative.");
+  }
+  if (!SPENDING_VOLATILITY.has(c.spendingVolatility)) {
+    issues.push("Spending volatility must be low, medium, or high.");
+  }
+
+  return issues;
+}
+
+/** Validate public-safe cash-reserve aggregate inputs. */
+export function validateCashReserveAnalysis(
+  r: CashReserveAnalysisInputs,
+): string[] {
+  const issues: string[] = [];
+  requireNoRawCashflowFields(r, issues);
+
+  if (!isNonNegative(r.monthlyEssentialSpending)) {
+    issues.push("Monthly essential spending cannot be negative.");
+  }
+  if (!isNonNegative(r.monthlyTotalSpending)) {
+    issues.push("Monthly total spending cannot be negative.");
+  }
+  if (r.monthlyTotalSpending < r.monthlyEssentialSpending) {
+    issues.push("Monthly total spending must be at least essential spending.");
+  }
+  if (!isNonNegative(r.currentCashReserve)) {
+    issues.push("Current cash reserve cannot be negative.");
+  }
+  if (!Number.isFinite(r.targetMonths) || r.targetMonths <= 0) {
+    issues.push("Target months must be greater than zero.");
+  }
+  if (
+    r.secondaryTargetMonths !== undefined &&
+    r.secondaryTargetMonths !== 0 &&
+    (!Number.isFinite(r.secondaryTargetMonths) ||
+      r.secondaryTargetMonths <= 0)
+  ) {
+    issues.push("Secondary target months must be greater than zero when used.");
+  }
+
+  return issues;
+}
+
+/** Validate public-safe budget-pacing aggregate inputs. */
+export function validateBudgetPacingProjection(
+  b: BudgetPacingProjectionInputs,
+): string[] {
+  const issues: string[] = [];
+  requireNoRawCashflowFields(b, issues);
+
+  if (!Number.isInteger(b.daysInMonth) || b.daysInMonth < 28 || b.daysInMonth > 31) {
+    issues.push("Days in month must be a whole number in [28, 31].");
+  }
+  if (
+    !Number.isInteger(b.monthDay) ||
+    b.monthDay < 1 ||
+    b.monthDay > b.daysInMonth
+  ) {
+    issues.push("Month day must be a whole number within the month.");
+  }
+  if (!isNonNegative(b.monthToDateSpending)) {
+    issues.push("Month-to-date spending cannot be negative.");
+  }
+  if (!Number.isFinite(b.monthlyBudget) || b.monthlyBudget <= 0) {
+    issues.push("Monthly budget must be greater than zero.");
+  }
+  if (
+    b.recurringRemaining !== undefined &&
+    !isNonNegative(b.recurringRemaining)
+  ) {
+    issues.push("Recurring remaining cannot be negative.");
+  }
+  if (
+    b.knownOneTimeRemaining !== undefined &&
+    !isNonNegative(b.knownOneTimeRemaining)
+  ) {
+    issues.push("Known one-time remaining cannot be negative.");
+  }
 
   return issues;
 }

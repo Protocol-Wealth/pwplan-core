@@ -159,6 +159,33 @@ const snapshot: ScenarioSnapshot = {
       },
     ],
   },
+  cashflowPlanningBridgeInputs: {
+    monthsAnalyzed: 6,
+    averageMonthlySpending: 8_000,
+    essentialMonthlySpending: 5_000,
+    lifestyleMonthlySpending: 3_000,
+    averageMonthlyIncome: 12_000,
+    averageMonthlySavings: 4_000,
+    currentCashReserve: 25_000,
+    targetCashReserveMonths: 6,
+    oneTimeExpenseAdjustment: 500,
+    spendingVolatility: "medium",
+  },
+  cashReserveAnalysisInputs: {
+    monthlyEssentialSpending: 5_000,
+    monthlyTotalSpending: 8_000,
+    currentCashReserve: 25_000,
+    targetMonths: 6,
+    secondaryTargetMonths: 9,
+  },
+  budgetPacingProjectionInputs: {
+    monthDay: 15,
+    daysInMonth: 30,
+    monthToDateSpending: 3_400,
+    monthlyBudget: 8_000,
+    recurringRemaining: 1_250,
+    knownOneTimeRemaining: 300,
+  },
 };
 
 describe("serializeScenario", () => {
@@ -212,7 +239,7 @@ describe("round-trip", () => {
   it("round-trips newer tool selections instead of rejecting them as unknown", () => {
     const newer: ScenarioSnapshot = {
       ...snapshot,
-      tool: "build_report",
+      tool: "cashflow_bridge",
       optimizeAllocationInputs: {
         ...snapshot.optimizeAllocationInputs,
         objective: "max_sharpe",

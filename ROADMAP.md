@@ -39,7 +39,9 @@ on completion and note the version in CHANGELOG.md._
       by contract). _(done 2026-05-30: `scenario-io.ts` versioned, fail-closed
       envelope + `ScenarioIO` save/load UI via Blob download + file input, no
       browser storage; refreshed 2026-07-01 to schema v2 so every current tool
-      input round-trips and every result slot clears on load; 14 tests.)_
+      input round-trips and every result slot clears on load; refreshed
+      2026-07-05 to schema v3 for the synthetic Cash Flow Bridge inputs; 14
+      tests at the v2 milestone.)_
 - [x] Built-in case-study presets (accumulator / near-retiree / crisis-stress)
       loadable from the UI. _(done 2026-05-30: `scenario-presets.ts`; 15 tests
       assert each preset passes the real validators and round-trips.)_
@@ -103,11 +105,13 @@ on completion and note the version in CHANGELOG.md._
       No UI, no Monarch CSV upload, no raw transaction storage, no
       merchant/payee/account/household fields, no notes, approvals, release
       state, or audit trails.)_
-- [ ] [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) Build the
-      synthetic Cash Flow OS / Planning Bridge UI. Use demo monthly-close values
-      and synthetic rule-trace examples only; production ingestion, household
-      workflow, advisor approval, client release, and compliance trail remain
-      private PWOS / pw-api / PWPortal work.
+- [x] [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) Build the
+      synthetic Cash Flow OS / Planning Bridge UI. _(done 2026-07-05:
+      `CashflowBridgeTool` tab over demo monthly-close aggregates, plus schema-v3
+      scenario round-trip and validators. No CSV upload, raw transaction storage,
+      merchant/payee/account/household fields, approvals, release state, audit
+      trail, or private workflow state. Live `nexusmcp.site` had not caught up to
+      the three cash-flow bridge tools during this pass, so tests stay mocked.)_
 
 ## Dependency on other repos (track, do not build here)
 

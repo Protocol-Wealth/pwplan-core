@@ -9,6 +9,19 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Slice 4 synthetic Cash Flow Bridge UI (2026-07-05).** Added the
+  `CashflowBridgeTool` tab, which uses demo/de-identified monthly-close aggregate
+  values to call `planning.cashflowPlanningBridge`,
+  `planning.cashReserveAnalysis`, and `planning.budgetPacingProjection`.
+  Results show planning assumptions, cash-reserve coverage, and budget pacing
+  status without any CSV upload, raw transaction storage, merchant/payee/account
+  fields, household records, advisor/client notes, approvals, release state,
+  persistence, or audit trail. Added pure validators for the three aggregate
+  request shapes, raw-transaction-shaped key rejection, schema-v3 scenario
+  round-trip support, preset coverage, and docs updates. Wire-contract count
+  remains 21; UI tab count is now 19. Live `nexusmcp.site` still returned the
+  older 23-tool list during this pass, so tests remain mocked/offline.
+
 - **Slice 3 cash-flow planning bridge contract/gateway support (2026-07-05).**
   Added public-safe TypeScript request/result contracts, `PLANNING_TOOLS` ids,
   and `planning.*` gateway methods for the three Nexus cash-flow bridge tools:

@@ -34,6 +34,9 @@ import { assertNoPII, PiiTripwireError } from "../lib/compliance";
 import type {
   BracketHeadroomInputs,
   BuildPlanningReportInputs,
+  BudgetPacingProjectionInputs,
+  CashReserveAnalysisInputs,
+  CashflowPlanningBridgeInputs,
   CorrelationInputs,
   FireInputs,
   GlidePathInputs,
@@ -57,7 +60,7 @@ import type {
 export type { ScenarioSnapshot } from "../store/scenario";
 
 /** Bump when the envelope shape changes incompatibly. */
-export const SCENARIO_FILE_VERSION = "2" as const;
+export const SCENARIO_FILE_VERSION = "3" as const;
 
 /** Tag identifying a pwplan-core scenario file, to reject unrelated JSON. */
 export const SCENARIO_FILE_KIND = "pwplan-core/scenario" as const;
@@ -100,6 +103,9 @@ export function serializeScenario(
     rebalanceInputs: snapshot.rebalanceInputs,
     optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
     buildReportInputs: snapshot.buildReportInputs,
+    cashflowPlanningBridgeInputs: snapshot.cashflowPlanningBridgeInputs,
+    cashReserveAnalysisInputs: snapshot.cashReserveAnalysisInputs,
+    budgetPacingProjectionInputs: snapshot.budgetPacingProjectionInputs,
   };
   // Fail-closed: never write a file that carries an identity-shaped key.
   return assertNoPII(envelope);
@@ -168,6 +174,7 @@ const ALLOCATION_OBJECTIVES = [
   "efficient_risk",
 ] as const;
 const OPTIMIZE_RETURN_MODELS = ["house_view", "historical"] as const;
+const SPENDING_VOLATILITY = ["low", "medium", "high"] as const;
 const PLANNING_TOOLS: PlanningTool[] = [
   "monte_carlo",
   "glide_path",
@@ -187,6 +194,7 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "rebalance",
   "optimize_allocation",
   "build_report",
+  "cashflow_bridge",
 ];
 
 function parseAssetClass(v: unknown): AssetClass | null {
@@ -609,6 +617,84 @@ function parseBuildReport(v: unknown): BuildPlanningReportInputs | null {
   return { title: v.title, includeRegime: v.includeRegime, sections };
 }
 
+function parseCashflowPlanningBridge(
+  v: unknown,
+): CashflowPlanningBridgeInputs | null {
+  if (
+    !isObject(v) ||
+    !isNum(v.monthsAnalyzed) ||
+    !isNum(v.averageMonthlySpending) ||
+    !isNum(v.essentialMonthlySpending) ||
+    !isNum(v.lifestyleMonthlySpending) ||
+    !isNum(v.averageMonthlyIncome) ||
+    !isNum(v.averageMonthlySavings) ||
+    !isNum(v.currentCashReserve) ||
+    !isNum(v.targetCashReserveMonths) ||
+    !isNum(v.oneTimeExpenseAdjustment) ||
+    !isStr(v.spendingVolatility) ||
+    !(SPENDING_VOLATILITY as readonly string[]).includes(v.spendingVolatility)
+  ) {
+    return null;
+  }
+  return {
+    monthsAnalyzed: v.monthsAnalyzed,
+    averageMonthlySpending: v.averageMonthlySpending,
+    essentialMonthlySpending: v.essentialMonthlySpending,
+    lifestyleMonthlySpending: v.lifestyleMonthlySpending,
+    averageMonthlyIncome: v.averageMonthlyIncome,
+    averageMonthlySavings: v.averageMonthlySavings,
+    currentCashReserve: v.currentCashReserve,
+    targetCashReserveMonths: v.targetCashReserveMonths,
+    oneTimeExpenseAdjustment: v.oneTimeExpenseAdjustment,
+    spendingVolatility:
+      v.spendingVolatility as CashflowPlanningBridgeInputs["spendingVolatility"],
+  };
+}
+
+function parseCashReserveAnalysis(v: unknown): CashReserveAnalysisInputs | null {
+  if (
+    !isObject(v) ||
+    !isNum(v.monthlyEssentialSpending) ||
+    !isNum(v.monthlyTotalSpending) ||
+    !isNum(v.currentCashReserve) ||
+    !isNum(v.targetMonths) ||
+    !isNum(v.secondaryTargetMonths)
+  ) {
+    return null;
+  }
+  return {
+    monthlyEssentialSpending: v.monthlyEssentialSpending,
+    monthlyTotalSpending: v.monthlyTotalSpending,
+    currentCashReserve: v.currentCashReserve,
+    targetMonths: v.targetMonths,
+    secondaryTargetMonths: v.secondaryTargetMonths,
+  };
+}
+
+function parseBudgetPacingProjection(
+  v: unknown,
+): BudgetPacingProjectionInputs | null {
+  if (
+    !isObject(v) ||
+    !isNum(v.monthDay) ||
+    !isNum(v.daysInMonth) ||
+    !isNum(v.monthToDateSpending) ||
+    !isNum(v.monthlyBudget) ||
+    !isNum(v.recurringRemaining) ||
+    !isNum(v.knownOneTimeRemaining)
+  ) {
+    return null;
+  }
+  return {
+    monthDay: v.monthDay,
+    daysInMonth: v.daysInMonth,
+    monthToDateSpending: v.monthToDateSpending,
+    monthlyBudget: v.monthlyBudget,
+    recurringRemaining: v.recurringRemaining,
+    knownOneTimeRemaining: v.knownOneTimeRemaining,
+  };
+}
+
 /**
  * Validate and unwrap a parsed JSON value into a ScenarioSnapshot. Returns a
  * discriminated result rather than throwing for the expected failure modes
@@ -726,6 +812,33 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
   if (buildReportInputs === null) {
     return { ok: false, error: "Malformed or missing report-builder inputs." };
   }
+  const cashflowPlanningBridgeInputs = parseCashflowPlanningBridge(
+    raw.cashflowPlanningBridgeInputs,
+  );
+  if (cashflowPlanningBridgeInputs === null) {
+    return {
+      ok: false,
+      error: "Malformed or missing cash-flow bridge inputs.",
+    };
+  }
+  const cashReserveAnalysisInputs = parseCashReserveAnalysis(
+    raw.cashReserveAnalysisInputs,
+  );
+  if (cashReserveAnalysisInputs === null) {
+    return {
+      ok: false,
+      error: "Malformed or missing cash-reserve inputs.",
+    };
+  }
+  const budgetPacingProjectionInputs = parseBudgetPacingProjection(
+    raw.budgetPacingProjectionInputs,
+  );
+  if (budgetPacingProjectionInputs === null) {
+    return {
+      ok: false,
+      error: "Malformed or missing budget-pacing inputs.",
+    };
+  }
 
   const snapshot: ScenarioSnapshot = {
     tool: raw.tool as PlanningTool,
@@ -746,6 +859,9 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
     rebalanceInputs,
     optimizeAllocationInputs,
     buildReportInputs,
+    cashflowPlanningBridgeInputs,
+    cashReserveAnalysisInputs,
+    budgetPacingProjectionInputs,
   };
 
   return { ok: true, value: snapshot };

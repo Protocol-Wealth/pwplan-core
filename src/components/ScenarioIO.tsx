@@ -46,6 +46,9 @@ export function ScenarioIO() {
     rebalanceInputs,
     optimizeAllocationInputs,
     buildReportInputs,
+    cashflowPlanningBridgeInputs,
+    cashReserveAnalysisInputs,
+    budgetPacingProjectionInputs,
     loadSnapshot,
     setError,
   } = useScenario();
@@ -72,6 +75,9 @@ export function ScenarioIO() {
       rebalanceInputs,
       optimizeAllocationInputs,
       buildReportInputs,
+      cashflowPlanningBridgeInputs,
+      cashReserveAnalysisInputs,
+      budgetPacingProjectionInputs,
     };
   }
 
