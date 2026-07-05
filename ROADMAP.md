@@ -95,15 +95,19 @@ on completion and note the version in CHANGELOG.md._
       withdrawal-tax-aware Roth ladder) — tracked in
       [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17). Net-worth
       / holdings tracking stays OUT of scope (PII/production).
-- [ ] [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) Decide
-      whether additional Nexus/PWOS planning/report metadata surfaces should be
-      extracted into this OSS UI. Keep any extraction synthetic/de-identified and
-      outside private advisor/client workflow details. The next candidate is a
-      public-safe Cash Flow OS / Planning Bridge reference: de-identified
-      transaction classes, monthly-close aggregates, and synthetic rule-decision
-      traces only. Do not add Monarch CSV upload, raw transaction storage,
-      merchant/payee strings, account nicknames, household records, advisor/client
-      notes, approvals, release state, or audit trails here.
+- [x] [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) Add the
+      public-safe Cash Flow OS / Planning Bridge contract + gateway extraction.
+      _(done 2026-07-05: `cashflow_planning_bridge`, `cash_reserve_analysis`,
+      and `budget_pacing_projection` request/result types, `PLANNING_TOOLS` ids,
+      gateway methods, exact dispatch tests, and PII/raw-field contract tests.
+      No UI, no Monarch CSV upload, no raw transaction storage, no
+      merchant/payee/account/household fields, no notes, approvals, release
+      state, or audit trails.)_
+- [ ] [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) Build the
+      synthetic Cash Flow OS / Planning Bridge UI. Use demo monthly-close values
+      and synthetic rule-trace examples only; production ingestion, household
+      workflow, advisor approval, client release, and compliance trail remain
+      private PWOS / pw-api / PWPortal work.
 
 ## Dependency on other repos (track, do not build here)
 

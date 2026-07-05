@@ -25,6 +25,17 @@ describe("planning contract", () => {
     const ids = Object.values(PLANNING_TOOLS);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it("exposes the current 21 public-safe wire tools", () => {
+    expect(Object.values(PLANNING_TOOLS)).toHaveLength(21);
+    expect(PLANNING_TOOLS.cashflowPlanningBridge).toBe(
+      "cashflow_planning_bridge",
+    );
+    expect(PLANNING_TOOLS.cashReserveAnalysis).toBe("cash_reserve_analysis");
+    expect(PLANNING_TOOLS.budgetPacingProjection).toBe(
+      "budget_pacing_projection",
+    );
+  });
 });
 
 describe("PII-free invariant", () => {
@@ -45,6 +56,25 @@ describe("PII-free invariant", () => {
 
   for (const word of FORBIDDEN) {
     it(`contract declares no '${word}' field`, () => {
+      const re = new RegExp(`^[ \\t]+${word}\\??:`, "mi");
+      expect(re.test(contractSrc)).toBe(false);
+    });
+  }
+
+  const RAW_FINANCE_FIELDS = [
+    "merchantOriginal",
+    "accountOriginal",
+    "originalStatement",
+    "notes",
+    "rawJson",
+    "ownerName",
+    "transaction",
+    "transactions",
+    "csv",
+  ];
+
+  for (const word of RAW_FINANCE_FIELDS) {
+    it(`contract declares no raw-ingestion '${word}' field`, () => {
       const re = new RegExp(`^[ \\t]+${word}\\??:`, "mi");
       expect(re.test(contractSrc)).toBe(false);
     });

@@ -6,9 +6,9 @@ model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
 [`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
 current.
 
-_Last updated: 2026-07-05. 18 wire-contract tools, 18 UI tabs (17 wire tabs +
-Roth · IRMAA), scenario files at schema v2, 201 tests green as of the prior
-local gate; current Slice 0 work is docs-only._
+_Last updated: 2026-07-05. 21 wire-contract tools, 18 UI tabs (17 wire tabs +
+Roth · IRMAA), scenario files at schema v2, and cash-flow bridge tools are
+contract/gateway-only until a future synthetic UI slice._
 
 ## Orient yourself in 5 minutes
 
@@ -48,11 +48,13 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
 
 ## Prioritized next tasks (from ROADMAP)
 
-1. **Nexus/PWOS planning-surface alignment** — decide whether a public-safe Cash
-   Flow OS / Planning Bridge contract belongs here. If accepted, keep it limited
-   to de-identified transaction classes, monthly-close aggregates, synthetic rule
-   traces, and demo-only bridge values into planning assumptions. Tracked in
-   [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
+1. **Synthetic Cash Flow OS / Planning Bridge UI** — use the newly added
+   `cashflow_planning_bridge`, `cash_reserve_analysis`, and
+   `budget_pacing_projection` contract/gateway methods with demo values only.
+   Keep the UI limited to derived monthly-close aggregates and synthetic traces;
+   do not add real CSV upload, raw transactions, merchant/payee/account fields,
+   household records, notes, approvals, release state, or audit trails. Tracked
+   in [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
 2. **Theming** to the `-core` family visual language — held for a design reference;
    ask the maintainer for it before starting. Tracked in
    [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16).

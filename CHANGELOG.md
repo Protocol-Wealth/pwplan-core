@@ -7,6 +7,21 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Added
+
+- **Slice 3 cash-flow planning bridge contract/gateway support (2026-07-05).**
+  Added public-safe TypeScript request/result contracts, `PLANNING_TOOLS` ids,
+  and `planning.*` gateway methods for the three Nexus cash-flow bridge tools:
+  `cashflow_planning_bridge`, `cash_reserve_analysis`, and
+  `budget_pacing_projection`. These are contract/gateway-only in this slice and
+  consume derived monthly-close aggregate numbers only. Added offline dispatch
+  tests, PII-tripwire coverage for the new methods, and contract tests that keep
+  identity-shaped and raw-ingestion-shaped fields out of the public wire types.
+  No UI, Monarch CSV upload, raw transaction processing, merchant/payee/account
+  fields, household records, advisor/client notes, approvals, release state,
+  persistence, or audit trail were added. The wire-contract count is now 21; the
+  UI remains 18 tabs plus the separate Roth · IRMAA case contract.
+
 ### Changed
 
 - **Slice 0 docs alignment (2026-07-05).** Clarified the hybrid PW Cash Flow OS +

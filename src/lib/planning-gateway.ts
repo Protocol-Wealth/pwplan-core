@@ -39,6 +39,12 @@ import {
   type RegimeReturnResult,
   type CapitalMarketAssumptionsRequest,
   type CapitalMarketAssumptionsResult,
+  type CashflowPlanningBridgeRequest,
+  type CashflowPlanningBridgeResult,
+  type CashReserveAnalysisRequest,
+  type CashReserveAnalysisResult,
+  type BudgetPacingProjectionRequest,
+  type BudgetPacingProjectionResult,
   type RothConversionRequest,
   type RothConversionResult,
   type SequenceOfReturnsStressRequest,
@@ -218,6 +224,36 @@ export const planning = {
   ) =>
     callTool<CapitalMarketAssumptionsRequest, CapitalMarketAssumptionsResult>(
       PLANNING_TOOLS.capitalMarketAssumptions,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  cashflowPlanningBridge: (
+    req: Omit<CashflowPlanningBridgeRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<CashflowPlanningBridgeRequest, CashflowPlanningBridgeResult>(
+      PLANNING_TOOLS.cashflowPlanningBridge,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  cashReserveAnalysis: (
+    req: Omit<CashReserveAnalysisRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<CashReserveAnalysisRequest, CashReserveAnalysisResult>(
+      PLANNING_TOOLS.cashReserveAnalysis,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  budgetPacingProjection: (
+    req: Omit<BudgetPacingProjectionRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<BudgetPacingProjectionRequest, BudgetPacingProjectionResult>(
+      PLANNING_TOOLS.budgetPacingProjection,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),

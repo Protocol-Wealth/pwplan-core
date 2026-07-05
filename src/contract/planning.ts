@@ -247,6 +247,106 @@ export interface CapitalMarketAssumptionsResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tools: public-safe Cash Flow OS planning bridge
+// ---------------------------------------------------------------------------
+
+export type SpendingVolatility = "low" | "medium" | "high";
+
+/** Derived monthly-close aggregates only. This is not a transaction ingestion
+ *  contract: no CSV rows, merchant/payee strings, account names, household
+ *  records, notes, approvals, release state, or audit trail fields. */
+export interface CashflowPlanningBridgeRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  monthsAnalyzed: number;
+  averageMonthlySpending: number;
+  essentialMonthlySpending: number;
+  lifestyleMonthlySpending: number;
+  averageMonthlyIncome: number;
+  averageMonthlySavings: number;
+  currentCashReserve: number;
+  targetCashReserveMonths: number;
+  oneTimeExpenseAdjustment?: number;
+  spendingVolatility?: SpendingVolatility;
+}
+
+export interface CashflowPlanningBridgeResult {
+  contractVersion: string;
+  monthsAnalyzed: number;
+  annualSpend: number;
+  normalizedAnnualSpend: number;
+  essentialAnnualSpend: number;
+  lifestyleAnnualSpend: number;
+  annualIncome: number;
+  annualSavings: number;
+  savingsRate: number;
+  cashReserveTarget: number;
+  cashReserveGap: number;
+  retirementIncomeFloor: number;
+  retirementLifestyleBand: {
+    lower: number;
+    target: number;
+    upper: number;
+  };
+  spendingVolatility: SpendingVolatility;
+  planningWarnings: string[];
+  recommendedNextTools: string[];
+  assumptions: Record<string, unknown>;
+  disclaimer?: string;
+}
+
+export type CashReserveStatus =
+  | "underfunded"
+  | "on_track"
+  | "funded"
+  | "overfunded";
+
+export interface CashReserveAnalysisRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  monthlyEssentialSpending: number;
+  monthlyTotalSpending: number;
+  currentCashReserve: number;
+  targetMonths: number;
+  secondaryTargetMonths?: number;
+}
+
+export interface CashReserveAnalysisResult {
+  contractVersion: string;
+  targetReserve: number;
+  secondaryTargetReserve: number | null;
+  currentReserve: number;
+  gapToTarget: number;
+  gapToSecondaryTarget: number | null;
+  monthsCoveredEssential: number;
+  monthsCoveredTotal: number;
+  status: CashReserveStatus;
+  disclaimer?: string;
+}
+
+export type BudgetPacingStatus = "under" | "on_track" | "over";
+export type BudgetWarningLevel = "none" | "info" | "warn" | "alert";
+
+export interface BudgetPacingProjectionRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  monthDay: number;
+  daysInMonth: number;
+  monthToDateSpending: number;
+  monthlyBudget: number;
+  recurringRemaining?: number;
+  knownOneTimeRemaining?: number;
+}
+
+export interface BudgetPacingProjectionResult {
+  contractVersion: string;
+  projectedMonthEndSpending: number;
+  projectedVariance: number;
+  budgetUsedPct: number;
+  pacingStatus: BudgetPacingStatus;
+  warningLevel: BudgetWarningLevel;
+  assumptions: Record<string, unknown>;
+  disclaimer?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Tool: roth_conversion
 // ---------------------------------------------------------------------------
 
@@ -676,6 +776,9 @@ export const PLANNING_TOOLS = {
   correlationMatrix: "correlation_matrix",
   regimeReturnGenerator: "regime_return_generator",
   capitalMarketAssumptions: "capital_market_assumptions",
+  cashflowPlanningBridge: "cashflow_planning_bridge",
+  cashReserveAnalysis: "cash_reserve_analysis",
+  budgetPacingProjection: "budget_pacing_projection",
   rothConversion: "roth_conversion",
   sequenceOfReturnsStress: "sequence_of_returns_stress",
   rmd: "rmd",

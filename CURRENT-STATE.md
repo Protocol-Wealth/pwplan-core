@@ -1,6 +1,6 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-07-05 (Slice 0 docs alignment for the PW Cash Flow OS + PW Planning Lab + PW Retirement Income Lab direction: public/private boundaries clarified, Cash Flow OS / Planning Bridge work tied to #15, and stale historical tool-count wording fixed). Session-start snapshot; maintain it._
+_Last updated: 2026-07-05 (Slice 3 contract/gateway support for the Nexus cash-flow planning bridge tools: public-safe types + dispatch only, no UI or real ingestion). Maintain it._
 
 ## Status
 
@@ -13,9 +13,10 @@ against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
 stack (pwos-core PII de-identification + audit log) and any pw-api integration
 have been **removed from this OSS repo** and live only in a private fork; the
 `pw-api` gateway seam is kept so that fork stays a low-diff sync. The wire
-contract has **18** tools; the UI exposes **18 tabs** (17 wire-tool tabs plus the
+contract has **21** tools; the UI still exposes **18 tabs** (17 wire-tool tabs plus the
 Roth · IRMAA case-contract tab), with `capital_market_assumptions` surfaced as
-the Monte Carlo "Load real market assumptions" control. Each tab is wired to its
+the Monte Carlo "Load real market assumptions" control. The three cash-flow
+bridge tools are contract/gateway-only for now. Each UI tab is wired to its
 gateway method with client-side request-shape validation and hand-rolled SVG/CSS
 results (no chart library). Accounts/asset classes are a shared portfolio. Plan
 inputs save/load as PII-free schema-v2 JSON and built-in case-study presets use
@@ -35,30 +36,34 @@ Thin UI → `planning-gateway` → `nexus-mcp` (open; the only backend this repo
 uses) | `pw-api` (private-fork seam). Wire contract v0.1.0, PII-free and enforced
 by test. `assertNoPII` is a small, always-on, dependency-free structural tripwire
 (`src/lib/compliance.ts`); `auditCall` is a no-op seam (writes nothing). See
-README.md "Compliance scope". The contract + gateway cover all **18** wire tools:
+README.md "Compliance scope". The contract + gateway cover all **21** wire tools:
 monteCarlo / glidePath / taxWithdrawal / rothConversion /
 sequenceOfReturnsStress / rmd / taxBracketHeadroom / socialSecurityClaiming /
 regimeConditionedSwr / correlationMatrix / regimeReturnGenerator /
 portfolioXray / fire / riskMetrics / rebalance / optimizeAllocation /
-buildPlanningReport, plus the `capitalMarketAssumptions` control inside the
+buildPlanningReport / cashflowPlanningBridge / cashReserveAnalysis /
+budgetPacingProjection, plus the `capitalMarketAssumptions` control inside the
 Monte Carlo tab. The Roth · IRMAA composite planner is separate from the wire
 tool registry and uses the case contract v1.1.0.
 
-Cash-flow operating-system concepts are not implemented yet in this OSS repo.
-If accepted, the public-safe shape should be additive and synthetic only:
-de-identified transaction classes, monthly-close summaries, counted/excluded
-cash-flow aggregates, rule-decision trace examples, and planning-bridge inputs.
-Raw CSV fields, merchant/payee text, account names, household/person identifiers,
-notes, approvals, and audit records remain private-only.
+Cash-flow operating-system concepts now have public-safe contract/gateway support
+for Nexus bridge calculations only: `cashflow_planning_bridge`,
+`cash_reserve_analysis`, and `budget_pacing_projection` accept derived
+monthly-close numbers and return planning assumptions / reserve status / pacing
+signals. There is no UI yet. Raw CSV fields, raw transaction arrays,
+merchant/payee text, account names, household/person identifiers, notes,
+approvals, release state, and audit records remain private-only.
 
 ## File inventory
 
 _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 
-- `src/contract/planning.ts` — wire contract v0.1.0; **18 tools**; PII-free invariant.
+- `src/contract/planning.ts` — wire contract v0.1.0; **21 tools**; PII-free invariant.
   `MonteCarloRequest` carries an optional `retirementAge?` + `pathCacheKey?`.
   `CapitalMarketAssumptionsRequest`/`Result` source real returns/vols/λ/correlations
   that drop straight into a `MonteCarloRequest`. Plus `RothConversionRequest`/`Result`,
+  `CashflowPlanningBridgeRequest`/`Result`, `CashReserveAnalysisRequest`/`Result`,
+  `BudgetPacingProjectionRequest`/`Result`,
   `SequenceOfReturnsStressRequest`/`Result` (+ `SequenceOutcome`), `RmdRequest`/`Result`,
   `TaxBracketHeadroomRequest`/`Result`, `SocialSecurityClaimingRequest`/`Result`
   (+ `SocialSecurityClaimRow`/`Breakeven`), `RegimeConditionedSwrRequest`/`Result`,
@@ -66,10 +71,10 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   `RiskMetricsRequest`/`Result`, `RebalanceRequest`/`Result` (+ `RebalanceRow`),
   `OptimizeAllocationRequest`/`Result` (+ `RiskProfile`/`AllocationObjective`/`AllocationAssetClass`),
   `BuildPlanningReportRequest`/`Result` (+ `PlanningReportSectionInput`/`PlanningReportSection`/`PlanningReport`).
-- `src/contract/planning.test.ts` — contract + PII-free enforcement (13 tests).
+- `src/contract/planning.test.ts` — contract + PII-free/raw-ingestion-field enforcement.
 - `src/contract/roth-conversion.ts` — the **case contract** `PLANNING_CASE_CONTRACT_VERSION = 1.1.0` (a mirror of `@protocolwealthos/planning-contract` / the nexus-core JSON-Schema): `PlanningContract` + `RothConversionAnalysis` (+ nested) for the composite Roth/IRMAA analysis. Distinct from the v0.1.0 wire contract; PII-free. `roth-conversion.test.ts` enforces semver + the PII-free invariant.
-- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; fail-fast backend env parsing; one `planning.*` method per wire tool (18) + the composite `analyzeRothConversion(req)` (POST `/mcp/tools/analyze_roth_conversion`; opaque `case_id` minted at dispatch).
-- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 18 tools, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks (incl. optimize_allocation + build_planning_report), pw-api seam, and invalid-backend fail-fast behavior; 26 tests.
+- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; fail-fast backend env parsing; one `planning.*` method per wire tool (21) + the composite `analyzeRothConversion(req)` (POST `/mcp/tools/analyze_roth_conversion`; opaque `case_id` minted at dispatch).
+- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 21 tools, cash-flow bridge dispatch checks, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks (incl. optimize_allocation + build_planning_report), pw-api seam, and invalid-backend fail-fast behavior.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
 - `src/store/scenario.ts` — Zustand store: active `tool` (18 UI tabs) + per-tool inputs (scenario / glidePath / tax / roth / rothIrmaa / sor / rmd / bracket / socialSecurity / regimeSwr / correlation / regimeGen / fire / riskMetrics / rebalance / optimizeAllocation / buildReport) + result slots (incl. `xrayResult` / `fireResult` / `riskMetricsResult` / `rebalanceResult` / `optimizeAllocationResult` / `buildReportResult`); the Portfolio X-ray + Rebalance reuse the shared scenario portfolio. Accounts/asset classes are one shared portfolio. Seeded valid defaults. `ScenarioSnapshot` captures every current tool input, and `loadSnapshot` clears every result slot plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions.
 - `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity. Includes the **"Load real market assumptions"** control (calls `capital_market_assumptions`, drops real returns/vols/λ onto the current portfolio + carries the engine correlation matrix into the run; provenance `asOf` line + the shared `MatrixTable`).
@@ -100,7 +105,7 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
 - `src/App.tsx` (tool tab bar + ScenarioIO), `src/main.tsx`, `src/index.css`, `index.html` — shell.
 - `scripts/smoke-nexus.mjs` — opt-in live round-trip against nexusmcp.site (PII-free default scenario); not in the gate suite, never in CI.
-- `docs/nexus-core-requirements.md` — the original consumer-side spec handed to nexus-core (the first 6 tools, enums, CORS/determinism). Historical: nexus-core now exposes a larger 23-tool planning surface, while this client intentionally exposes 18 wire tools plus the separate Roth · IRMAA case contract; `src/contract/planning.ts` is the source of truth for this OSS UI.
+- `docs/nexus-core-requirements.md` — the original consumer-side spec handed to nexus-core (the first 6 tools, enums, CORS/determinism). Historical: nexus-core now exposes a larger planning surface, while this client intentionally exposes 21 wire tools plus the separate Roth · IRMAA case contract; `src/contract/planning.ts` is the source of truth for this OSS UI.
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.
 - CI: `.github/workflows/ci.yml` (7 jobs).
 - `LICENSE` (Apache-2.0), `NOTICE` (patent #64/082,241), `README.md`, `CONTRIBUTING.md`.
@@ -130,15 +135,15 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
 - `NOTICE` patent application number is USPTO #64/082,241 (PW-PROV-003, filed
   2026-06-04; conversion deadline 2027-06-04).
-- **All 18 wire-contract tools are surfaced in the UI** — 17 tabs +
+- **18 of 21 wire-contract tools are surfaced in the UI** — 17 tabs +
   `capital_market_assumptions` (the Monte Carlo "Load real market assumptions"
-  control); no gateway-only tools. Plus the **Roth · IRMAA tab** — for the
-  composite case contract (v1.1.0), which is not one of the 18 wire tools.
-  (Latest additions: `optimize_allocation` + `build_planning_report`.)
-- There is no public Cash Flow OS contract or demo yet. The intended first
-  public-safe slice is documentation/contract design under #15: derived
-  monthly-close values and de-identified transaction classes only, not raw
-  transaction ingestion.
+  control). The three cash-flow bridge tools are gateway-only until the future
+  synthetic Cash Flow OS / Planning Bridge UI. Plus the **Roth · IRMAA tab** — for the
+  composite case contract (v1.1.0), which is not one of the 21 wire tools.
+  (Latest gateway additions: the cash-flow bridge trio.)
+- There is no public Cash Flow OS UI/demo yet. The contract/gateway slice under
+  #15 is in place for derived monthly-close values only; the next public-safe
+  slice is synthetic UI using demo values, not raw transaction ingestion.
 - Live MCP availability is intentionally not a CI gate; use
   `scripts/smoke-nexus.mjs` plus targeted `/mcp/tools/{tool}` checks when a task
   needs runtime certainty. The Roth · IRMAA tab additionally depends on the

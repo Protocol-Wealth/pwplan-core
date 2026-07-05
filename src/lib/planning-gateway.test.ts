@@ -28,6 +28,9 @@ import {
   type CorrelationRequest,
   type RegimeReturnRequest,
   type CapitalMarketAssumptionsRequest,
+  type CashflowPlanningBridgeRequest,
+  type CashReserveAnalysisRequest,
+  type BudgetPacingProjectionRequest,
   type RothConversionRequest,
   type SequenceOfReturnsStressRequest,
   type RmdRequest,
@@ -91,6 +94,40 @@ const regReq: Omit<RegimeReturnRequest, "contractVersion"> = {
 const cmaReq: Omit<CapitalMarketAssumptionsRequest, "contractVersion"> = {
   assetClassIds: ["us_equity", "us_bonds"],
 };
+
+const cashflowBridgeReq: Omit<
+  CashflowPlanningBridgeRequest,
+  "contractVersion"
+> = {
+  monthsAnalyzed: 6,
+  averageMonthlySpending: 8_000,
+  essentialMonthlySpending: 5_000,
+  lifestyleMonthlySpending: 3_000,
+  averageMonthlyIncome: 12_000,
+  averageMonthlySavings: 4_000,
+  currentCashReserve: 25_000,
+  targetCashReserveMonths: 6,
+  oneTimeExpenseAdjustment: 500,
+  spendingVolatility: "high",
+};
+
+const cashReserveReq: Omit<CashReserveAnalysisRequest, "contractVersion"> = {
+  monthlyEssentialSpending: 5_000,
+  monthlyTotalSpending: 8_000,
+  currentCashReserve: 35_000,
+  targetMonths: 6,
+  secondaryTargetMonths: 9,
+};
+
+const budgetPacingReq: Omit<BudgetPacingProjectionRequest, "contractVersion"> =
+  {
+    monthDay: 15,
+    daysInMonth: 30,
+    monthToDateSpending: 2_500,
+    monthlyBudget: 5_000,
+    recurringRemaining: 250,
+    knownOneTimeRemaining: 125,
+  };
 
 const rothReq: Omit<RothConversionRequest, "contractVersion"> = {
   currentTaxableIncome: 150_000,
@@ -297,6 +334,33 @@ describe("planning gateway dispatch", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("throws PiiTripwireError before dispatch for cash-flow bridge payloads with identity keys", async () => {
+    const leakyBridge = {
+      ...cashflowBridgeReq,
+      email: "client@example.com",
+    };
+    const leakyReserve = {
+      ...cashReserveReq,
+      firstName: "Client",
+    };
+    const leakyBudget = {
+      ...budgetPacingReq,
+      dateOfBirth: "1980-01-01",
+    };
+    const cases: (() => Promise<unknown>)[] = [
+      () => planning.cashflowPlanningBridge(leakyBridge),
+      () => planning.cashReserveAnalysis(leakyReserve),
+      () => planning.budgetPacingProjection(leakyBudget),
+    ];
+
+    for (const call of cases) {
+      const fetchMock = stubFetch({ contractVersion: "0.1.0" });
+      await expect(call()).rejects.toBeInstanceOf(PiiTripwireError);
+      expect(fetchMock).not.toHaveBeenCalled();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("throws a gateway error carrying the status and body on a non-OK response", async () => {
     stubFetch({}, { ok: false, status: 400, text: "allocation must sum to 1" });
     await expect(planning.monteCarlo(mcReq)).rejects.toThrow(
@@ -326,6 +390,18 @@ describe("planning gateway dispatch", () => {
       {
         id: "capital_market_assumptions",
         call: () => planning.capitalMarketAssumptions(cmaReq),
+      },
+      {
+        id: "cashflow_planning_bridge",
+        call: () => planning.cashflowPlanningBridge(cashflowBridgeReq),
+      },
+      {
+        id: "cash_reserve_analysis",
+        call: () => planning.cashReserveAnalysis(cashReserveReq),
+      },
+      {
+        id: "budget_pacing_projection",
+        call: () => planning.budgetPacingProjection(budgetPacingReq),
       },
       {
         id: "roth_conversion",
@@ -407,6 +483,95 @@ describe("planning gateway dispatch", () => {
     expect(result.assetClasses[0].id).toBe("us_equity");
     expect(result.correlations.us_equity.us_equity).toBe(1);
     expect(result.asOf).toBe("2026-05-29");
+  });
+
+  it("dispatches cashflow_planning_bridge with derived monthly-close aggregates", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      monthsAnalyzed: 6,
+      annualSpend: 96_000,
+      normalizedAnnualSpend: 90_000,
+      essentialAnnualSpend: 60_000,
+      lifestyleAnnualSpend: 36_000,
+      annualIncome: 144_000,
+      annualSavings: 48_000,
+      savingsRate: 0.3333333333,
+      cashReserveTarget: 30_000,
+      cashReserveGap: 5_000,
+      retirementIncomeFloor: 60_000,
+      retirementLifestyleBand: { lower: 30_600, target: 36_000, upper: 41_400 },
+      spendingVolatility: "high",
+      planningWarnings: ["cash_reserve_underfunded"],
+      recommendedNextTools: ["project_cash_flow", "build_planning_report"],
+      assumptions: { monthlyCloseBasis: "derived aggregates only" },
+    });
+
+    const result = await planning.cashflowPlanningBridge(cashflowBridgeReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/cashflow_planning_bridge",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.contractVersion).toBe(PLANNING_CONTRACT_VERSION);
+    expect(sent.monthsAnalyzed).toBe(6);
+    expect(sent.averageMonthlySpending).toBe(8_000);
+    expect(sent.spendingVolatility).toBe("high");
+    expect(sent.transactions).toBeUndefined();
+    expect(result.normalizedAnnualSpend).toBe(90_000);
+    expect(result.retirementLifestyleBand.target).toBe(36_000);
+    expect(result.recommendedNextTools).toContain("project_cash_flow");
+  });
+
+  it("dispatches cash_reserve_analysis and returns reserve status", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      targetReserve: 30_000,
+      secondaryTargetReserve: 45_000,
+      currentReserve: 35_000,
+      gapToTarget: 0,
+      gapToSecondaryTarget: 10_000,
+      monthsCoveredEssential: 7,
+      monthsCoveredTotal: 4.375,
+      status: "on_track",
+    });
+
+    const result = await planning.cashReserveAnalysis(cashReserveReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/cash_reserve_analysis",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.monthlyEssentialSpending).toBe(5_000);
+    expect(sent.secondaryTargetMonths).toBe(9);
+    expect(result.status).toBe("on_track");
+    expect(result.gapToSecondaryTarget).toBe(10_000);
+  });
+
+  it("dispatches budget_pacing_projection and returns pacing warning state", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      projectedMonthEndSpending: 5_375,
+      projectedVariance: 375,
+      budgetUsedPct: 0.5,
+      pacingStatus: "over",
+      warningLevel: "warn",
+      assumptions: {
+        recurringRemainingBasis: "Known future recurring spend not yet included",
+      },
+    });
+
+    const result = await planning.budgetPacingProjection(budgetPacingReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/budget_pacing_projection",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.monthDay).toBe(15);
+    expect(sent.daysInMonth).toBe(30);
+    expect(sent.recurringRemaining).toBe(250);
+    expect(sent.knownOneTimeRemaining).toBe(125);
+    expect(result.pacingStatus).toBe("over");
+    expect(result.warningLevel).toBe("warn");
   });
 
   it("rides an optional pathCacheKey through the monte_carlo dispatch", async () => {

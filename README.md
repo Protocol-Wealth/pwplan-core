@@ -129,9 +129,11 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **18 planning tools**, **all surfaced in the UI** —
+The wire contract covers **21 planning tools**. Eighteen are surfaced in the UI —
 seventeen as tabs plus the `capital_market_assumptions` control inside the Monte
-Carlo tab. The Roth · IRMAA tab uses a separate case contract
+Carlo tab. The three Cash Flow OS planning bridge tools are contract/gateway-only
+today; they are reserved for a future synthetic demo UI and accept derived
+monthly-close aggregates only. The Roth · IRMAA tab uses a separate case contract
 (`PLANNING_CASE_CONTRACT_VERSION`) because it mirrors the canonical
 Roth-conversion planning schema.
 
@@ -155,6 +157,9 @@ Roth-conversion planning schema.
 | `optimize_allocation`        | Mean-variance allocation over engine-sourced data     | tab        |
 | `build_planning_report`      | Assemble de-identified planning sections into report  | tab        |
 | `capital_market_assumptions` | Real returns / vols / λ / correlations                | MC control |
+| `cashflow_planning_bridge`   | Monthly-close aggregates → planning assumptions       | gateway    |
+| `cash_reserve_analysis`      | Reserve target / coverage / funding status            | gateway    |
+| `budget_pacing_projection`   | Month-end budget pace from aggregate spending         | gateway    |
 
 ## Stack
 
