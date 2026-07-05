@@ -6,8 +6,9 @@ model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
 [`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
 current.
 
-_Last updated: 2026-07-01. 18 wire-contract tools, 18 UI tabs (17 wire tabs +
-Roth · IRMAA), scenario files at schema v2, 201 tests green._
+_Last updated: 2026-07-05. 18 wire-contract tools, 18 UI tabs (17 wire tabs +
+Roth · IRMAA), scenario files at schema v2, 201 tests green as of the prior
+local gate; current Slice 0 work is docs-only._
 
 ## Orient yourself in 5 minutes
 
@@ -28,6 +29,11 @@ Roth · IRMAA), scenario files at schema v2, 201 tests green._
   lives in `nexus-core` (engine + API/MCP) and is surfaced in the **pw-demo**
   browser app (pwdemo.com). pwplan-core is the _retirement-planning_ UI only. Don't
   add crypto-options or production-compliance code here.
+- **Cash Flow OS boundary:** this repo may show a synthetic, public-safe Cash Flow
+  OS / Planning Bridge reference, but it must not ingest Monarch files or store
+  raw transactions, merchant/payee strings, account nicknames, household records,
+  advisor/client notes, approvals, release state, or audit trails. Those belong in
+  private PWOS / pw-api / PWPortal.
 
 ## Before you commit (keep all five green — mirrors CI)
 
@@ -42,19 +48,20 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
 
 ## Prioritized next tasks (from ROADMAP)
 
-1. **Theming** to the `-core` family visual language — held for a design reference;
+1. **Nexus/PWOS planning-surface alignment** — decide whether a public-safe Cash
+   Flow OS / Planning Bridge contract belongs here. If accepted, keep it limited
+   to de-identified transaction classes, monthly-close aggregates, synthetic rule
+   traces, and demo-only bridge values into planning assumptions. Tracked in
+   [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
+2. **Theming** to the `-core` family visual language — held for a design reference;
    ask the maintainer for it before starting. Tracked in
    [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16).
-2. **Optional further calculators** inspired by OSS finance apps (dividend income,
+3. **Optional further calculators** inspired by OSS finance apps (dividend income,
    a withdrawal-tax-aware Roth ladder). Net-worth / holdings tracking stays **out
    of scope** (it would require PII / production data). Each new tool follows the
    established pattern: contract type → gateway method → store slice → pure
    validator → UI tab → tests → docs; engine side ships in nexus-core first.
    Tracked in [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17).
-3. **Nexus/PWOS planning-surface alignment** — decide whether any additional
-   public-safe planning/report metadata surfaces belong here, without importing
-   private PWOS advisor/client workflow details. Tracked in
-   [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
 4. **`NOTICE` patent application number** — DONE: filed 2026-06-04 as USPTO
    #64/082,241 (PW-PROV-003 provisional; conversion deadline 2027-06-04).
 

@@ -98,7 +98,12 @@ on completion and note the version in CHANGELOG.md._
 - [ ] [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) Decide
       whether additional Nexus/PWOS planning/report metadata surfaces should be
       extracted into this OSS UI. Keep any extraction synthetic/de-identified and
-      outside private advisor/client workflow details.
+      outside private advisor/client workflow details. The next candidate is a
+      public-safe Cash Flow OS / Planning Bridge reference: de-identified
+      transaction classes, monthly-close aggregates, and synthetic rule-decision
+      traces only. Do not add Monarch CSV upload, raw transaction storage,
+      merchant/payee strings, account nicknames, household records, advisor/client
+      notes, approvals, release state, or audit trails here.
 
 ## Dependency on other repos (track, do not build here)
 
@@ -113,3 +118,7 @@ on completion and note the version in CHANGELOG.md._
 
 - pw-api backend path and pwos.app/plan + /chat integration. Decide separate
   private pw-plan repo vs. pw-api module later.
+- Real Cash Flow OS production work: Monarch CSV upload/preview, raw import row
+  preservation, transaction normalization/classification, household/advisor rules,
+  monthly close records, action items, document requests, advisor approval,
+  client release, and books-and-records audit trail.

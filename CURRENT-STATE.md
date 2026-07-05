@@ -1,11 +1,12 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-07-01 (adversarial audit follow-up: scenario save/load is now schema v2 and captures every current tool input, loading clears every result slot, Roth · IRMAA validation covers married-separate spouse birth year + Medicare enrollment count, invalid `VITE_PLANNING_BACKEND` values fail fast, docs/tool counts were reconciled, and outstanding work is tracked in GitHub issues #15/#16/#17). Session-start snapshot; maintain it._
+_Last updated: 2026-07-05 (Slice 0 docs alignment for the PW Cash Flow OS + PW Planning Lab + PW Retirement Income Lab direction: public/private boundaries clarified, Cash Flow OS / Planning Bridge work tied to #15, and stale historical tool-count wording fixed). Session-start snapshot; maintain it._
 
 ## Status
 
-Verified green locally: typecheck clean, lint clean, prettier clean, 201 tests
-pass (9 test files), build succeeds. **This repo is now
+Last full local gate before this docs-only update was green: typecheck clean,
+lint clean, prettier clean, 201 tests pass (9 test files), build succeeds.
+**This repo is now
 positioned as demo / case-study tooling**: it runs
 against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
 `.env` needed) with de-identified / fake client data. The production compliance
@@ -22,6 +23,12 @@ the same full snapshot shape. Every first-party source file carries an SPDX
 Apache-2.0 header. The demo-reframe work shipped via PR #1 (CCO + CTO/CISO
 approved) and is merged to `main`; `main` is the live line again.
 
+The hybrid product boundary is explicit as of 2026-07-05: this OSS repo may show
+synthetic Cash Flow OS concepts and a Planning Bridge from derived monthly-close
+values into planning assumptions, but must not become a real Monarch import,
+raw-transaction store, household record system, advisor/client workflow, approval
+queue, release workflow, or compliance/audit trail.
+
 ## Architecture as built
 
 Thin UI → `planning-gateway` → `nexus-mcp` (open; the only backend this repo
@@ -36,6 +43,13 @@ portfolioXray / fire / riskMetrics / rebalance / optimizeAllocation /
 buildPlanningReport, plus the `capitalMarketAssumptions` control inside the
 Monte Carlo tab. The Roth · IRMAA composite planner is separate from the wire
 tool registry and uses the case contract v1.1.0.
+
+Cash-flow operating-system concepts are not implemented yet in this OSS repo.
+If accepted, the public-safe shape should be additive and synthetic only:
+de-identified transaction classes, monthly-close summaries, counted/excluded
+cash-flow aggregates, rule-decision trace examples, and planning-bridge inputs.
+Raw CSV fields, merchant/payee text, account names, household/person identifiers,
+notes, approvals, and audit records remain private-only.
 
 ## File inventory
 
@@ -86,7 +100,7 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
 - `src/App.tsx` (tool tab bar + ScenarioIO), `src/main.tsx`, `src/index.css`, `index.html` — shell.
 - `scripts/smoke-nexus.mjs` — opt-in live round-trip against nexusmcp.site (PII-free default scenario); not in the gate suite, never in CI.
-- `docs/nexus-core-requirements.md` — the original consumer-side spec handed to nexus-core (the first 6 tools, enums, CORS/determinism). Historical: the engine has since grown to 12 tools; `src/contract/planning.ts` is the source of truth.
+- `docs/nexus-core-requirements.md` — the original consumer-side spec handed to nexus-core (the first 6 tools, enums, CORS/determinism). Historical: nexus-core now exposes a larger 23-tool planning surface, while this client intentionally exposes 18 wire tools plus the separate Roth · IRMAA case contract; `src/contract/planning.ts` is the source of truth for this OSS UI.
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.
 - CI: `.github/workflows/ci.yml` (7 jobs).
 - `LICENSE` (Apache-2.0), `NOTICE` (patent #64/082,241), `README.md`, `CONTRIBUTING.md`.
@@ -121,6 +135,10 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   control); no gateway-only tools. Plus the **Roth · IRMAA tab** — for the
   composite case contract (v1.1.0), which is not one of the 18 wire tools.
   (Latest additions: `optimize_allocation` + `build_planning_report`.)
+- There is no public Cash Flow OS contract or demo yet. The intended first
+  public-safe slice is documentation/contract design under #15: derived
+  monthly-close values and de-identified transaction classes only, not raw
+  transaction ingestion.
 - Live MCP availability is intentionally not a CI gate; use
   `scripts/smoke-nexus.mjs` plus targeted `/mcp/tools/{tool}` checks when a task
   needs runtime certainty. The Roth · IRMAA tab additionally depends on the
@@ -131,7 +149,8 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 Open GitHub issue tracking:
 
 - [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) — Nexus/PWOS
-  planning-surface alignment and any public-safe contract extraction decisions.
+  planning-surface alignment, including any public-safe Cash Flow OS / Planning
+  Bridge contract extraction decisions.
 - [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16) — `-core`
   family visual theming.
 - [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17) — optional

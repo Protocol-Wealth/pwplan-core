@@ -7,6 +7,16 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Changed
+
+- **Slice 0 docs alignment (2026-07-05).** Clarified the hybrid PW Cash Flow OS +
+  PW Planning Lab + PW Retirement Income Lab boundary: `pwplan-core` remains the
+  public-safe UI/contract/demo shell, may only add synthetic Cash Flow OS /
+  Planning Bridge references, and must not add Monarch CSV upload, raw
+  transaction storage, household records, advisor/client workflow state,
+  approvals, release state, or audit trails. Also fixed stale historical
+  nexus-core tool-count wording in `CURRENT-STATE.md`.
+
 ### Fixed
 
 - **Audit hardening pass (2026-07-01).** Scenario save/load now uses schema v2

@@ -92,6 +92,25 @@ guidelines; this repo intentionally ships none of it. The `pw-api` value of
 `VITE_PLANNING_BACKEND` exists only so that private fork stays a low-diff sync;
 this OSS build never reaches pw-api.
 
+### Cash Flow OS and Planning Bridge boundary
+
+The current product direction is **PW Cash Flow OS + PW Planning Lab + PW
+Retirement Income Lab**. In that architecture, this repo stays the public-safe
+reference shell:
+
+- OK here: synthetic workflows, de-identified contracts, demo-only rule traces,
+  monthly-close examples, and a Planning Bridge view that shows how derived
+  monthly cash-flow values can feed planning assumptions.
+- Not OK here: Monarch CSV upload, raw import rows, merchant/payee strings,
+  account nicknames, household records, advisor/client notes, document requests,
+  approval state, release state, audit trails, or any real client collaboration
+  workflow.
+
+Real ingestion, household-specific rule processing, advisor approval, client
+release, and compliance trail belong in private PWOS / pw-api / PWPortal. Nexus
+should receive only de-identified planning inputs and derived numbers, never raw
+household transactions.
+
 ## Quickstart
 
 ```bash
@@ -157,7 +176,8 @@ reading CLAUDE.md.
 Open build and alignment work is tracked in GitHub issues:
 
 - [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) — Nexus/PWOS
-  planning surface alignment and any public-safe contract extraction decisions.
+  planning surface alignment, including any public-safe Cash Flow OS / Planning
+  Bridge contract extraction decisions.
 - [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16) — `-core`
   family visual theming.
 - [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17) — optional
