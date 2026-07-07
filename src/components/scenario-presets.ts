@@ -14,6 +14,7 @@
  */
 
 import type { ScenarioSnapshot } from "./scenario-io";
+import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
 export interface ScenarioPreset {
   id: string;
@@ -107,6 +108,9 @@ const DEFAULT_TOOL_INPUTS: Omit<
     returnsText: "0.12, -0.08, 0.21, 0.15, -0.18",
     riskFreeRate: 0.02,
     periodsPerYear: 1,
+  },
+  riskProfileScoreInputs: {
+    answers: DEFAULT_RISK_PROFILE_ANSWERS,
   },
   rebalanceInputs: { targetWeights: { us_equity: 0.6, us_bonds: 0.4 } },
   optimizeAllocationInputs: {

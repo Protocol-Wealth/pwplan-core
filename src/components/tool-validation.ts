@@ -10,6 +10,10 @@
  */
 
 import { isAllocationBalanced } from "./scenario-validation";
+import {
+  answerIdsForQuestion,
+  RISK_PROFILE_QUESTION_IDS,
+} from "../lib/risk-profile-questionnaire";
 import type { Account, AssetClass } from "../contract/planning";
 import type {
   BracketHeadroomInputs,
@@ -25,6 +29,7 @@ import type {
   RebalanceInputs,
   RegimeGenInputs,
   RegimeSwrInputs,
+  RiskProfileScoreInputs,
   RiskMetricsInputs,
   RmdInputs,
   RothInputs,
@@ -567,6 +572,37 @@ export function validateRiskMetrics(r: RiskMetricsInputs): string[] {
   }
   if (!Number.isInteger(r.periodsPerYear) || r.periodsPerYear < 1) {
     issues.push("Periods per year must be a whole number, one or more.");
+  }
+  return issues;
+}
+
+/** Validate fixed-answer risk questionnaire inputs. No free text accepted. */
+export function validateRiskProfileScore(r: RiskProfileScoreInputs): string[] {
+  const issues: string[] = [];
+  const seen = new Set(Object.keys(r.answers));
+  const unknown = [...seen].filter(
+    (questionId) => !RISK_PROFILE_QUESTION_IDS.includes(questionId),
+  );
+  if (unknown.length > 0) {
+    issues.push(`Unknown risk-profile question id(s): ${unknown.join(", ")}.`);
+  }
+  const missing = RISK_PROFILE_QUESTION_IDS.filter(
+    (questionId) => !seen.has(questionId),
+  );
+  if (missing.length > 0) {
+    issues.push(
+      `Answer every risk-profile question: ${missing.join(", ")} missing.`,
+    );
+  }
+  for (const questionId of RISK_PROFILE_QUESTION_IDS) {
+    const answerId = r.answers[questionId];
+    if (answerId === undefined) continue;
+    const allowed = answerIdsForQuestion(questionId);
+    if (!allowed.includes(answerId)) {
+      issues.push(
+        `Risk-profile answer for ${questionId} must be one of: ${allowed.join(", ")}.`,
+      );
+    }
   }
   return issues;
 }

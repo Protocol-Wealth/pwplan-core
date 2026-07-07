@@ -33,6 +33,11 @@ import type {
   WealthRoadmapScope,
 } from "../contract/planning";
 import { assertNoPII, PiiTripwireError } from "../lib/compliance";
+import {
+  answerIdsForQuestion,
+  DEFAULT_RISK_PROFILE_ANSWERS,
+  RISK_PROFILE_QUESTION_IDS,
+} from "../lib/risk-profile-questionnaire";
 import type {
   BracketHeadroomInputs,
   BuildPlanningReportInputs,
@@ -50,6 +55,7 @@ import type {
   RegimeGenInputs,
   RegimeSwrInputs,
   ReportSectionDraft,
+  RiskProfileScoreInputs,
   RiskMetricsInputs,
   RmdInputs,
   RothInputs,
@@ -103,6 +109,7 @@ export function serializeScenario(
     regimeGenInputs: snapshot.regimeGenInputs,
     fireInputs: snapshot.fireInputs,
     riskMetricsInputs: snapshot.riskMetricsInputs,
+    riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
     rebalanceInputs: snapshot.rebalanceInputs,
     optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
     buildReportInputs: snapshot.buildReportInputs,
@@ -195,6 +202,7 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "portfolio_xray",
   "fire",
   "risk_metrics",
+  "risk_profile",
   "rebalance",
   "optimize_allocation",
   "build_report",
@@ -555,6 +563,24 @@ function parseRiskMetrics(v: unknown): RiskMetricsInputs | null {
   };
 }
 
+function parseRiskProfileScore(v: unknown): RiskProfileScoreInputs | null {
+  if (v === undefined) {
+    return { answers: { ...DEFAULT_RISK_PROFILE_ANSWERS } };
+  }
+  if (!isObject(v) || !isObject(v.answers)) return null;
+  const answers: Record<string, string> = {};
+  for (const [questionId, answerId] of Object.entries(v.answers)) {
+    if (!isStr(answerId)) return null;
+    if (!RISK_PROFILE_QUESTION_IDS.includes(questionId)) return null;
+    if (!answerIdsForQuestion(questionId).includes(answerId)) return null;
+    answers[questionId] = answerId;
+  }
+  for (const questionId of RISK_PROFILE_QUESTION_IDS) {
+    if (!isStr(answers[questionId])) return null;
+  }
+  return { answers };
+}
+
 function parseNumberRecord(v: unknown): Record<string, number> | null {
   if (!isObject(v)) return null;
   const out: Record<string, number> = {};
@@ -883,6 +909,15 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
   if (riskMetricsInputs === null) {
     return { ok: false, error: "Malformed or missing risk-metrics inputs." };
   }
+  const riskProfileScoreInputs = parseRiskProfileScore(
+    raw.riskProfileScoreInputs,
+  );
+  if (riskProfileScoreInputs === null) {
+    return {
+      ok: false,
+      error: "Malformed or missing risk-profile inputs.",
+    };
+  }
   const rebalanceInputs = parseRebalance(raw.rebalanceInputs);
   if (rebalanceInputs === null) {
     return { ok: false, error: "Malformed or missing rebalance inputs." };
@@ -950,6 +985,7 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
     regimeGenInputs,
     fireInputs,
     riskMetricsInputs,
+    riskProfileScoreInputs,
     rebalanceInputs,
     optimizeAllocationInputs,
     buildReportInputs,

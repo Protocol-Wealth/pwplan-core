@@ -12,6 +12,7 @@ import {
   type ScenarioSnapshot,
 } from "./scenario-io";
 import { PLANNING_CONTRACT_VERSION } from "../contract/planning";
+import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
 const snapshot: ScenarioSnapshot = {
   tool: "monte_carlo",
@@ -136,6 +137,9 @@ const snapshot: ScenarioSnapshot = {
     returnsText: "0.12, -0.08, 0.15",
     riskFreeRate: 0.02,
     periodsPerYear: 1,
+  },
+  riskProfileScoreInputs: {
+    answers: DEFAULT_RISK_PROFILE_ANSWERS,
   },
   rebalanceInputs: { targetWeights: { us_equity: 0.6, us_bonds: 0.4 } },
   optimizeAllocationInputs: {
@@ -309,6 +313,21 @@ describe("round-trip", () => {
         seed: 20260707,
         engineReference: "nexus-core",
       });
+    }
+  });
+
+  it("defaults risk-profile answers when loading an older scenario file", () => {
+    const env = serializeScenario(snapshot);
+    const result = parseScenario({
+      ...env,
+      riskProfileScoreInputs: undefined,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.riskProfileScoreInputs.answers).toEqual(
+        DEFAULT_RISK_PROFILE_ANSWERS,
+      );
     }
   });
 });
