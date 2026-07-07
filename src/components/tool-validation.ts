@@ -35,6 +35,26 @@ import type {
 } from "../store/scenario";
 
 const SPENDING_VOLATILITY = new Set(["low", "medium", "high"]);
+const ROADMAP_INPUT_KINDS = new Set([
+  "snapshot",
+  "trajectory",
+  "goals",
+  "income",
+  "guardrails",
+  "historical_blend",
+  "priority_actions",
+]);
+const ROADMAP_REQUIRED_BY_SCOPE = {
+  focused: ["snapshot", "trajectory", "goals"],
+  full: [
+    "snapshot",
+    "trajectory",
+    "goals",
+    "income",
+    "guardrails",
+    "historical_blend",
+  ],
+} as const;
 const RAW_CASHFLOW_KEYS = new Set([
   "merchantoriginal",
   "accountoriginal",
@@ -625,6 +645,52 @@ export function validateBuildPlanningReport(
   r: BuildPlanningReportInputs,
 ): string[] {
   const issues: string[] = [];
+  if (r.preset !== "custom" && r.preset !== "wealth_roadmap") {
+    issues.push("Choose a supported report type.");
+  }
+  if (r.scope !== "focused" && r.scope !== "full") {
+    issues.push("Choose a supported Wealth Roadmap scope.");
+  }
+  if (r.preset === "wealth_roadmap") {
+    if (r.assumptionVersion.trim().length === 0) {
+      issues.push("Wealth Roadmap needs an assumption version.");
+    }
+    if (r.cmaVersion.trim().length === 0) {
+      issues.push("Wealth Roadmap needs a CMA version.");
+    }
+    if (!Number.isInteger(r.taxYear) || r.taxYear < 2000 || r.taxYear > 2100) {
+      issues.push("Wealth Roadmap tax year must be a plausible year.");
+    }
+    if (!Number.isSafeInteger(r.seed) || r.seed < 0) {
+      issues.push("Wealth Roadmap seed must be a non-negative integer.");
+    }
+    const seen = new Set<string>();
+    for (const section of r.sections) {
+      const kind = section.kind.trim();
+      if (kind.length === 0) continue;
+      if (!ROADMAP_INPUT_KINDS.has(kind)) {
+        issues.push(
+          "Wealth Roadmap sections must use snapshot, trajectory, goals, income, guardrails, historical_blend, or priority_actions.",
+        );
+      } else if (seen.has(kind)) {
+        issues.push(`Wealth Roadmap accepts at most one ${kind} section.`);
+      }
+      seen.add(kind);
+      if (kind === "priority_actions" && r.scope !== "full") {
+        issues.push("Priority actions are only accepted for full scope.");
+      }
+    }
+    const required =
+      r.scope === "focused" || r.scope === "full"
+        ? ROADMAP_REQUIRED_BY_SCOPE[r.scope]
+        : [];
+    const missing = required.filter((kind) => !seen.has(kind));
+    if (missing.length > 0) {
+      issues.push(
+        `Wealth Roadmap ${r.scope} scope missing required sections: ${missing.join(", ")}.`,
+      );
+    }
+  }
   if (r.sections.length === 0) {
     issues.push("Add at least one section.");
     return issues;

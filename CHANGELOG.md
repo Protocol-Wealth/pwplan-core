@@ -9,6 +9,17 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Wealth Roadmap report UI controls (2026-07-07).** Extended the existing
+  Report tab so it can dispatch `build_planning_report` as either custom
+  sections or the `preset: "wealth_roadmap"` envelope, with focused/full scope
+  and replay metadata (`assumptionVersion`, `cmaVersion`, `taxYear`, `seed`,
+  optional `engineReference`). Results now render scope/benefit text,
+  release-block state, metadata stamps, and the engine disclaimer when present.
+  Scenario import/export remains backward-compatible by defaulting older report
+  snapshots. No new quant logic, persistence, raw ingestion, identity fields,
+  advisor workflow state, approvals, audit trail, or private release workflow was
+  added.
+
 - **Planning contract reconciliation to 33 Nexus tools (2026-07-07).** Added
   public-safe TypeScript contract and gateway coverage for the newer Nexus
   planning tools: `income_layering`, `historical_blend`, `risk_profile_score`,

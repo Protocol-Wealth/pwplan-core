@@ -145,6 +145,14 @@ on completion and note the version in CHANGELOG.md._
       raw ingestion, identity fields, advisor workflow state, approvals,
       request-side release state, or audit trail. 33 wire-contract tools, 21 UI
       tabs.)_
+- [x] Add PW Wealth Roadmap controls to the Report tab.
+      _(done 2026-07-07: the existing `BuildPlanningReportTool` can dispatch
+      custom sections or `preset: "wealth_roadmap"` with focused/full scope and
+      replay metadata, and renders scope/benefit text, release-block state,
+      metadata stamps, and disclaimers returned by the engine. Scenario JSON
+      remains schema-v4 and defaults older report snapshots. No new quant logic,
+      persistence, raw ingestion, identity fields, advisor workflow state,
+      approvals, audit trail, or private release workflow.)_
 
 ## Dependency on other repos (track, do not build here)
 

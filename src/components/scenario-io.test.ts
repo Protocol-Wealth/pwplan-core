@@ -149,13 +149,30 @@ const snapshot: ScenarioSnapshot = {
     riskFreeRate: 0.02,
   },
   buildReportInputs: {
-    title: "Planning summary",
+    title: "PW Wealth Roadmap",
     includeRegime: true,
+    preset: "wealth_roadmap",
+    scope: "focused",
+    assumptionVersion: "2026.07",
+    cmaVersion: "engine-default-cma",
+    taxYear: 2026,
+    seed: 20260707,
+    engineReference: "nexus-core",
     sections: [
       {
-        kind: "summary",
-        title: "Overview",
-        findingsText: "Plan funds the full horizon in the base case.",
+        kind: "snapshot",
+        title: "Snapshot",
+        findingsText: "Current balance sheet and allocation summary reviewed.",
+      },
+      {
+        kind: "trajectory",
+        title: "Trajectory",
+        findingsText: "Planning trajectory reviewed with current assumptions.",
+      },
+      {
+        kind: "goals",
+        title: "Goals",
+        findingsText: "Stated planning goal reviewed for discussion.",
       },
     ],
   },
@@ -267,6 +284,33 @@ describe("round-trip", () => {
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.value).toEqual(newer);
   });
+
+  it("defaults report metadata when loading an older scenario file", () => {
+    const env = serializeScenario(snapshot);
+    const oldReport = { ...env.buildReportInputs };
+    delete (oldReport as Partial<typeof oldReport>).preset;
+    delete (oldReport as Partial<typeof oldReport>).scope;
+    delete (oldReport as Partial<typeof oldReport>).assumptionVersion;
+    delete (oldReport as Partial<typeof oldReport>).cmaVersion;
+    delete (oldReport as Partial<typeof oldReport>).taxYear;
+    delete (oldReport as Partial<typeof oldReport>).seed;
+    delete (oldReport as Partial<typeof oldReport>).engineReference;
+
+    const result = parseScenario({ ...env, buildReportInputs: oldReport });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.buildReportInputs).toMatchObject({
+        preset: "custom",
+        scope: "focused",
+        assumptionVersion: "2026.07",
+        cmaVersion: "engine-default-cma",
+        taxYear: 2026,
+        seed: 20260707,
+        engineReference: "nexus-core",
+      });
+    }
+  });
 });
 
 describe("parseScenario rejections", () => {
@@ -293,6 +337,25 @@ describe("parseScenario rejections", () => {
     expect(parseScenario({ ...env, tool: "crystal_ball" })).toMatchObject({
       ok: false,
     });
+  });
+
+  it("rejects unknown report preset and scope values", () => {
+    const env = serializeScenario(snapshot);
+    expect(
+      parseScenario({
+        ...env,
+        buildReportInputs: {
+          ...env.buildReportInputs,
+          preset: "prospect_pack",
+        },
+      }),
+    ).toMatchObject({ ok: false });
+    expect(
+      parseScenario({
+        ...env,
+        buildReportInputs: { ...env.buildReportInputs, scope: "enterprise" },
+      }),
+    ).toMatchObject({ ok: false });
   });
 
   it("rejects malformed inputs (missing numeric field)", () => {
