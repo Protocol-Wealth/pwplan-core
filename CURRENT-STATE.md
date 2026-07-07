@@ -1,10 +1,10 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-07-07 (S10 scenario compare UI slice: 29 public-safe wire tools, 21 UI tabs). Maintain it._
+_Last updated: 2026-07-07 (planning contract reconciliation: 33 public-safe wire tools, 21 UI tabs). Maintain it._
 
 ## Status
 
-Last local gate for the S10 scenario compare UI slice was green:
+Last local gate for the planning contract reconciliation slice was green:
 typecheck clean, lint clean, format check clean, tests pass, and build succeeds.
 **This repo is now
 positioned as demo / case-study tooling**: it runs
@@ -13,7 +13,7 @@ against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
 stack (pwos-core PII de-identification + audit log) and any pw-api integration
 have been **removed from this OSS repo** and live only in a private fork; the
 `pw-api` gateway seam is kept so that fork stays a low-diff sync. The wire
-contract has **29** tools; the UI exposes **21 tabs** (17 one-tool wire tabs, the
+contract has **33** tools; the UI exposes **21 tabs** (17 one-tool wire tabs, the
 Education tab, the synthetic Cash Flow Bridge tab, the Roth · IRMAA
 case-contract tab, and the Scenario Compare tab), with
 `capital_market_assumptions` surfaced as the Monte Carlo "Load real market
@@ -38,12 +38,13 @@ Thin UI → `planning-gateway` → `nexus-mcp` (open; the only backend this repo
 uses) | `pw-api` (private-fork seam). Wire contract v0.1.0, PII-free and enforced
 by test. `assertNoPII` is a small, always-on, dependency-free structural tripwire
 (`src/lib/compliance.ts`); `auditCall` is a no-op seam (writes nothing). See
-README.md "Compliance scope". The contract + gateway cover all **29** current
+README.md "Compliance scope". The contract + gateway cover all **33** current
 nexus-core planning wire tools: monteCarlo / solveGoal / analyzeGoals /
-projectCashFlow / glidePath / taxWithdrawal / rothConversion /
+projectCashFlow / glidePath / taxWithdrawal / historicalBlend / rothConversion /
 sequenceOfReturnsStress / rmd / taxBracketHeadroom / socialSecurityClaiming /
 regimeConditionedSwr / correlationMatrix / regimeReturnGenerator /
-portfolioXray / fire / riskMetrics / rebalance / optimizeAllocation /
+portfolioXray / fire / riskMetrics / riskProfileScore / performanceAnalysis /
+rebalance / optimizeAllocation / incomeLayering /
 irmaaHeadroom / analyzeRothConversion / sequenceConversions /
 buildPlanningReport / educationFunding / educationVehicleRules /
 cashflowPlanningBridge / cashReserveAnalysis / budgetPacingProjection, plus the
@@ -58,34 +59,34 @@ transaction arrays, merchant/payee text, account names, household/person
 identifiers, notes, approvals, release state, and audit records remain
 private-only. Live `https://nexusmcp.site/mcp/tools` was not re-smoked during
 this consumer pass, so UI tests remain mocked/offline and source truth is the
-local nexus-core 29-tool contract.
+local nexus-core 33-tool contract.
 
 ## File inventory
 
 _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 
-- `src/contract/planning.ts` — wire contract v0.1.0; **29 tools**; PII-free invariant.
+- `src/contract/planning.ts` — wire contract v0.1.0; **33 tools**; PII-free invariant.
   `MonteCarloRequest` carries an optional `retirementAge?` + `pathCacheKey?`.
   `CapitalMarketAssumptionsRequest`/`Result` source real returns/vols/λ/correlations
   that drop straight into a `MonteCarloRequest`. Plus `RothConversionRequest`/`Result`,
   `CashflowPlanningBridgeRequest`/`Result`, `CashReserveAnalysisRequest`/`Result`,
   `BudgetPacingProjectionRequest`/`Result`,
   `EducationFundingRequest`/`Result`, `EducationVehicleRulesRequest`/`Result`,
+  `IncomeLayeringRequest`/`Result`, `HistoricalBlendRequest`/`Result`,
+  `RiskProfileScoreRequest`/`Result`, `PerformanceAnalysisRequest`/`Result`,
   `SequenceOfReturnsStressRequest`/`Result` (+ `SequenceOutcome`), `RmdRequest`/`Result`,
   `TaxBracketHeadroomRequest`/`Result`, `SocialSecurityClaimingRequest`/`Result`
   (+ `SocialSecurityClaimRow`/`Breakeven`), `RegimeConditionedSwrRequest`/`Result`,
   `PortfolioXrayRequest`/`Result` (+ `XrayFinding`/`XraySeverity`), `FireRequest`/`Result`,
   `RiskMetricsRequest`/`Result`, `RebalanceRequest`/`Result` (+ `RebalanceRow`),
   `OptimizeAllocationRequest`/`Result` (+ `RiskProfile`/`AllocationObjective`/`AllocationAssetClass`),
-  `BuildPlanningReportRequest`/`Result` (+ `PlanningReportSectionInput`/`PlanningReportSection`/`PlanningReport`),
+  `BuildPlanningReportRequest`/`Result` (+ `PlanningReportSectionInput`/`PlanningReportSection`/`PlanningReport` and additive `preset: "wealth_roadmap"` / `scope` / `metadata` fields),
   plus contract-parity types for `SolveGoal`, `AnalyzeGoals`, `ProjectCashFlow`,
-  and `IrmaaHeadroom`. `RmdRequest` and `TaxWithdrawalRequest` include optional
-  year-only `birthYear` for the Nexus RMD start-age policy; date of birth remains
-  forbidden.
+  and `IrmaaHeadroom`. `ProjectCashFlowRequest` includes optional taxable/traditional/Roth bucket fields; `TaxWithdrawalRequest` includes optional state / residency-change fields and year-only `birthYear` for the Nexus RMD start-age policy; date of birth remains forbidden.
 - `src/contract/planning.test.ts` — contract + PII-free/raw-ingestion-field enforcement.
 - `src/contract/roth-conversion.ts` — the **case contract** `PLANNING_CASE_CONTRACT_VERSION = 1.1.0` (a mirror of `@protocolwealthos/planning-contract` / the nexus-core JSON-Schema): `PlanningContract` + `RothConversionAnalysis` (+ nested) for the composite Roth/IRMAA analysis. Distinct from the v0.1.0 wire contract; PII-free. `roth-conversion.test.ts` enforces semver + the PII-free invariant.
-- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; fail-fast backend env parsing; one `planning.*` method per wire tool (29) plus the compatibility `analyzeRothConversion(req)` helper, now routed through the shared registry. `education_funding` additionally rejects non-opaque student `subjectRef` values before dispatch.
-- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 29 tools, cash-flow bridge dispatch checks, education dispatch + `notes`→`referenceNotes` normalization, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks (incl. solve_goal, analyze_goals, project_cash_flow, education_funding, education_vehicle_rules, irmaa_headroom, analyze_roth_conversion, sequence_conversions, optimize_allocation, and build_planning_report), pw-api seam, and invalid-backend fail-fast behavior.
+- `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; fail-fast backend env parsing; one `planning.*` method per wire tool (33) plus the compatibility `analyzeRothConversion(req)` helper, now routed through the shared registry. `education_funding` additionally rejects non-opaque student `subjectRef` values before dispatch.
+- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 33 tools, cash-flow bridge dispatch checks, education dispatch + `notes`→`referenceNotes` normalization, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks (incl. solve_goal, analyze_goals, project_cash_flow bucket fields, education_funding, education_vehicle_rules, income_layering, historical_blend, risk_profile_score, performance_analysis, irmaa_headroom, analyze_roth_conversion, sequence_conversions, optimize_allocation, and build_planning_report / wealth_roadmap metadata), pw-api seam, and invalid-backend fail-fast behavior.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
 - `src/store/scenario.ts` — Zustand store: active `tool` (21 UI tabs) + per-tool inputs (scenario / glidePath / tax / roth / rothIrmaa / sor / rmd / bracket / socialSecurity / regimeSwr / correlation / regimeGen / fire / riskMetrics / rebalance / optimizeAllocation / buildReport / educationFunding / cashflowBridge / compare) + result slots (incl. `xrayResult` / `fireResult` / `riskMetricsResult` / `rebalanceResult` / `optimizeAllocationResult` / `buildReportResult` / education results / cash-flow bridge results / compare results); the Portfolio X-ray + Rebalance reuse the shared scenario portfolio. Accounts/asset classes are one shared portfolio. Seeded valid defaults. `ScenarioSnapshot` captures every current tool input, and `loadSnapshot` clears every result slot plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions. The compare queue holds 2-3 in-memory scenario snapshots and a replay seed only; it is not persisted and adds no wire type.
 - `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity. Includes the **"Load real market assumptions"** control (calls `capital_market_assumptions`, drops real returns/vols/λ onto the current portfolio + carries the engine correlation matrix into the run; provenance `asOf` line + the shared `MatrixTable`).
@@ -120,7 +121,7 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
 - `src/App.tsx` (21-tab bar + ScenarioIO), `src/main.tsx`, `src/index.css`, `index.html` — shell.
 - `scripts/smoke-nexus.mjs` — opt-in live round-trip against nexusmcp.site (PII-free default scenario); not in the gate suite, never in CI.
-- `docs/nexus-core-requirements.md` — the original consumer-side spec handed to nexus-core (the first 6 tools, enums, CORS/determinism). Historical: nexus-core now exposes a larger planning surface, while this client intentionally exposes 29 wire tools plus the Roth · IRMAA case contract payload; `src/contract/planning.ts` is the source of truth for this OSS UI.
+- `docs/nexus-core-requirements.md` — the original consumer-side spec handed to nexus-core (the first 6 tools, enums, CORS/determinism). Historical: nexus-core now exposes a larger planning surface, while this client intentionally exposes 33 wire tools plus the Roth · IRMAA case contract payload; `src/contract/planning.ts` is the source of truth for this OSS UI.
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.
 - CI: `.github/workflows/ci.yml` (7 jobs).
 - `LICENSE` (Apache-2.0), `NOTICE` (patent #64/082,241), `README.md`, `CONTRIBUTING.md`.

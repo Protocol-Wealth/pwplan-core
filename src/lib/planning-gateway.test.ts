@@ -29,8 +29,10 @@ import {
   type GlidePathRequest,
   type TaxWithdrawalRequest,
   type CorrelationRequest,
+  type HistoricalBlendRequest,
   type RegimeReturnRequest,
   type CapitalMarketAssumptionsRequest,
+  type IncomeLayeringRequest,
   type CashflowPlanningBridgeRequest,
   type CashReserveAnalysisRequest,
   type BudgetPacingProjectionRequest,
@@ -45,6 +47,8 @@ import {
   type PortfolioXrayRequest,
   type FireRequest,
   type RiskMetricsRequest,
+  type RiskProfileScoreRequest,
+  type PerformanceAnalysisRequest,
   type RebalanceRequest,
   type OptimizeAllocationRequest,
   type IrmaaHeadroomRequest,
@@ -102,6 +106,10 @@ const projectCashFlowReq: Omit<ProjectCashFlowRequest, "contractVersion"> = {
   retirementIncome: 45_000,
   currentLiabilities: 250_000,
   baseYear: 2026,
+  taxYear: 2026,
+  accountBalances: { taxable: 50_000, traditional: 500_000, roth: 50_000 },
+  accountReturns: { taxable: 0.03, traditional: 0.05, roth: 0.06 },
+  earlyWithdrawalPenaltyRate: 0.1,
 };
 
 const gpReq: Omit<GlidePathRequest, "contractVersion"> = {
@@ -120,12 +128,23 @@ const taxReq: Omit<TaxWithdrawalRequest, "contractVersion"> = {
   grossNeed: 120_000,
   age: 65,
   otherTaxableIncome: 0,
+  state: "PA",
+  residencyChange: { year: 2028, from: "PA", to: "FL" },
+  projectionYear: 2026,
 };
 
 const corrReq: Omit<CorrelationRequest, "contractVersion"> = {
   assetClassIds: ["us_equity"],
   lookbackDays: 1260,
   shrinkage: true,
+};
+
+const historicalBlendReq: Omit<HistoricalBlendRequest, "contractVersion"> = {
+  assetClassIds: ["us_equity", "us_bonds"],
+  weights: { us_equity: 0.6, us_bonds: 0.4 },
+  lookbackDays: 2520,
+  rebalanceFrequency: "monthly",
+  initialValue: 1,
 };
 
 const regReq: Omit<RegimeReturnRequest, "contractVersion"> = {
@@ -192,6 +211,17 @@ const educationRulesReq: Omit<EducationVehicleRulesRequest, "contractVersion"> =
     taxYear: 2026,
   };
 
+const incomeLayeringReq: Omit<IncomeLayeringRequest, "contractVersion"> = {
+  currentAge: 65,
+  terminalAge: 95,
+  spendingTarget: 120_000,
+  filingStatus: "married_joint",
+  taxYear: 2026,
+  socialSecurity: { piaMonthly: 2_500, claimAge: 67, fraAge: 67 },
+  accountBalances: { taxable: 100_000, traditional: 800_000, roth: 100_000 },
+  state: "PA",
+};
+
 const rothReq: Omit<RothConversionRequest, "contractVersion"> = {
   currentTaxableIncome: 150_000,
   filingStatus: "married_joint",
@@ -257,6 +287,35 @@ const riskReq: Omit<RiskMetricsRequest, "contractVersion"> = {
   periodsPerYear: 1,
 };
 
+const riskProfileReq: Omit<RiskProfileScoreRequest, "contractVersion"> = {
+  answers: {
+    time_horizon: "long",
+    drawdown_tolerance: "medium",
+    income_stability: "stable",
+    investment_experience: "some",
+    liquidity_need: "moderate",
+    goal_flexibility: "some",
+    loss_reaction: "hold",
+    concentration_comfort: "moderate",
+  },
+};
+
+const performanceReq: Omit<PerformanceAnalysisRequest, "contractVersion"> = {
+  twrPeriods: [
+    { startValue: 100_000, endValue: 110_000, netExternalFlow: 0 },
+    { startValue: 110_000, endValue: 125_000, netExternalFlow: 5_000 },
+  ],
+  flowTiming: "start",
+  periodsPerYear: 1,
+  mwrFlows: [{ tYears: 0, amount: -100_000 }],
+  terminalValue: 125_000,
+  terminalTimeYears: 2,
+  grossReturns: [0.08, 0.06],
+  feeRates: [0.01, 0.01],
+  portfolioReturns: [0.08, 0.06],
+  benchmarkReturns: [0.07, 0.055],
+};
+
 const rebalanceReq: Omit<RebalanceRequest, "contractVersion"> = {
   assetClasses: [
     {
@@ -305,6 +364,24 @@ const reportReq: Omit<BuildPlanningReportRequest, "contractVersion"> = {
   sections: [
     { kind: "summary", title: "Overview", findings: ["funds the horizon"] },
     { kind: "allocation" },
+  ],
+};
+
+const roadmapReq: Omit<BuildPlanningReportRequest, "contractVersion"> = {
+  preset: "wealth_roadmap",
+  scope: "focused",
+  includeRegime: true,
+  metadata: {
+    assumptionVersion: "assumptions-2026q3",
+    cmaVersion: "cma-2026q3",
+    taxYear: 2026,
+    seed: 20260707,
+    engineReference: "nexus-core:test",
+  },
+  sections: [
+    { kind: "snapshot", data: { netWorth: 1_000_000 } },
+    { kind: "trajectory", data: { successProbability: 0.84 } },
+    { kind: "goals", data: { goalCount: 1 } },
   ],
 };
 
@@ -477,9 +554,29 @@ describe("planning gateway dispatch", () => {
           email: "client@example.com",
         }),
       () =>
+        planning.incomeLayering({
+          ...incomeLayeringReq,
+          phone: "555-555-5555",
+        }),
+      () =>
+        planning.historicalBlend({
+          ...historicalBlendReq,
+          address: "123 Main St",
+        }),
+      () =>
+        planning.riskProfileScore({
+          ...riskProfileReq,
+          firstName: "Client",
+        }),
+      () =>
+        planning.performanceAnalysis({
+          ...performanceReq,
+          ssn: "123-45-6789",
+        }),
+      () =>
         planning.irmaaHeadroom({
           ...irmaaReq,
-          phone: "555-555-5555",
+          lastName: "Client",
         }),
       () =>
         planning.analyzeRothConversion({
@@ -550,6 +647,10 @@ describe("planning gateway dispatch", () => {
         call: () => planning.correlationMatrix(corrReq),
       },
       {
+        id: "historical_blend",
+        call: () => planning.historicalBlend(historicalBlendReq),
+      },
+      {
         id: "regime_return_generator",
         call: () => planning.regimeReturnGenerator(regReq),
       },
@@ -579,6 +680,10 @@ describe("planning gateway dispatch", () => {
         response: { contractVersion: "0.1.0", rules: [] },
       },
       {
+        id: "income_layering",
+        call: () => planning.incomeLayering(incomeLayeringReq),
+      },
+      {
         id: "roth_conversion",
         call: () => planning.rothConversion(rothReq),
       },
@@ -605,6 +710,14 @@ describe("planning gateway dispatch", () => {
       },
       { id: "fire", call: () => planning.fire(fireReq) },
       { id: "risk_metrics", call: () => planning.riskMetrics(riskReq) },
+      {
+        id: "risk_profile_score",
+        call: () => planning.riskProfileScore(riskProfileReq),
+      },
+      {
+        id: "performance_analysis",
+        call: () => planning.performanceAnalysis(performanceReq),
+      },
       { id: "rebalance", call: () => planning.rebalance(rebalanceReq) },
       {
         id: "optimize_allocation",
@@ -1495,6 +1608,42 @@ describe("planning gateway dispatch", () => {
     expect(result.report.sections).toHaveLength(2);
     expect(result.report.regime).toBe("expansion");
     expect(result.report.assumptions[0]).toBe("EMF regime: expansion");
+  });
+
+  it("dispatches the wealth_roadmap build_planning_report preset metadata", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      report: {
+        title: "PW Wealth Roadmap",
+        preset: "wealth_roadmap",
+        scope: "focused",
+        scopeStatement:
+          "This Wealth Roadmap is a planning snapshot, not a comprehensive financial plan.",
+        planningBenefitNotice:
+          "A comprehensive financial planning engagement may provide additional context.",
+        metadata: {
+          ...roadmapReq.metadata,
+          scope: "focused",
+        },
+        release: {
+          released: false,
+          blocked: true,
+          blockReason: "private_release_required",
+          uncuratedPriorityActions: 0,
+        },
+        sections: [],
+        assumptions: [],
+      },
+      disclaimer: "Planning illustration, not advice.",
+    });
+    const result = await planning.buildPlanningReport(roadmapReq);
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.preset).toBe("wealth_roadmap");
+    expect(sent.scope).toBe("focused");
+    expect(sent.metadata.cmaVersion).toBe("cma-2026q3");
+    expect(result.report.preset).toBe("wealth_roadmap");
+    expect(result.report.release?.blocked).toBe(true);
+    expect(result.disclaimer).toContain("not advice");
   });
 
   it("defaults the active backend to nexus-mcp", () => {

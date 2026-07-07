@@ -135,6 +135,16 @@ on completion and note the version in CHANGELOG.md._
       overlay. No contract change, new quant logic, persistence, identity
       fields, raw ingestion, advisor workflow state, approvals, release state,
       or audit trail. 29 wire-contract tools, 21 UI tabs.)_
+- [x] Reconcile pwplan-core contract/gateway to the current 33-tool Nexus
+      planning surface.
+      _(done 2026-07-07: added `income_layering`, `historical_blend`,
+      `risk_profile_score`, and `performance_analysis`; added S8
+      project-cash-flow bucket fields, state/residency tax-withdrawal fields,
+      and Wealth Roadmap preset/scope/metadata fields on
+      `build_planning_report`. Contract/gateway-only; no UI tabs, persistence,
+      raw ingestion, identity fields, advisor workflow state, approvals,
+      request-side release state, or audit trail. 33 wire-contract tools, 21 UI
+      tabs.)_
 
 ## Dependency on other repos (track, do not build here)
 

@@ -9,6 +9,18 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Planning contract reconciliation to 33 Nexus tools (2026-07-07).** Added
+  public-safe TypeScript contract and gateway coverage for the newer Nexus
+  planning tools: `income_layering`, `historical_blend`, `risk_profile_score`,
+  and `performance_analysis`. Also added additive request/result fields for S8
+  project-cash-flow account buckets, state/residency fields on
+  `tax_aware_withdrawal`, and the `build_planning_report`
+  `preset: "wealth_roadmap"` / `scope` / `metadata` envelope. This is
+  contract/gateway-only: no UI tabs, no persistence, no raw ingestion, no
+  identity fields, no advisor workflow state, no approvals, no release state
+  accepted on requests, and no audit trail. The public wire contract now covers
+  33 tools; the UI remains 21 tabs.
+
 - **S10 scenario compare UI slice (2026-07-07).** Added a UI-only Scenario
   Compare tab over the existing Monte Carlo contract. Advisors can add 2-3
   in-memory, de-identified scenario snapshots, replay each through
@@ -16,8 +28,9 @@ Semantic Versioning. The planning wire contract is versioned separately as
   live-CMA/default-CMA source references, and review a success-probability,
   P50-terminal, worst-path diff table plus a median-balance SVG overlay. Added
   pure compare helpers/tests for seed gating, future additive `cmaVersion`
-  extraction, result mismatch checks, and row deltas. The public wire contract
-  remains 29 tools; the UI now exposes 21 tabs. No new quant logic, contract
+  extraction, result mismatch checks, and row deltas. At that milestone, the
+  public wire contract remained 29 tools and the UI exposed 21 tabs. No new
+  quant logic, contract
   fields, identity data, persistence, raw ingestion, advisor workflow state,
   approvals, release state, or audit trail were added.
 

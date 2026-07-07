@@ -47,6 +47,14 @@ export type FilingStatus =
   | "married_separate"
   | "head_of_household";
 
+export type AccountBalanceMap = Partial<Record<AccountType, number>>;
+
+export interface ResidencyChange {
+  year: number;
+  from: string;
+  to: string;
+}
+
 /** EMF regime classification emitted by nexus-core. Mirrors the regime engine. */
 export type Regime =
   | "expansion"
@@ -344,6 +352,13 @@ export interface ProjectCashFlowRequest {
   retirementIncome?: number;
   currentLiabilities?: number;
   baseYear?: number;
+  taxYear?: number;
+  /** Optional multi-account deterministic waterfall. Omit to keep legacy
+   *  single-bucket behavior. */
+  accountBalances?: AccountBalanceMap;
+  accountReturns?: AccountBalanceMap;
+  earlyWithdrawalPenaltyAge?: number;
+  earlyWithdrawalPenaltyRate?: number;
 }
 
 export type CashFlowPhase = "accumulation" | "retirement";
@@ -361,6 +376,10 @@ export interface CashFlowYear {
   portfolioBalance: number;
   liabilities: number;
   netWorth: number;
+  accountBalances?: AccountBalanceMap;
+  withdrawalsByAccount?: AccountBalanceMap;
+  ordinaryTaxes?: number;
+  earlyWithdrawalPenalty?: number;
 }
 
 export interface ProjectCashFlowResult {
@@ -374,14 +393,17 @@ export interface ProjectCashFlowResult {
     peakNetWorth: number;
     depletionAge: number | null;
     fundedThroughTerminal: boolean;
-    [key: string]: number | boolean | null;
+    startingAccountBalances?: AccountBalanceMap;
+    endingAccountBalances?: AccountBalanceMap;
+    lifetimeEarlyWithdrawalPenalties?: number;
+    [key: string]: number | boolean | null | AccountBalanceMap | undefined;
   };
   lifetimeTax: {
     totalIncome: number;
     totalTaxesPaid: number;
     effectiveRate: number;
   };
-  assumptions: Record<string, number | string>;
+  assumptions: Record<string, unknown>;
   disclaimer?: string;
 }
 
@@ -419,18 +441,36 @@ export interface TaxWithdrawalRequest {
   age: number; // for RMD determination
   /** Optional birth year for SECURE 2.0 RMD start-age policy; never DOB. */
   birthYear?: number;
+  state?: string;
+  residencyChange?: ResidencyChange;
+  projectionYear?: number;
   otherTaxableIncome: number;
+}
+
+export interface TaxWithdrawalRow {
+  type: AccountType;
+  gross: number;
+  tax: number;
+  federalTax?: number;
+  stateTax?: number;
 }
 
 export interface TaxWithdrawalResult {
   contractVersion: string;
   /** Ordered withdrawal plan by account type. */
-  withdrawals: { type: AccountType; gross: number; tax: number }[];
+  withdrawals: TaxWithdrawalRow[];
   totalTax: number;
+  federalTax?: number;
+  stateTax?: number;
   effectiveRate: number;
   rmdStartAge?: number;
   rmdStartAgePolicyVersion?: string;
   rmdSatisfied: boolean;
+  taxTableVersion?: string;
+  stateCode?: string | null;
+  stateTaxModeled?: boolean;
+  stateTaxTableVersion?: string | null;
+  stateTaxNotes?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -500,6 +540,201 @@ export interface CapitalMarketAssumptionsResult {
    *  so the client can pass it straight through. */
   correlations: Record<string, Record<string, number>>;
   asOf: string; // ISO date of the assumptions, for provenance
+}
+
+// ---------------------------------------------------------------------------
+// Tool: income_layering
+// ---------------------------------------------------------------------------
+
+export interface SocialSecurityIncomeInput {
+  piaMonthly: number;
+  claimAge: number;
+  fraAge?: number;
+  colaRate?: number;
+}
+
+export interface IncomeStreamInput {
+  kind: "pension" | "annuity";
+  annualAmount: number;
+  startAge: number;
+  endAge?: number;
+  colaRate?: number;
+}
+
+export interface IncomeLayeringRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  currentAge: number;
+  terminalAge: number;
+  spendingTarget: number;
+  retirementAge?: number;
+  earnedIncome?: number;
+  wageGrowthRate?: number;
+  spendingInflationRate?: number;
+  filingStatus?: FilingStatus;
+  taxYear?: number;
+  baseYear?: number;
+  socialSecurity?: SocialSecurityIncomeInput;
+  spouseSocialSecurity?: SocialSecurityIncomeInput;
+  incomeStreams?: IncomeStreamInput[];
+  accountBalances?: AccountBalanceMap;
+  accountReturns?: AccountBalanceMap;
+  expectedReturn?: number;
+  bracketFillTargetRate?: number;
+  birthYear?: number;
+  state?: string;
+  residencyChange?: ResidencyChange;
+  survivorYear?: number;
+  survivorFilingStatus?: FilingStatus;
+}
+
+export interface IncomeLayer {
+  source: string;
+  gross: number;
+  tax: number;
+  net: number;
+}
+
+export interface IncomeLayeringYear {
+  age: number;
+  year: number;
+  spendingTarget: number;
+  layers: IncomeLayer[];
+  totalGross: number;
+  totalTax: number;
+  netIncome: number;
+  gap: number;
+  surplusAfterTax: number;
+  effectiveTaxRate: number;
+  endingAccountBalances: Record<AccountType, number>;
+  bracketHeadroom?: Record<string, unknown>;
+  stateCode?: string | null;
+  stateTaxModeled?: boolean;
+  federalTax?: number;
+  stateTax?: number;
+  stateTaxTableVersion?: string | null;
+  stateTaxNotes?: string[];
+  filingStatus?: FilingStatus;
+  survivorActive?: boolean;
+}
+
+export interface IncomeLayeringRollups {
+  projectionYears: number;
+  currentAge: number;
+  terminalAge: number;
+  retirementAge: number;
+  totalSpendingTarget: number;
+  totalGrossIncome: number;
+  totalTax: number;
+  totalFederalTax?: number;
+  totalStateTax?: number;
+  totalNetIncome: number;
+  totalGap: number;
+  totalSurplusAfterTax: number;
+  firstGapAge: number | null;
+  startingAccountBalances: Record<AccountType, number>;
+  endingAccountBalances: Record<AccountType, number>;
+  sourceTotals: Record<string, { gross: number; tax: number; net: number }>;
+  rmdStartAge: number;
+  rmdStartAgePolicyVersion: string;
+}
+
+export interface IncomeLayeringAssumptions {
+  filingStatus: string;
+  taxTableYear: number;
+  taxTableVersion: string;
+  spendingInflationRate: number;
+  wageGrowthRate: number;
+  expectedReturn: number;
+  accountReturns: Record<AccountType, number>;
+  withdrawalOrder: string[];
+  socialSecurityClaimAge: number | null;
+  socialSecurityFraAge: number | null;
+  spouseSocialSecurityClaimAge?: number | null;
+  spouseSocialSecurityFraAge?: number | null;
+  bracketFillTargetRate: number | null;
+  survivorYear?: number | null;
+  survivorFilingStatus?: string | null;
+  state?: string | null;
+  residencyChange?: ResidencyChange | null;
+}
+
+export interface IncomeLayeringResult {
+  contractVersion?: string;
+  years: IncomeLayeringYear[];
+  rollups: IncomeLayeringRollups;
+  assumptions: IncomeLayeringAssumptions;
+  disclaimer?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Tool: historical_blend
+// ---------------------------------------------------------------------------
+
+export type HistoricalBlendRebalanceFrequency = "monthly" | "annual" | "none";
+
+export interface HistoricalBlendRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  assetClassIds?: string[];
+  weights: Record<string, number>;
+  lookbackDays?: number;
+  asOf?: string;
+  rebalanceFrequency?: HistoricalBlendRebalanceFrequency;
+  initialValue?: number;
+}
+
+export interface HistoricalCalendarReturn {
+  year: number;
+  months: number;
+  return: number;
+  complete: boolean;
+}
+
+export interface HistoricalTrailingReturn {
+  window: string;
+  months: number;
+  return: number;
+  annualized: boolean;
+}
+
+export interface HistoricalGrowthPoint {
+  month: string;
+  value: number;
+}
+
+export interface HistoricalSigmaBands {
+  minus4Sigma: number;
+  minus2Sigma: number;
+  mean: number;
+  plus2Sigma: number;
+  plus4Sigma: number;
+}
+
+export interface HistoricalBlendStatistics {
+  annualizedMean: number;
+  annualizedVolatility: number;
+  sigmaBands: HistoricalSigmaBands;
+}
+
+export interface HistoricalBlendResult {
+  contractVersion: string;
+  weights: Record<string, number>;
+  rebalanceFrequency: HistoricalBlendRebalanceFrequency | string;
+  months: number;
+  startMonth: string;
+  endMonth: string;
+  calendarYearReturns: HistoricalCalendarReturn[];
+  annualizedReturns: HistoricalTrailingReturn[];
+  growthOfDollar: HistoricalGrowthPoint[];
+  statistics: HistoricalBlendStatistics;
+  assumptions: {
+    incomeReinvested: boolean;
+    feesTaxesCostsIncluded: boolean;
+    directIndexInvestmentPossible: boolean;
+    returnFrequency: string;
+  };
+  disclaimer: string;
+  asOf: string;
+  assetClasses: Array<{ id: string; label: string; weight: number }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -981,6 +1216,160 @@ export interface RiskMetricsResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: risk_profile_score
+// ---------------------------------------------------------------------------
+
+export interface RiskProfileScoreRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  /** Fixed questionnaire answer ids keyed by question id. No free text. */
+  answers: Record<string, string>;
+}
+
+export interface RiskProfileQuestionAnswer {
+  id: string;
+  label: string;
+  score: number;
+}
+
+export interface RiskProfileQuestion {
+  id: string;
+  label: string;
+  answers: RiskProfileQuestionAnswer[];
+}
+
+export interface RiskProfileScoredAnswer {
+  questionId: string;
+  answerId: string;
+  score: number;
+}
+
+export interface RiskProfileBand {
+  profile: RiskProfile;
+  scoreMin: number;
+  scoreMax: number;
+  annualVolatilityLow: number;
+  annualVolatilityHigh: number;
+  suggestedWeights: Record<string, number>;
+}
+
+export interface RiskProfileScoreResult {
+  contractVersion: string;
+  score: number;
+  maxScore: number;
+  profile: RiskProfile;
+  riskBand: {
+    annualVolatilityLow: number;
+    annualVolatilityHigh: number;
+  };
+  suggestedWeights: Record<string, number>;
+  scoredAnswers: RiskProfileScoredAnswer[];
+  questions: RiskProfileQuestion[];
+  bands: RiskProfileBand[];
+  assumptions: {
+    questionnaireVersion: string;
+    profileSet: string[];
+    optimizerField: string;
+    [key: string]: unknown;
+  };
+  disclaimer: string;
+}
+
+// ---------------------------------------------------------------------------
+// Tool: performance_analysis
+// ---------------------------------------------------------------------------
+
+export type TwrFlowTiming = "start" | "end";
+
+export interface TwrPeriodInput {
+  startValue: number;
+  endValue: number;
+  netExternalFlow?: number;
+}
+
+export interface MwrCashFlowInput {
+  tYears: number;
+  amount: number;
+}
+
+export interface PerformanceAnalysisRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  twrPeriods?: TwrPeriodInput[];
+  flowTiming?: TwrFlowTiming;
+  periodsPerYear?: number;
+  mwrFlows?: MwrCashFlowInput[];
+  terminalValue?: number;
+  terminalTimeYears?: number;
+  grossReturns?: number[];
+  feeRates?: number[];
+  portfolioReturns?: number[];
+  benchmarkReturns?: number[];
+}
+
+export interface TwrPeriodResult {
+  period: number;
+  startValue: number;
+  endValue: number;
+  netExternalFlow: number;
+  return: number;
+}
+
+export interface TimeWeightedReturnResult {
+  periods: number;
+  periodsPerYear: number;
+  flowTiming: string;
+  periodReturns: TwrPeriodResult[];
+  cumulativeReturn: number;
+  annualizedReturn: number;
+}
+
+export interface MoneyWeightedReturnResult {
+  rate: number;
+  terminalTimeYears: number;
+  iterations: number;
+  bracketExpansions: number;
+  method: string;
+}
+
+export interface FeeDragResult {
+  periods: number;
+  periodsPerYear: number;
+  netReturns: number[];
+  cumulativeGrossReturn: number;
+  cumulativeNetReturn: number;
+  cumulativeFeeDrag: number;
+  annualizedGrossReturn: number;
+  annualizedNetReturn: number;
+  annualizedFeeDrag: number;
+}
+
+export interface BenchmarkRelativeResult {
+  periods: number;
+  periodsPerYear: number;
+  relativeReturns: number[];
+  cumulativePortfolioReturn: number;
+  cumulativeBenchmarkReturn: number;
+  cumulativeExcessReturn: number;
+  annualizedPortfolioReturn: number;
+  annualizedBenchmarkReturn: number;
+  annualizedExcessReturn: number;
+}
+
+export interface PerformanceAnalysisResult {
+  contractVersion: string;
+  timeWeighted: TimeWeightedReturnResult | null;
+  moneyWeighted: MoneyWeightedReturnResult | null;
+  feeDrag: FeeDragResult | null;
+  benchmarkRelative: BenchmarkRelativeResult | null;
+  assumptions: {
+    flowTiming: string;
+    periodsPerYear: number;
+    cashFlowSignConvention: string;
+    compositeTool: "performance_analysis" | string;
+  };
+  disclaimer: string;
+}
+
+// ---------------------------------------------------------------------------
 // Tool: rebalance (rebalance-to-target)
 // ---------------------------------------------------------------------------
 
@@ -1135,6 +1524,17 @@ export interface PlanningReportSectionInput {
   assumptions?: string[];
 }
 
+export type PlanningReportPreset = "custom" | "wealth_roadmap";
+export type WealthRoadmapScope = "focused" | "full";
+
+export interface PlanningReportMetadata {
+  assumptionVersion: string;
+  cmaVersion: string;
+  taxYear: number;
+  seed: number;
+  engineReference?: string;
+}
+
 /** Assemble the supplied de-identified sections into an ordered report; the
  *  engine normalizes titles, collates findings, and (optionally) annotates the
  *  live regime. Pure assembly — no quant logic. Educational, not advice. */
@@ -1143,6 +1543,9 @@ export interface BuildPlanningReportRequest {
   sections: PlanningReportSectionInput[];
   title?: string;
   includeRegime?: boolean;
+  preset?: PlanningReportPreset;
+  scope?: WealthRoadmapScope;
+  metadata?: PlanningReportMetadata;
 }
 
 export interface PlanningReportSection {
@@ -1150,6 +1553,14 @@ export interface PlanningReportSection {
   title: string;
   findings: string[];
   data: Record<string, unknown>;
+  metadata?: PlanningReportMetadata & { scope?: WealthRoadmapScope };
+}
+
+export interface PlanningReportReleaseState {
+  released: boolean;
+  blocked: boolean;
+  blockReason: string;
+  uncuratedPriorityActions: number;
 }
 
 export interface PlanningReport {
@@ -1157,11 +1568,18 @@ export interface PlanningReport {
   sections: PlanningReportSection[];
   assumptions: string[];
   regime?: string; // present when includeRegime requested it
+  preset?: "wealth_roadmap";
+  scope?: WealthRoadmapScope;
+  scopeStatement?: string;
+  planningBenefitNotice?: string;
+  metadata?: PlanningReportMetadata & { scope?: WealthRoadmapScope };
+  release?: PlanningReportReleaseState;
 }
 
 export interface BuildPlanningReportResult {
   contractVersion: string;
   report: PlanningReport;
+  disclaimer?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -1176,6 +1594,7 @@ export const PLANNING_TOOLS = {
   glidePath: "glide_path",
   taxWithdrawal: "tax_aware_withdrawal",
   correlationMatrix: "correlation_matrix",
+  historicalBlend: "historical_blend",
   regimeReturnGenerator: "regime_return_generator",
   capitalMarketAssumptions: "capital_market_assumptions",
   cashflowPlanningBridge: "cashflow_planning_bridge",
@@ -1183,6 +1602,7 @@ export const PLANNING_TOOLS = {
   budgetPacingProjection: "budget_pacing_projection",
   educationFunding: "education_funding",
   educationVehicleRules: "education_vehicle_rules",
+  incomeLayering: "income_layering",
   rothConversion: "roth_conversion",
   sequenceOfReturnsStress: "sequence_of_returns_stress",
   rmd: "rmd",
@@ -1192,8 +1612,10 @@ export const PLANNING_TOOLS = {
   portfolioXray: "portfolio_xray",
   fire: "fire",
   riskMetrics: "risk_metrics",
+  performanceAnalysis: "performance_analysis",
   rebalance: "rebalance",
   optimizeAllocation: "optimize_allocation",
+  riskProfileScore: "risk_profile_score",
   irmaaHeadroom: "irmaa_headroom",
   analyzeRothConversion: "analyze_roth_conversion",
   sequenceConversions: "sequence_conversions",
