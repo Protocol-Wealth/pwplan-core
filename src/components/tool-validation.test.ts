@@ -14,6 +14,7 @@ import {
   validateEducationFunding,
   validateFire,
   validateGlidePath,
+  validateIncomeLayering,
   validateOptimizeAllocation,
   validatePortfolioXray,
   validateRebalance,
@@ -38,6 +39,7 @@ import type {
   EducationFundingInputs,
   FireInputs,
   GlidePathInputs,
+  IncomeLayeringInputs,
   OptimizeAllocationInputs,
   RebalanceInputs,
   RegimeGenInputs,
@@ -52,6 +54,7 @@ import type {
   TaxWithdrawalInputs,
 } from "../store/scenario";
 import type { Account, AssetClass } from "../contract/planning";
+import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
 const validGlide: GlidePathInputs = {
@@ -662,6 +665,112 @@ const validRisk: RiskMetricsInputs = {
   riskFreeRate: 0.02,
   periodsPerYear: 1,
 };
+
+const validIncomeLayering: IncomeLayeringInputs =
+  DEFAULT_INCOME_LAYERING_INPUTS;
+
+describe("validateIncomeLayering", () => {
+  it("accepts a well-formed request with shared accounts", () => {
+    expect(validateIncomeLayering(validIncomeLayering, accounts)).toEqual([]);
+  });
+
+  it("requires shared account balances for withdrawal gaps", () => {
+    expect(validateIncomeLayering(validIncomeLayering, [])).toContain(
+      "Add accounts in the Monte Carlo tab to model withdrawal gaps.",
+    );
+  });
+
+  it("rejects age ordering and non-positive spending targets", () => {
+    expect(
+      validateIncomeLayering(
+        { ...validIncomeLayering, terminalAge: 60 },
+        accounts,
+      ),
+    ).toContain("Terminal age must be beyond current age.");
+    expect(
+      validateIncomeLayering(
+        { ...validIncomeLayering, spendingTarget: 0 },
+        accounts,
+      ),
+    ).toContain("Spending target must be greater than zero.");
+  });
+
+  it("validates Social Security rows only when PIA is enabled", () => {
+    expect(
+      validateIncomeLayering(
+        { ...validIncomeLayering, primaryClaimAge: 61 },
+        accounts,
+      ),
+    ).toContain("Primary claim age must be a whole number from 62 to 70.");
+    expect(
+      validateIncomeLayering(
+        {
+          ...validIncomeLayering,
+          primaryPiaMonthly: 0,
+          primaryClaimAge: 61,
+        },
+        accounts,
+      ),
+    ).not.toContain("Primary claim age must be a whole number from 62 to 70.");
+  });
+
+  it("blocks spouse and survivor shapes that Nexus rejects", () => {
+    expect(
+      validateIncomeLayering(
+        {
+          ...validIncomeLayering,
+          primaryPiaMonthly: 0,
+          spousePiaMonthly: 1_500,
+        },
+        accounts,
+      ),
+    ).toContain("Spouse Social Security requires primary Social Security.");
+    expect(
+      validateIncomeLayering(
+        {
+          ...validIncomeLayering,
+          survivorYear: 2040,
+          spousePiaMonthly: 0,
+        },
+        accounts,
+      ),
+    ).toContain("Survivor year requires spouse Social Security.");
+  });
+
+  it("flags birth-year drift from current age and base year", () => {
+    expect(
+      validateIncomeLayering(
+        { ...validIncomeLayering, birthYear: 1950 },
+        accounts,
+      ),
+    ).toContain(
+      "Birth year should match base year minus current age, within one year.",
+    );
+  });
+
+  it("validates pension and annuity rows", () => {
+    expect(
+      validateIncomeLayering(
+        {
+          ...validIncomeLayering,
+          incomeStreams: [
+            {
+              kind: "pension",
+              annualAmount: 0,
+              startAge: 65,
+              endAge: 64,
+              colaRate: 0,
+            },
+          ],
+        },
+        accounts,
+      ),
+    ).toEqual([
+      "Income stream 1 annual amount must be greater than zero.",
+      "Income stream 1 end age must be 0 or within the projection.",
+    ]);
+  });
+});
 
 describe("validateRiskMetrics", () => {
   it("accepts a well-formed request", () => {

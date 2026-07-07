@@ -9,6 +9,17 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **S2 income layering UI slice (2026-07-07).** Added an Income Layers tab over
+  `income_layering`, using shared Monte Carlo account balances for
+  taxable/traditional/Roth buckets plus de-identified assumptions for earned
+  income, Social Security, pension/annuity streams, tax year, state, and optional
+  survivor-year filing-status switch. Results render rollups, a stacked
+  after-tax income timeline, source totals, assumptions, and disclaimer. Scenario
+  JSON remains schema-v4 and defaults older saved files with a public-safe
+  near-retiree income-layering example. No client identity, account names, raw
+  holdings, notes, advisor workflow state, approvals, release state,
+  persistence, audit trail, or private compliance workflow was added.
+
 - **S5 risk profile UI slice (2026-07-07).** Added a Risk Profile tab over
   `risk_profile_score`, using the engine's fixed question/answer ids with no
   free text. Results render score, optimizer-compatible profile, volatility band,

@@ -129,8 +129,8 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **33 planning tools**. The UI has 22 tabs:
-eighteen one-tool tabs, the `capital_market_assumptions` control inside the
+The wire contract covers **33 planning tools**. The UI has 23 tabs:
+nineteen one-tool tabs, the `capital_market_assumptions` control inside the
 Monte Carlo tab, one Education tab that houses the two education funding tools,
 one synthetic Cash Flow Bridge tab that houses the three cash-flow bridge tools,
 the Roth · IRMAA tab over the composite case contract, and a UI-only Scenario
@@ -153,7 +153,7 @@ Roth-conversion planning schema.
 | `solve_goal`                 | Solve one planning variable to target success         | gateway    |
 | `analyze_goals`              | Goal funding status + priority pool allocation        | gateway    |
 | `project_cash_flow`          | Deterministic cash-flow + net-worth projection        | gateway    |
-| `income_layering`            | Stacked retirement income timeline                    | gateway    |
+| `income_layering`            | Stacked retirement income timeline                    | tab        |
 | `glide_path`                 | Target equity weight by age                           | tab        |
 | `tax_aware_withdrawal`       | Per-year withdrawal ordering + RMD                    | tab        |
 | `roth_conversion`            | Convert-now vs. leave-pre-tax after-tax comparison    | tab        |

@@ -12,6 +12,7 @@ import {
   type ScenarioSnapshot,
 } from "./scenario-io";
 import { PLANNING_CONTRACT_VERSION } from "../contract/planning";
+import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
 const snapshot: ScenarioSnapshot = {
@@ -138,6 +139,7 @@ const snapshot: ScenarioSnapshot = {
     riskFreeRate: 0.02,
     periodsPerYear: 1,
   },
+  incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
   riskProfileScoreInputs: {
     answers: DEFAULT_RISK_PROFILE_ANSWERS,
   },
@@ -327,6 +329,21 @@ describe("round-trip", () => {
     if (result.ok) {
       expect(result.value.riskProfileScoreInputs.answers).toEqual(
         DEFAULT_RISK_PROFILE_ANSWERS,
+      );
+    }
+  });
+
+  it("defaults income-layering inputs when loading an older scenario file", () => {
+    const env = serializeScenario(snapshot);
+    const result = parseScenario({
+      ...env,
+      incomeLayeringInputs: undefined,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.incomeLayeringInputs).toEqual(
+        DEFAULT_INCOME_LAYERING_INPUTS,
       );
     }
   });
