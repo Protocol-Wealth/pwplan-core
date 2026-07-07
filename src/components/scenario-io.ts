@@ -28,11 +28,13 @@ import type {
   AssetClass,
   FilingStatus,
   GuaranteedIncome,
+  HistoricalBlendRebalanceFrequency,
   PlanningReportPreset,
   ReturnModel,
   WealthRoadmapScope,
 } from "../contract/planning";
 import { assertNoPII, PiiTripwireError } from "../lib/compliance";
+import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import {
   answerIdsForQuestion,
@@ -50,6 +52,7 @@ import type {
   FireInputs,
   GlidePathInputs,
   GlidePathShape,
+  HistoricalBlendInputs,
   IncomeLayeringInputs,
   IncomeLayeringStreamDraft,
   OptimizeAllocationInputs,
@@ -113,6 +116,7 @@ export function serializeScenario(
     fireInputs: snapshot.fireInputs,
     riskMetricsInputs: snapshot.riskMetricsInputs,
     incomeLayeringInputs: snapshot.incomeLayeringInputs,
+    historicalBlendInputs: snapshot.historicalBlendInputs,
     riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
     rebalanceInputs: snapshot.rebalanceInputs,
     optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
@@ -189,6 +193,11 @@ const ALLOCATION_OBJECTIVES = [
   "efficient_risk",
 ] as const;
 const OPTIMIZE_RETURN_MODELS = ["house_view", "historical"] as const;
+const HISTORICAL_BLEND_REBALANCE_FREQUENCIES = [
+  "monthly",
+  "annual",
+  "none",
+] as const;
 const INCOME_STREAM_KINDS = ["pension", "annuity"] as const;
 const SPENDING_VOLATILITY = ["low", "medium", "high"] as const;
 const PLANNING_TOOLS: PlanningTool[] = [
@@ -208,6 +217,7 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "fire",
   "risk_metrics",
   "income_layering",
+  "historical_blend",
   "risk_profile",
   "rebalance",
   "optimize_allocation",
@@ -665,6 +675,41 @@ function parseIncomeLayering(v: unknown): IncomeLayeringInputs | null {
   };
 }
 
+function defaultHistoricalBlend(): HistoricalBlendInputs {
+  return {
+    ...DEFAULT_HISTORICAL_BLEND_INPUTS,
+    weights: { ...DEFAULT_HISTORICAL_BLEND_INPUTS.weights },
+  };
+}
+
+function parseHistoricalBlend(v: unknown): HistoricalBlendInputs | null {
+  if (v === undefined) return defaultHistoricalBlend();
+  if (
+    !isObject(v) ||
+    !isStr(v.assetClassIdsText) ||
+    !isNum(v.lookbackDays) ||
+    !isStr(v.asOf) ||
+    !isStr(v.rebalanceFrequency) ||
+    !(HISTORICAL_BLEND_REBALANCE_FREQUENCIES as readonly string[]).includes(
+      v.rebalanceFrequency,
+    ) ||
+    !isNum(v.initialValue)
+  ) {
+    return null;
+  }
+  const weights = parseNumberRecord(v.weights);
+  if (weights === null) return null;
+  return {
+    assetClassIdsText: v.assetClassIdsText,
+    weights,
+    lookbackDays: v.lookbackDays,
+    asOf: v.asOf,
+    rebalanceFrequency:
+      v.rebalanceFrequency as HistoricalBlendRebalanceFrequency,
+    initialValue: v.initialValue,
+  };
+}
+
 function parseRiskProfileScore(v: unknown): RiskProfileScoreInputs | null {
   if (v === undefined) {
     return { answers: { ...DEFAULT_RISK_PROFILE_ANSWERS } };
@@ -1018,6 +1063,13 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
       error: "Malformed or missing income-layering inputs.",
     };
   }
+  const historicalBlendInputs = parseHistoricalBlend(raw.historicalBlendInputs);
+  if (historicalBlendInputs === null) {
+    return {
+      ok: false,
+      error: "Malformed or missing historical-blend inputs.",
+    };
+  }
   const riskProfileScoreInputs = parseRiskProfileScore(
     raw.riskProfileScoreInputs,
   );
@@ -1095,6 +1147,7 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
     fireInputs,
     riskMetricsInputs,
     incomeLayeringInputs,
+    historicalBlendInputs,
     riskProfileScoreInputs,
     rebalanceInputs,
     optimizeAllocationInputs,

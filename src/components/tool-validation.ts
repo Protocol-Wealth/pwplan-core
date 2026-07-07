@@ -25,6 +25,7 @@ import type {
   EducationFundingInputs,
   FireInputs,
   GlidePathInputs,
+  HistoricalBlendInputs,
   IncomeLayeringInputs,
   OptimizeAllocationInputs,
   RebalanceInputs,
@@ -42,6 +43,11 @@ import type {
 
 const SPENDING_VOLATILITY = new Set(["low", "medium", "high"]);
 const INCOME_STREAM_KINDS = new Set(["pension", "annuity"]);
+const HISTORICAL_BLEND_REBALANCE_FREQUENCIES = new Set([
+  "monthly",
+  "annual",
+  "none",
+]);
 const ROADMAP_INPUT_KINDS = new Set([
   "snapshot",
   "trajectory",
@@ -731,6 +737,49 @@ export function validateIncomeLayering(
       i.survivorYear > i.baseYear + (i.terminalAge - i.currentAge))
   ) {
     issues.push("Survivor year must be 0 or within the projection years.");
+  }
+  return issues;
+}
+
+/** Reasons a historical-blend request cannot be dispatched. */
+export function validateHistoricalBlend(h: HistoricalBlendInputs): string[] {
+  const issues: string[] = [];
+  const ids = parseIdList(h.assetClassIdsText);
+  const weightIds = Object.keys(h.weights).filter((id) => id.trim().length > 0);
+  const activeIds = ids.length > 0 ? ids : weightIds;
+  if (activeIds.length < 2) {
+    issues.push("Enter at least two asset-class ids.");
+  }
+  if (new Set(activeIds).size !== activeIds.length) {
+    issues.push("Asset-class ids must be distinct.");
+  }
+  if (
+    !Number.isInteger(h.lookbackDays) ||
+    h.lookbackDays < 30 ||
+    h.lookbackDays > 3_650
+  ) {
+    issues.push("Lookback days must be a whole number in [30, 3650].");
+  }
+  if (h.asOf.trim().length > 0 && !/^\d{4}-\d{2}-\d{2}$/.test(h.asOf.trim())) {
+    issues.push("As-of date must be blank or YYYY-MM-DD.");
+  }
+  if (!HISTORICAL_BLEND_REBALANCE_FREQUENCIES.has(h.rebalanceFrequency)) {
+    issues.push("Rebalance frequency must be monthly, annual, or none.");
+  }
+  if (!Number.isFinite(h.initialValue) || h.initialValue <= 0) {
+    issues.push("Initial value must be greater than zero.");
+  }
+  let weightSum = 0;
+  for (const id of activeIds) {
+    const weight = h.weights[id] ?? 0;
+    if (!Number.isFinite(weight) || weight < 0) {
+      issues.push("Weights cannot be negative.");
+      break;
+    }
+    weightSum += weight;
+  }
+  if (Math.abs(weightSum - 1) > 1e-6) {
+    issues.push("Weights must sum to 1 across the selected asset classes.");
   }
   return issues;
 }

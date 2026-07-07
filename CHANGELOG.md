@@ -9,6 +9,16 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **S3 historical blend UI slice (2026-07-07).** Added a History tab over
+  `historical_blend`, collecting only asset-class ids, weights, lookback,
+  optional as-of date, rebalance frequency, and initial value. Results render
+  growth of initial value, recent calendar-year return bars, trailing-return
+  table, annualized mean/volatility, assumptions, and the engine disclaimer.
+  Scenario JSON remains schema-v4 and defaults older saved files with a
+  public-safe 60/40 blend. No client identity, account names, holdings,
+  provider data ingestion, notes, advisor workflow state, approvals, release
+  state, persistence, audit trail, or private compliance workflow was added.
+
 - **S2 income layering UI slice (2026-07-07).** Added an Income Layers tab over
   `income_layering`, using shared Monte Carlo account balances for
   taxable/traditional/Roth buckets plus de-identified assumptions for earned

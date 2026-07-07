@@ -171,6 +171,16 @@ on completion and note the version in CHANGELOG.md._
       raw holdings, notes, advisor workflow state, approvals, release state,
       persistence, audit trail, or private compliance workflow. 33 wire-contract
       tools, 23 UI tabs.)_
+- [x] S3 historical blend UI slice.
+      _(done 2026-07-07: added `HistoricalBlendTool` over `historical_blend`,
+      using asset-class ids, weights, lookback, optional as-of date, rebalance
+      frequency, and initial value only. Results render growth of initial value,
+      recent calendar-year bars, trailing-return table, annualized stats,
+      assumptions, and disclaimer. Scenario JSON remains schema-v4 and defaults
+      older snapshots. No client identity, account names, holdings, provider
+      ingestion, notes, advisor workflow state, approvals, release state,
+      persistence, audit trail, or private compliance workflow. 33 wire-contract
+      tools, 24 UI tabs.)_
 
 ## Dependency on other repos (track, do not build here)
 

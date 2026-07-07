@@ -12,6 +12,7 @@ import {
   type ScenarioSnapshot,
 } from "./scenario-io";
 import { PLANNING_CONTRACT_VERSION } from "../contract/planning";
+import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
@@ -140,6 +141,7 @@ const snapshot: ScenarioSnapshot = {
     periodsPerYear: 1,
   },
   incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
+  historicalBlendInputs: DEFAULT_HISTORICAL_BLEND_INPUTS,
   riskProfileScoreInputs: {
     answers: DEFAULT_RISK_PROFILE_ANSWERS,
   },
@@ -344,6 +346,21 @@ describe("round-trip", () => {
     if (result.ok) {
       expect(result.value.incomeLayeringInputs).toEqual(
         DEFAULT_INCOME_LAYERING_INPUTS,
+      );
+    }
+  });
+
+  it("defaults historical-blend inputs when loading an older scenario file", () => {
+    const env = serializeScenario(snapshot);
+    const result = parseScenario({
+      ...env,
+      historicalBlendInputs: undefined,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.historicalBlendInputs).toEqual(
+        DEFAULT_HISTORICAL_BLEND_INPUTS,
       );
     }
   });

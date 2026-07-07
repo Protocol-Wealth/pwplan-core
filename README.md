@@ -129,8 +129,8 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **33 planning tools**. The UI has 23 tabs:
-nineteen one-tool tabs, the `capital_market_assumptions` control inside the
+The wire contract covers **33 planning tools**. The UI has 24 tabs:
+twenty one-tool tabs, the `capital_market_assumptions` control inside the
 Monte Carlo tab, one Education tab that houses the two education funding tools,
 one synthetic Cash Flow Bridge tab that houses the three cash-flow bridge tools,
 the Roth · IRMAA tab over the composite case contract, and a UI-only Scenario
@@ -163,7 +163,7 @@ Roth-conversion planning schema.
 | `social_security_claiming`   | Benefit by claim age 62–70 + breakeven ages           | tab        |
 | `regime_conditioned_swr`     | Base SWR adjusted for the live macro regime           | tab        |
 | `correlation_matrix`         | Real-data return correlations (shrinkage optional)    | tab        |
-| `historical_blend`           | Historical index-blend exhibit                        | gateway    |
+| `historical_blend`           | Historical index-blend exhibit                        | tab        |
 | `regime_return_generator`    | Live regime + transition matrix + path cache key      | tab        |
 | `portfolio_xray`             | Regime-aware structural diagnostics + findings        | tab        |
 | `fire`                       | FIRE / Coast-FIRE number + years to independence      | tab        |

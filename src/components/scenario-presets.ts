@@ -14,6 +14,7 @@
  */
 
 import type { ScenarioSnapshot } from "./scenario-io";
+import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
@@ -111,6 +112,7 @@ const DEFAULT_TOOL_INPUTS: Omit<
     periodsPerYear: 1,
   },
   incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
+  historicalBlendInputs: DEFAULT_HISTORICAL_BLEND_INPUTS,
   riskProfileScoreInputs: {
     answers: DEFAULT_RISK_PROFILE_ANSWERS,
   },

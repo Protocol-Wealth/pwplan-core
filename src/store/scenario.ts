@@ -33,6 +33,7 @@ import type {
   FireResult,
   RiskMetricsResult,
   IncomeLayeringResult,
+  HistoricalBlendResult,
   RebalanceResult,
   OptimizeAllocationResult,
   BuildPlanningReportResult,
@@ -53,8 +54,10 @@ import type {
   TaxWithdrawalResult,
   PlanningReportPreset,
   WealthRoadmapScope,
+  HistoricalBlendRebalanceFrequency,
 } from "../contract/planning";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
+import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 import type {
   ContractFilingStatus,
@@ -80,6 +83,7 @@ export type PlanningTool =
   | "fire"
   | "risk_metrics"
   | "income_layering"
+  | "historical_blend"
   | "risk_profile"
   | "rebalance"
   | "optimize_allocation"
@@ -264,6 +268,16 @@ export interface IncomeLayeringInputs {
   survivorFilingStatus: FilingStatus;
 }
 
+export interface HistoricalBlendInputs {
+  /** Comma/space-separated ids; blank means use weight keys only. */
+  assetClassIdsText: string;
+  weights: Record<string, number>;
+  lookbackDays: number;
+  asOf: string;
+  rebalanceFrequency: HistoricalBlendRebalanceFrequency;
+  initialValue: number;
+}
+
 export interface RiskProfileScoreInputs {
   /** Fixed questionnaire answer ids keyed by canonical question id. */
   answers: Record<string, string>;
@@ -383,6 +397,7 @@ export interface ScenarioSnapshot {
   fireInputs: FireInputs;
   riskMetricsInputs: RiskMetricsInputs;
   incomeLayeringInputs: IncomeLayeringInputs;
+  historicalBlendInputs: HistoricalBlendInputs;
   riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
@@ -411,6 +426,7 @@ interface ScenarioState {
   fireInputs: FireInputs;
   riskMetricsInputs: RiskMetricsInputs;
   incomeLayeringInputs: IncomeLayeringInputs;
+  historicalBlendInputs: HistoricalBlendInputs;
   riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
@@ -436,6 +452,7 @@ interface ScenarioState {
   fireResult: FireResult | null;
   riskMetricsResult: RiskMetricsResult | null;
   incomeLayeringResult: IncomeLayeringResult | null;
+  historicalBlendResult: HistoricalBlendResult | null;
   riskProfileScoreResult: RiskProfileScoreResult | null;
   rebalanceResult: RebalanceResult | null;
   optimizeAllocationResult: OptimizeAllocationResult | null;
@@ -475,6 +492,7 @@ interface ScenarioState {
   setFireInputs: (patch: Partial<FireInputs>) => void;
   setRiskMetricsInputs: (patch: Partial<RiskMetricsInputs>) => void;
   setIncomeLayeringInputs: (patch: Partial<IncomeLayeringInputs>) => void;
+  setHistoricalBlendInputs: (patch: Partial<HistoricalBlendInputs>) => void;
   setRiskProfileScoreInputs: (patch: Partial<RiskProfileScoreInputs>) => void;
   setRebalanceInputs: (patch: Partial<RebalanceInputs>) => void;
   setOptimizeAllocationInputs: (
@@ -507,6 +525,7 @@ interface ScenarioState {
   setFireResult: (r: FireResult | null) => void;
   setRiskMetricsResult: (r: RiskMetricsResult | null) => void;
   setIncomeLayeringResult: (r: IncomeLayeringResult | null) => void;
+  setHistoricalBlendResult: (r: HistoricalBlendResult | null) => void;
   setRiskProfileScoreResult: (r: RiskProfileScoreResult | null) => void;
   setRebalanceResult: (r: RebalanceResult | null) => void;
   setOptimizeAllocationResult: (r: OptimizeAllocationResult | null) => void;
@@ -802,6 +821,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   fireInputs: DEFAULT_FIRE,
   riskMetricsInputs: DEFAULT_RISK_METRICS,
   incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
+  historicalBlendInputs: DEFAULT_HISTORICAL_BLEND_INPUTS,
   riskProfileScoreInputs: DEFAULT_RISK_PROFILE_SCORE,
   rebalanceInputs: DEFAULT_REBALANCE,
   optimizeAllocationInputs: DEFAULT_OPTIMIZE_ALLOCATION,
@@ -827,6 +847,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   fireResult: null,
   riskMetricsResult: null,
   incomeLayeringResult: null,
+  historicalBlendResult: null,
   riskProfileScoreResult: null,
   rebalanceResult: null,
   optimizeAllocationResult: null,
@@ -867,6 +888,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       fireInputs: snapshot.fireInputs,
       riskMetricsInputs: snapshot.riskMetricsInputs,
       incomeLayeringInputs: snapshot.incomeLayeringInputs,
+      historicalBlendInputs: snapshot.historicalBlendInputs,
       riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
       rebalanceInputs: snapshot.rebalanceInputs,
       optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
@@ -891,6 +913,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       fireResult: null,
       riskMetricsResult: null,
       incomeLayeringResult: null,
+      historicalBlendResult: null,
       riskProfileScoreResult: null,
       rebalanceResult: null,
       optimizeAllocationResult: null,
@@ -944,6 +967,21 @@ export const useScenario = create<ScenarioState>((set) => ({
         ...(patch.incomeStreams
           ? {
               incomeStreams: patch.incomeStreams,
+            }
+          : {}),
+      },
+    })),
+  setHistoricalBlendInputs: (patch) =>
+    set((s) => ({
+      historicalBlendInputs: {
+        ...s.historicalBlendInputs,
+        ...patch,
+        ...(patch.weights
+          ? {
+              weights: {
+                ...s.historicalBlendInputs.weights,
+                ...patch.weights,
+              },
             }
           : {}),
       },
@@ -1014,6 +1052,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   setRiskMetricsResult: (riskMetricsResult) => set({ riskMetricsResult }),
   setIncomeLayeringResult: (incomeLayeringResult) =>
     set({ incomeLayeringResult }),
+  setHistoricalBlendResult: (historicalBlendResult) =>
+    set({ historicalBlendResult }),
   setRiskProfileScoreResult: (riskProfileScoreResult) =>
     set({ riskProfileScoreResult }),
   setRebalanceResult: (rebalanceResult) => set({ rebalanceResult }),

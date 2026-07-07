@@ -10,6 +10,7 @@ import {
   validateCashflowPlanningBridge,
   validateEducationFunding,
   validateGlidePath,
+  validateHistoricalBlend,
   validateIncomeLayering,
   validateRiskProfileScore,
   validateTaxWithdrawal,
@@ -91,6 +92,12 @@ describe("scenario presets", () => {
             preset.snapshot.incomeLayeringInputs,
             preset.snapshot.inputs.accounts,
           ),
+        ).toEqual([]);
+      });
+
+      it("passes historical-blend validation", () => {
+        expect(
+          validateHistoricalBlend(preset.snapshot.historicalBlendInputs),
         ).toEqual([]);
       });
 
