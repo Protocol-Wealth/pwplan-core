@@ -28,6 +28,7 @@ import type {
   HistoricalBlendInputs,
   IncomeLayeringInputs,
   OptimizeAllocationInputs,
+  PerformanceAnalysisInputs,
   RebalanceInputs,
   RegimeGenInputs,
   RegimeSwrInputs,
@@ -581,6 +582,186 @@ export function validateRiskMetrics(r: RiskMetricsInputs): string[] {
   if (!Number.isInteger(r.periodsPerYear) || r.periodsPerYear < 1) {
     issues.push("Periods per year must be a whole number, one or more.");
   }
+  return issues;
+}
+
+function validatePerformanceReturnSeries(
+  label: string,
+  text: string,
+  issues: string[],
+): number[] | null {
+  const parsed = parseReturns(text);
+  if (parsed === null) {
+    issues.push(`${label} must be a list of numbers.`);
+    return null;
+  }
+  if (parsed.some((value) => value <= -1)) {
+    issues.push(`${label} values must be greater than -1.`);
+  }
+  return parsed;
+}
+
+function performanceSignChanges(
+  flows: { tYears: number; amount: number }[],
+  terminalValue: number,
+  terminalTimeYears: number,
+): number {
+  const signs = [
+    ...flows.map((flow) => ({ tYears: flow.tYears, amount: flow.amount })),
+    { tYears: terminalTimeYears, amount: terminalValue },
+  ]
+    .sort((a, b) => a.tYears - b.tYears)
+    .map((event) => (event.amount > 0 ? 1 : event.amount < 0 ? -1 : 0))
+    .filter((sign) => sign !== 0);
+  return signs.reduce((changes, sign, index) => {
+    if (index === 0) return changes;
+    return changes + (signs[index - 1] !== sign ? 1 : 0);
+  }, 0);
+}
+
+/** Reasons a performance-analysis request cannot be dispatched. */
+export function validatePerformanceAnalysis(
+  p: PerformanceAnalysisInputs,
+): string[] {
+  const issues: string[] = [];
+  if (!Number.isInteger(p.periodsPerYear) || p.periodsPerYear < 1) {
+    issues.push("Periods per year must be a whole number, one or more.");
+  }
+
+  const hasTwr = p.twrPeriods.length > 0;
+  const hasMwr = p.mwrFlows.length > 0;
+  const hasFee =
+    p.grossReturnsText.trim().length > 0 || p.feeRatesText.trim().length > 0;
+  const hasBenchmark =
+    p.portfolioReturnsText.trim().length > 0 ||
+    p.benchmarkReturnsText.trim().length > 0;
+  if (!hasTwr && !hasMwr && !hasFee && !hasBenchmark) {
+    issues.push("Enable at least one performance analysis section.");
+  }
+
+  for (const [index, period] of p.twrPeriods.entries()) {
+    const label = `TWR period ${index + 1}`;
+    if (
+      !Number.isFinite(period.startValue) ||
+      !Number.isFinite(period.endValue) ||
+      !Number.isFinite(period.netExternalFlow)
+    ) {
+      issues.push(`${label} values must be finite numbers.`);
+      continue;
+    }
+    if (period.startValue < 0 || period.endValue < 0) {
+      issues.push(`${label} start and end values cannot be negative.`);
+    }
+    if (
+      p.flowTiming === "start" &&
+      period.startValue + period.netExternalFlow <= 0
+    ) {
+      issues.push(`${label} start value plus flow must be greater than zero.`);
+    }
+    if (p.flowTiming === "end" && period.startValue <= 0) {
+      issues.push(`${label} start value must be greater than zero.`);
+    }
+    if (
+      p.flowTiming === "end" &&
+      period.endValue - period.netExternalFlow < 0
+    ) {
+      issues.push(`${label} end value minus flow cannot be negative.`);
+    }
+  }
+
+  for (const [index, flow] of p.mwrFlows.entries()) {
+    const label = `MWR flow ${index + 1}`;
+    if (!Number.isFinite(flow.tYears) || !Number.isFinite(flow.amount)) {
+      issues.push(`${label} values must be finite numbers.`);
+      continue;
+    }
+    if (flow.tYears < 0) {
+      issues.push(`${label} time cannot be negative.`);
+    }
+  }
+  if (hasMwr) {
+    if (!Number.isFinite(p.terminalValue) || p.terminalValue < 0) {
+      issues.push("Terminal value must be a finite number, zero or more.");
+    }
+    if (!Number.isFinite(p.terminalTimeYears) || p.terminalTimeYears <= 0) {
+      issues.push("Terminal time must be a finite number greater than zero.");
+    }
+    if (
+      Number.isFinite(p.terminalTimeYears) &&
+      p.mwrFlows.some((flow) => flow.tYears > p.terminalTimeYears)
+    ) {
+      issues.push("Terminal time must be at or after every MWR flow time.");
+    }
+    if (!p.mwrFlows.some((flow) => flow.amount < 0)) {
+      issues.push("MWR needs at least one negative contribution flow.");
+    }
+    if (p.terminalValue <= 0 && !p.mwrFlows.some((flow) => flow.amount > 0)) {
+      issues.push("MWR needs a positive terminal value or withdrawal flow.");
+    }
+    if (
+      Number.isFinite(p.terminalValue) &&
+      Number.isFinite(p.terminalTimeYears) &&
+      p.mwrFlows.every(
+        (flow) => Number.isFinite(flow.tYears) && Number.isFinite(flow.amount),
+      ) &&
+      performanceSignChanges(p.mwrFlows, p.terminalValue, p.terminalTimeYears) >
+        1
+    ) {
+      issues.push("MWR cash-flow signs allow multiple possible IRR roots.");
+    }
+  }
+
+  if (hasFee) {
+    if (
+      p.grossReturnsText.trim().length === 0 ||
+      p.feeRatesText.trim().length === 0
+    ) {
+      issues.push("Gross returns and fee rates must be supplied together.");
+    } else {
+      const gross = validatePerformanceReturnSeries(
+        "Gross returns",
+        p.grossReturnsText,
+        issues,
+      );
+      const fees = parseReturns(p.feeRatesText);
+      if (fees === null) {
+        issues.push("Fee rates must be a list of numbers.");
+      } else if (fees.some((fee) => fee < 0 || fee >= 1)) {
+        issues.push(
+          "Fee rates must be greater than or equal to 0 and below 1.",
+        );
+      }
+      if (gross && fees && gross.length !== fees.length) {
+        issues.push("Gross returns and fee rates must have the same length.");
+      }
+    }
+  }
+
+  if (hasBenchmark) {
+    if (
+      p.portfolioReturnsText.trim().length === 0 ||
+      p.benchmarkReturnsText.trim().length === 0
+    ) {
+      issues.push("Portfolio and benchmark returns must be supplied together.");
+    } else {
+      const portfolio = validatePerformanceReturnSeries(
+        "Portfolio returns",
+        p.portfolioReturnsText,
+        issues,
+      );
+      const benchmark = validatePerformanceReturnSeries(
+        "Benchmark returns",
+        p.benchmarkReturnsText,
+        issues,
+      );
+      if (portfolio && benchmark && portfolio.length !== benchmark.length) {
+        issues.push(
+          "Portfolio and benchmark returns must have the same length.",
+        );
+      }
+    }
+  }
+
   return issues;
 }
 

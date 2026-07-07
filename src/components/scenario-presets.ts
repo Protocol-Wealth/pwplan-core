@@ -16,6 +16,7 @@
 import type { ScenarioSnapshot } from "./scenario-io";
 import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
+import { DEFAULT_PERFORMANCE_ANALYSIS_INPUTS } from "../lib/performance-analysis-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
 export interface ScenarioPreset {
@@ -113,6 +114,7 @@ const DEFAULT_TOOL_INPUTS: Omit<
   },
   incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
   historicalBlendInputs: DEFAULT_HISTORICAL_BLEND_INPUTS,
+  performanceAnalysisInputs: DEFAULT_PERFORMANCE_ANALYSIS_INPUTS,
   riskProfileScoreInputs: {
     answers: DEFAULT_RISK_PROFILE_ANSWERS,
   },

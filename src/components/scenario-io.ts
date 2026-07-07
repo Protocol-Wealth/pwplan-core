@@ -31,11 +31,13 @@ import type {
   HistoricalBlendRebalanceFrequency,
   PlanningReportPreset,
   ReturnModel,
+  TwrFlowTiming,
   WealthRoadmapScope,
 } from "../contract/planning";
 import { assertNoPII, PiiTripwireError } from "../lib/compliance";
 import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
+import { DEFAULT_PERFORMANCE_ANALYSIS_INPUTS } from "../lib/performance-analysis-defaults";
 import {
   answerIdsForQuestion,
   DEFAULT_RISK_PROFILE_ANSWERS,
@@ -56,6 +58,9 @@ import type {
   IncomeLayeringInputs,
   IncomeLayeringStreamDraft,
   OptimizeAllocationInputs,
+  PerformanceAnalysisInputs,
+  PerformanceMwrFlowDraft,
+  PerformanceTwrPeriodDraft,
   PlanningTool,
   RebalanceInputs,
   RegimeGenInputs,
@@ -117,6 +122,7 @@ export function serializeScenario(
     riskMetricsInputs: snapshot.riskMetricsInputs,
     incomeLayeringInputs: snapshot.incomeLayeringInputs,
     historicalBlendInputs: snapshot.historicalBlendInputs,
+    performanceAnalysisInputs: snapshot.performanceAnalysisInputs,
     riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
     rebalanceInputs: snapshot.rebalanceInputs,
     optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
@@ -198,6 +204,7 @@ const HISTORICAL_BLEND_REBALANCE_FREQUENCIES = [
   "annual",
   "none",
 ] as const;
+const TWR_FLOW_TIMINGS = ["start", "end"] as const;
 const INCOME_STREAM_KINDS = ["pension", "annuity"] as const;
 const SPENDING_VOLATILITY = ["low", "medium", "high"] as const;
 const PLANNING_TOOLS: PlanningTool[] = [
@@ -218,6 +225,7 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "risk_metrics",
   "income_layering",
   "historical_blend",
+  "performance_analysis",
   "risk_profile",
   "rebalance",
   "optimize_allocation",
@@ -710,6 +718,78 @@ function parseHistoricalBlend(v: unknown): HistoricalBlendInputs | null {
   };
 }
 
+function defaultPerformanceAnalysis(): PerformanceAnalysisInputs {
+  return {
+    ...DEFAULT_PERFORMANCE_ANALYSIS_INPUTS,
+    twrPeriods: DEFAULT_PERFORMANCE_ANALYSIS_INPUTS.twrPeriods.map(
+      (period) => ({
+        ...period,
+      }),
+    ),
+    mwrFlows: DEFAULT_PERFORMANCE_ANALYSIS_INPUTS.mwrFlows.map((flow) => ({
+      ...flow,
+    })),
+  };
+}
+
+function parsePerformanceTwrPeriod(
+  v: unknown,
+): PerformanceTwrPeriodDraft | null {
+  if (
+    !isObject(v) ||
+    !isNum(v.startValue) ||
+    !isNum(v.endValue) ||
+    !isNum(v.netExternalFlow)
+  ) {
+    return null;
+  }
+  return {
+    startValue: v.startValue,
+    endValue: v.endValue,
+    netExternalFlow: v.netExternalFlow,
+  };
+}
+
+function parsePerformanceMwrFlow(v: unknown): PerformanceMwrFlowDraft | null {
+  if (!isObject(v) || !isNum(v.tYears) || !isNum(v.amount)) return null;
+  return { tYears: v.tYears, amount: v.amount };
+}
+
+function parsePerformanceAnalysis(
+  v: unknown,
+): PerformanceAnalysisInputs | null {
+  if (v === undefined) return defaultPerformanceAnalysis();
+  if (
+    !isObject(v) ||
+    !isStr(v.flowTiming) ||
+    !(TWR_FLOW_TIMINGS as readonly string[]).includes(v.flowTiming) ||
+    !isNum(v.periodsPerYear) ||
+    !isNum(v.terminalValue) ||
+    !isNum(v.terminalTimeYears) ||
+    !isStr(v.grossReturnsText) ||
+    !isStr(v.feeRatesText) ||
+    !isStr(v.portfolioReturnsText) ||
+    !isStr(v.benchmarkReturnsText)
+  ) {
+    return null;
+  }
+  const twrPeriods = parseArray(v.twrPeriods, parsePerformanceTwrPeriod);
+  const mwrFlows = parseArray(v.mwrFlows, parsePerformanceMwrFlow);
+  if (twrPeriods === null || mwrFlows === null) return null;
+  return {
+    twrPeriods,
+    flowTiming: v.flowTiming as TwrFlowTiming,
+    periodsPerYear: v.periodsPerYear,
+    mwrFlows,
+    terminalValue: v.terminalValue,
+    terminalTimeYears: v.terminalTimeYears,
+    grossReturnsText: v.grossReturnsText,
+    feeRatesText: v.feeRatesText,
+    portfolioReturnsText: v.portfolioReturnsText,
+    benchmarkReturnsText: v.benchmarkReturnsText,
+  };
+}
+
 function parseRiskProfileScore(v: unknown): RiskProfileScoreInputs | null {
   if (v === undefined) {
     return { answers: { ...DEFAULT_RISK_PROFILE_ANSWERS } };
@@ -1070,6 +1150,15 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
       error: "Malformed or missing historical-blend inputs.",
     };
   }
+  const performanceAnalysisInputs = parsePerformanceAnalysis(
+    raw.performanceAnalysisInputs,
+  );
+  if (performanceAnalysisInputs === null) {
+    return {
+      ok: false,
+      error: "Malformed or missing performance-analysis inputs.",
+    };
+  }
   const riskProfileScoreInputs = parseRiskProfileScore(
     raw.riskProfileScoreInputs,
   );
@@ -1148,6 +1237,7 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
     riskMetricsInputs,
     incomeLayeringInputs,
     historicalBlendInputs,
+    performanceAnalysisInputs,
     riskProfileScoreInputs,
     rebalanceInputs,
     optimizeAllocationInputs,
