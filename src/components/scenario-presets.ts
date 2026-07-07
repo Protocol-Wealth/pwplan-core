@@ -14,6 +14,7 @@
  */
 
 import type { ScenarioSnapshot } from "./scenario-io";
+import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
 export interface ScenarioPreset {
@@ -109,6 +110,7 @@ const DEFAULT_TOOL_INPUTS: Omit<
     riskFreeRate: 0.02,
     periodsPerYear: 1,
   },
+  incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
   riskProfileScoreInputs: {
     answers: DEFAULT_RISK_PROFILE_ANSWERS,
   },

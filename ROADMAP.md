@@ -161,6 +161,16 @@ on completion and note the version in CHANGELOG.md._
       optimizer objectives. No advisor override, notes, suitability workflow
       state, persistence, identity fields, approvals, audit trail, or private
       compliance workflow. 33 wire-contract tools, 22 UI tabs.)_
+- [x] S2 income layering UI slice.
+      _(done 2026-07-07: added `IncomeLayeringTool` over `income_layering`,
+      using shared Monte Carlo account buckets plus de-identified earned-income,
+      Social Security, pension/annuity, tax-year, state, and optional survivor
+      assumptions. Results render rollups, a stacked after-tax income timeline,
+      source totals, assumptions, and disclaimer. Scenario JSON remains
+      schema-v4 and defaults older snapshots. No client identity, account names,
+      raw holdings, notes, advisor workflow state, approvals, release state,
+      persistence, audit trail, or private compliance workflow. 33 wire-contract
+      tools, 23 UI tabs.)_
 
 ## Dependency on other repos (track, do not build here)
 

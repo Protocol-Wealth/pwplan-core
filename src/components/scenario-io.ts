@@ -33,6 +33,7 @@ import type {
   WealthRoadmapScope,
 } from "../contract/planning";
 import { assertNoPII, PiiTripwireError } from "../lib/compliance";
+import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import {
   answerIdsForQuestion,
   DEFAULT_RISK_PROFILE_ANSWERS,
@@ -49,6 +50,8 @@ import type {
   FireInputs,
   GlidePathInputs,
   GlidePathShape,
+  IncomeLayeringInputs,
+  IncomeLayeringStreamDraft,
   OptimizeAllocationInputs,
   PlanningTool,
   RebalanceInputs,
@@ -109,6 +112,7 @@ export function serializeScenario(
     regimeGenInputs: snapshot.regimeGenInputs,
     fireInputs: snapshot.fireInputs,
     riskMetricsInputs: snapshot.riskMetricsInputs,
+    incomeLayeringInputs: snapshot.incomeLayeringInputs,
     riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
     rebalanceInputs: snapshot.rebalanceInputs,
     optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
@@ -185,6 +189,7 @@ const ALLOCATION_OBJECTIVES = [
   "efficient_risk",
 ] as const;
 const OPTIMIZE_RETURN_MODELS = ["house_view", "historical"] as const;
+const INCOME_STREAM_KINDS = ["pension", "annuity"] as const;
 const SPENDING_VOLATILITY = ["low", "medium", "high"] as const;
 const PLANNING_TOOLS: PlanningTool[] = [
   "monte_carlo",
@@ -202,6 +207,7 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "portfolio_xray",
   "fire",
   "risk_metrics",
+  "income_layering",
   "risk_profile",
   "rebalance",
   "optimize_allocation",
@@ -563,6 +569,102 @@ function parseRiskMetrics(v: unknown): RiskMetricsInputs | null {
   };
 }
 
+function defaultIncomeLayering(): IncomeLayeringInputs {
+  return {
+    ...DEFAULT_INCOME_LAYERING_INPUTS,
+    incomeStreams: DEFAULT_INCOME_LAYERING_INPUTS.incomeStreams.map(
+      (stream) => ({ ...stream }),
+    ),
+  };
+}
+
+function parseIncomeLayeringStream(
+  v: unknown,
+): IncomeLayeringStreamDraft | null {
+  if (
+    !isObject(v) ||
+    !isStr(v.kind) ||
+    !(INCOME_STREAM_KINDS as readonly string[]).includes(v.kind) ||
+    !isNum(v.annualAmount) ||
+    !isNum(v.startAge) ||
+    !isNum(v.endAge) ||
+    !isNum(v.colaRate)
+  ) {
+    return null;
+  }
+  return {
+    kind: v.kind as IncomeLayeringStreamDraft["kind"],
+    annualAmount: v.annualAmount,
+    startAge: v.startAge,
+    endAge: v.endAge,
+    colaRate: v.colaRate,
+  };
+}
+
+function parseIncomeLayering(v: unknown): IncomeLayeringInputs | null {
+  if (v === undefined) return defaultIncomeLayering();
+  if (
+    !isObject(v) ||
+    !isNum(v.currentAge) ||
+    !isNum(v.retirementAge) ||
+    !isNum(v.terminalAge) ||
+    !isNum(v.spendingTarget) ||
+    !isNum(v.earnedIncome) ||
+    !isNum(v.wageGrowthRate) ||
+    !isNum(v.spendingInflationRate) ||
+    !isStr(v.filingStatus) ||
+    !FILING_STATUSES.includes(v.filingStatus as FilingStatus) ||
+    !isNum(v.taxYear) ||
+    !isNum(v.baseYear) ||
+    !isNum(v.expectedReturn) ||
+    !isNum(v.bracketFillTargetRate) ||
+    !isNum(v.birthYear) ||
+    !isStr(v.stateCode) ||
+    !isNum(v.primaryPiaMonthly) ||
+    !isNum(v.primaryClaimAge) ||
+    !isNum(v.primaryFraAge) ||
+    !isNum(v.primaryColaRate) ||
+    !isNum(v.spousePiaMonthly) ||
+    !isNum(v.spouseClaimAge) ||
+    !isNum(v.spouseFraAge) ||
+    !isNum(v.spouseColaRate) ||
+    !isNum(v.survivorYear) ||
+    !isStr(v.survivorFilingStatus) ||
+    !FILING_STATUSES.includes(v.survivorFilingStatus as FilingStatus)
+  ) {
+    return null;
+  }
+  const incomeStreams = parseArray(v.incomeStreams, parseIncomeLayeringStream);
+  if (incomeStreams === null) return null;
+  return {
+    currentAge: v.currentAge,
+    retirementAge: v.retirementAge,
+    terminalAge: v.terminalAge,
+    spendingTarget: v.spendingTarget,
+    earnedIncome: v.earnedIncome,
+    wageGrowthRate: v.wageGrowthRate,
+    spendingInflationRate: v.spendingInflationRate,
+    filingStatus: v.filingStatus as FilingStatus,
+    taxYear: v.taxYear,
+    baseYear: v.baseYear,
+    expectedReturn: v.expectedReturn,
+    bracketFillTargetRate: v.bracketFillTargetRate,
+    birthYear: v.birthYear,
+    stateCode: v.stateCode,
+    primaryPiaMonthly: v.primaryPiaMonthly,
+    primaryClaimAge: v.primaryClaimAge,
+    primaryFraAge: v.primaryFraAge,
+    primaryColaRate: v.primaryColaRate,
+    spousePiaMonthly: v.spousePiaMonthly,
+    spouseClaimAge: v.spouseClaimAge,
+    spouseFraAge: v.spouseFraAge,
+    spouseColaRate: v.spouseColaRate,
+    incomeStreams,
+    survivorYear: v.survivorYear,
+    survivorFilingStatus: v.survivorFilingStatus as FilingStatus,
+  };
+}
+
 function parseRiskProfileScore(v: unknown): RiskProfileScoreInputs | null {
   if (v === undefined) {
     return { answers: { ...DEFAULT_RISK_PROFILE_ANSWERS } };
@@ -909,6 +1011,13 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
   if (riskMetricsInputs === null) {
     return { ok: false, error: "Malformed or missing risk-metrics inputs." };
   }
+  const incomeLayeringInputs = parseIncomeLayering(raw.incomeLayeringInputs);
+  if (incomeLayeringInputs === null) {
+    return {
+      ok: false,
+      error: "Malformed or missing income-layering inputs.",
+    };
+  }
   const riskProfileScoreInputs = parseRiskProfileScore(
     raw.riskProfileScoreInputs,
   );
@@ -985,6 +1094,7 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
     regimeGenInputs,
     fireInputs,
     riskMetricsInputs,
+    incomeLayeringInputs,
     riskProfileScoreInputs,
     rebalanceInputs,
     optimizeAllocationInputs,

@@ -32,6 +32,7 @@ import type {
   PortfolioXrayResult,
   FireResult,
   RiskMetricsResult,
+  IncomeLayeringResult,
   RebalanceResult,
   OptimizeAllocationResult,
   BuildPlanningReportResult,
@@ -46,12 +47,14 @@ import type {
   EducationFundingResult,
   EducationVehicleRulesResult,
   RiskProfile,
+  IncomeStreamInput,
   AllocationObjective,
   SpendingVolatility,
   TaxWithdrawalResult,
   PlanningReportPreset,
   WealthRoadmapScope,
 } from "../contract/planning";
+import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 import type {
   ContractFilingStatus,
@@ -76,6 +79,7 @@ export type PlanningTool =
   | "portfolio_xray"
   | "fire"
   | "risk_metrics"
+  | "income_layering"
   | "risk_profile"
   | "rebalance"
   | "optimize_allocation"
@@ -220,6 +224,46 @@ export interface RiskMetricsInputs {
   periodsPerYear: number;
 }
 
+export type IncomeLayeringStreamDraft = Omit<
+  IncomeStreamInput,
+  "endAge" | "colaRate"
+> & {
+  /** 0 means open-ended in the UI and is omitted from the wire request. */
+  endAge: number;
+  colaRate: number;
+};
+
+export interface IncomeLayeringInputs {
+  currentAge: number;
+  retirementAge: number;
+  terminalAge: number;
+  spendingTarget: number;
+  earnedIncome: number;
+  wageGrowthRate: number;
+  spendingInflationRate: number;
+  filingStatus: FilingStatus;
+  taxYear: number;
+  baseYear: number;
+  expectedReturn: number;
+  bracketFillTargetRate: number;
+  /** Year-only, not DOB. 0 means omit and let the engine default policy apply. */
+  birthYear: number;
+  /** Two-letter state code, blank means omit. */
+  stateCode: string;
+  primaryPiaMonthly: number;
+  primaryClaimAge: number;
+  primaryFraAge: number;
+  primaryColaRate: number;
+  spousePiaMonthly: number;
+  spouseClaimAge: number;
+  spouseFraAge: number;
+  spouseColaRate: number;
+  incomeStreams: IncomeLayeringStreamDraft[];
+  /** 0 means no survivor-year switch. */
+  survivorYear: number;
+  survivorFilingStatus: FilingStatus;
+}
+
 export interface RiskProfileScoreInputs {
   /** Fixed questionnaire answer ids keyed by canonical question id. */
   answers: Record<string, string>;
@@ -338,6 +382,7 @@ export interface ScenarioSnapshot {
   regimeGenInputs: RegimeGenInputs;
   fireInputs: FireInputs;
   riskMetricsInputs: RiskMetricsInputs;
+  incomeLayeringInputs: IncomeLayeringInputs;
   riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
@@ -365,6 +410,7 @@ interface ScenarioState {
   regimeGenInputs: RegimeGenInputs;
   fireInputs: FireInputs;
   riskMetricsInputs: RiskMetricsInputs;
+  incomeLayeringInputs: IncomeLayeringInputs;
   riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
@@ -389,6 +435,7 @@ interface ScenarioState {
   xrayResult: PortfolioXrayResult | null;
   fireResult: FireResult | null;
   riskMetricsResult: RiskMetricsResult | null;
+  incomeLayeringResult: IncomeLayeringResult | null;
   riskProfileScoreResult: RiskProfileScoreResult | null;
   rebalanceResult: RebalanceResult | null;
   optimizeAllocationResult: OptimizeAllocationResult | null;
@@ -427,6 +474,7 @@ interface ScenarioState {
   setRegimeGenInputs: (patch: Partial<RegimeGenInputs>) => void;
   setFireInputs: (patch: Partial<FireInputs>) => void;
   setRiskMetricsInputs: (patch: Partial<RiskMetricsInputs>) => void;
+  setIncomeLayeringInputs: (patch: Partial<IncomeLayeringInputs>) => void;
   setRiskProfileScoreInputs: (patch: Partial<RiskProfileScoreInputs>) => void;
   setRebalanceInputs: (patch: Partial<RebalanceInputs>) => void;
   setOptimizeAllocationInputs: (
@@ -458,6 +506,7 @@ interface ScenarioState {
   setXrayResult: (r: PortfolioXrayResult | null) => void;
   setFireResult: (r: FireResult | null) => void;
   setRiskMetricsResult: (r: RiskMetricsResult | null) => void;
+  setIncomeLayeringResult: (r: IncomeLayeringResult | null) => void;
   setRiskProfileScoreResult: (r: RiskProfileScoreResult | null) => void;
   setRebalanceResult: (r: RebalanceResult | null) => void;
   setOptimizeAllocationResult: (r: OptimizeAllocationResult | null) => void;
@@ -752,6 +801,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   regimeGenInputs: DEFAULT_REGIME_GEN,
   fireInputs: DEFAULT_FIRE,
   riskMetricsInputs: DEFAULT_RISK_METRICS,
+  incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
   riskProfileScoreInputs: DEFAULT_RISK_PROFILE_SCORE,
   rebalanceInputs: DEFAULT_REBALANCE,
   optimizeAllocationInputs: DEFAULT_OPTIMIZE_ALLOCATION,
@@ -776,6 +826,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   xrayResult: null,
   fireResult: null,
   riskMetricsResult: null,
+  incomeLayeringResult: null,
   riskProfileScoreResult: null,
   rebalanceResult: null,
   optimizeAllocationResult: null,
@@ -815,6 +866,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       regimeGenInputs: snapshot.regimeGenInputs,
       fireInputs: snapshot.fireInputs,
       riskMetricsInputs: snapshot.riskMetricsInputs,
+      incomeLayeringInputs: snapshot.incomeLayeringInputs,
       riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
       rebalanceInputs: snapshot.rebalanceInputs,
       optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
@@ -838,6 +890,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       xrayResult: null,
       fireResult: null,
       riskMetricsResult: null,
+      incomeLayeringResult: null,
       riskProfileScoreResult: null,
       rebalanceResult: null,
       optimizeAllocationResult: null,
@@ -883,6 +936,18 @@ export const useScenario = create<ScenarioState>((set) => ({
     set((s) => ({ fireInputs: { ...s.fireInputs, ...patch } })),
   setRiskMetricsInputs: (patch) =>
     set((s) => ({ riskMetricsInputs: { ...s.riskMetricsInputs, ...patch } })),
+  setIncomeLayeringInputs: (patch) =>
+    set((s) => ({
+      incomeLayeringInputs: {
+        ...s.incomeLayeringInputs,
+        ...patch,
+        ...(patch.incomeStreams
+          ? {
+              incomeStreams: patch.incomeStreams,
+            }
+          : {}),
+      },
+    })),
   setRiskProfileScoreInputs: (patch) =>
     set((s) => ({
       riskProfileScoreInputs: {
@@ -947,6 +1012,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   setXrayResult: (xrayResult) => set({ xrayResult }),
   setFireResult: (fireResult) => set({ fireResult }),
   setRiskMetricsResult: (riskMetricsResult) => set({ riskMetricsResult }),
+  setIncomeLayeringResult: (incomeLayeringResult) =>
+    set({ incomeLayeringResult }),
   setRiskProfileScoreResult: (riskProfileScoreResult) =>
     set({ riskProfileScoreResult }),
   setRebalanceResult: (rebalanceResult) => set({ rebalanceResult }),

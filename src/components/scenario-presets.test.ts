@@ -10,6 +10,7 @@ import {
   validateCashflowPlanningBridge,
   validateEducationFunding,
   validateGlidePath,
+  validateIncomeLayering,
   validateRiskProfileScore,
   validateTaxWithdrawal,
 } from "./tool-validation";
@@ -81,6 +82,15 @@ describe("scenario presets", () => {
       it("passes risk-profile validation", () => {
         expect(
           validateRiskProfileScore(preset.snapshot.riskProfileScoreInputs),
+        ).toEqual([]);
+      });
+
+      it("passes income-layering validation", () => {
+        expect(
+          validateIncomeLayering(
+            preset.snapshot.incomeLayeringInputs,
+            preset.snapshot.inputs.accounts,
+          ),
         ).toEqual([]);
       });
 

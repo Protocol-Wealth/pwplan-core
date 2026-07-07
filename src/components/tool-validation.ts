@@ -25,6 +25,7 @@ import type {
   EducationFundingInputs,
   FireInputs,
   GlidePathInputs,
+  IncomeLayeringInputs,
   OptimizeAllocationInputs,
   RebalanceInputs,
   RegimeGenInputs,
@@ -40,6 +41,7 @@ import type {
 } from "../store/scenario";
 
 const SPENDING_VOLATILITY = new Set(["low", "medium", "high"]);
+const INCOME_STREAM_KINDS = new Set(["pension", "annuity"]);
 const ROADMAP_INPUT_KINDS = new Set([
   "snapshot",
   "trajectory",
@@ -572,6 +574,163 @@ export function validateRiskMetrics(r: RiskMetricsInputs): string[] {
   }
   if (!Number.isInteger(r.periodsPerYear) || r.periodsPerYear < 1) {
     issues.push("Periods per year must be a whole number, one or more.");
+  }
+  return issues;
+}
+
+function validateIncomeLayeringSocialSecurity(
+  label: string,
+  piaMonthly: number,
+  claimAge: number,
+  fraAge: number,
+  colaRate: number,
+  issues: string[],
+): void {
+  if (piaMonthly < 0) {
+    issues.push(`${label} Social Security PIA cannot be negative.`);
+    return;
+  }
+  if (piaMonthly === 0) return;
+  if (!Number.isInteger(claimAge) || claimAge < 62 || claimAge > 70) {
+    issues.push(`${label} claim age must be a whole number from 62 to 70.`);
+  }
+  if (!Number.isInteger(fraAge) || fraAge <= 62 || fraAge > 70) {
+    issues.push(`${label} FRA must be a whole number in (62, 70].`);
+  }
+  if (colaRate <= -1) {
+    issues.push(`${label} Social Security COLA must be greater than -1.`);
+  }
+}
+
+/** Reasons an income-layering request cannot be dispatched. */
+export function validateIncomeLayering(
+  i: IncomeLayeringInputs,
+  accounts: Account[],
+): string[] {
+  const issues: string[] = [];
+  if (accounts.length === 0) {
+    issues.push(
+      "Add accounts in the Monte Carlo tab to model withdrawal gaps.",
+    );
+  } else if (accounts.some((account) => account.balance < 0)) {
+    issues.push("Shared account balances cannot be negative.");
+  }
+  if (!Number.isInteger(i.currentAge) || i.currentAge < 0) {
+    issues.push("Current age must be a whole number, zero or more.");
+  }
+  if (
+    !Number.isInteger(i.retirementAge) ||
+    i.retirementAge < i.currentAge ||
+    i.retirementAge > i.terminalAge
+  ) {
+    issues.push("Retirement age must fall between current and terminal age.");
+  }
+  if (!Number.isInteger(i.terminalAge) || i.terminalAge <= i.currentAge) {
+    issues.push("Terminal age must be beyond current age.");
+  }
+  if (i.spendingTarget <= 0) {
+    issues.push("Spending target must be greater than zero.");
+  }
+  if (i.earnedIncome < 0) {
+    issues.push("Earned income cannot be negative.");
+  }
+  if (i.wageGrowthRate <= -1) {
+    issues.push("Wage growth must be greater than -1.");
+  }
+  if (i.spendingInflationRate <= -1) {
+    issues.push("Spending inflation must be greater than -1.");
+  }
+  if (i.expectedReturn <= -1) {
+    issues.push("Expected return must be greater than -1.");
+  }
+  if (i.bracketFillTargetRate < 0 || i.bracketFillTargetRate >= 1) {
+    issues.push("Bracket-fill target rate must be 0 or between 0 and 1.");
+  }
+  if (!Number.isInteger(i.taxYear) || i.taxYear < 2000 || i.taxYear > 2100) {
+    issues.push("Tax year must be a plausible year.");
+  }
+  if (!Number.isInteger(i.baseYear) || i.baseYear < 2000 || i.baseYear > 2100) {
+    issues.push("Base year must be a plausible year.");
+  }
+  if (
+    i.birthYear !== 0 &&
+    (!Number.isInteger(i.birthYear) ||
+      i.birthYear < 1900 ||
+      i.birthYear > i.taxYear)
+  ) {
+    issues.push("Birth year must be 0 or a plausible year at/before tax year.");
+  }
+  if (
+    i.birthYear !== 0 &&
+    Math.abs(i.birthYear - (i.baseYear - i.currentAge)) > 1
+  ) {
+    issues.push(
+      "Birth year should match base year minus current age, within one year.",
+    );
+  }
+  const state = i.stateCode.trim();
+  if (state.length > 0 && !/^[A-Za-z]{2}$/.test(state)) {
+    issues.push("State code must be blank or two letters.");
+  }
+  if (i.spousePiaMonthly > 0 && i.primaryPiaMonthly <= 0) {
+    issues.push("Spouse Social Security requires primary Social Security.");
+  }
+  if (i.survivorYear > 0 && i.spousePiaMonthly <= 0) {
+    issues.push("Survivor year requires spouse Social Security.");
+  }
+  validateIncomeLayeringSocialSecurity(
+    "Primary",
+    i.primaryPiaMonthly,
+    i.primaryClaimAge,
+    i.primaryFraAge,
+    i.primaryColaRate,
+    issues,
+  );
+  validateIncomeLayeringSocialSecurity(
+    "Spouse",
+    i.spousePiaMonthly,
+    i.spouseClaimAge,
+    i.spouseFraAge,
+    i.spouseColaRate,
+    issues,
+  );
+  if (i.incomeStreams.length > 8) {
+    issues.push("Income layering supports at most 8 pension/annuity rows.");
+  }
+  i.incomeStreams.forEach((stream, index) => {
+    const label = `Income stream ${index + 1}`;
+    if (!INCOME_STREAM_KINDS.has(stream.kind)) {
+      issues.push(`${label} must be pension or annuity.`);
+    }
+    if (stream.annualAmount <= 0) {
+      issues.push(`${label} annual amount must be greater than zero.`);
+    }
+    if (
+      !Number.isInteger(stream.startAge) ||
+      stream.startAge < i.currentAge ||
+      stream.startAge > i.terminalAge
+    ) {
+      issues.push(`${label} start age must fall within the projection.`);
+    }
+    if (
+      stream.endAge !== 0 &&
+      (!Number.isInteger(stream.endAge) ||
+        stream.endAge < stream.startAge ||
+        stream.endAge > i.terminalAge)
+    ) {
+      issues.push(`${label} end age must be 0 or within the projection.`);
+    }
+    if (stream.colaRate <= -1) {
+      issues.push(`${label} COLA must be greater than -1.`);
+    }
+  });
+  if (
+    i.survivorYear !== 0 &&
+    (!Number.isInteger(i.survivorYear) ||
+      i.survivorYear < i.baseYear ||
+      i.survivorYear > i.baseYear + (i.terminalAge - i.currentAge))
+  ) {
+    issues.push("Survivor year must be 0 or within the projection years.");
   }
   return issues;
 }

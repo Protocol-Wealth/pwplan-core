@@ -48,6 +48,10 @@ import {
   RiskMetricsResults,
 } from "./components/RiskMetricsTool";
 import {
+  IncomeLayeringForm,
+  IncomeLayeringResults,
+} from "./components/IncomeLayeringTool";
+import {
   RiskProfileForm,
   RiskProfileResults,
 } from "./components/RiskProfileTool";
@@ -89,6 +93,7 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "portfolio_xray", label: "X-ray" },
   { value: "fire", label: "FIRE" },
   { value: "risk_metrics", label: "Risk metrics" },
+  { value: "income_layering", label: "Income layers" },
   { value: "risk_profile", label: "Risk profile" },
   { value: "rebalance", label: "Rebalance" },
   { value: "optimize_allocation", label: "Optimize" },
@@ -220,6 +225,13 @@ function ActiveTool() {
         <>
           <RiskMetricsForm />
           <RiskMetricsResults />
+        </>
+      );
+    case "income_layering":
+      return (
+        <>
+          <IncomeLayeringForm />
+          <IncomeLayeringResults />
         </>
       );
     case "risk_profile":
