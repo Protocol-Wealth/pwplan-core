@@ -35,6 +35,7 @@ import type {
   RebalanceResult,
   OptimizeAllocationResult,
   BuildPlanningReportResult,
+  RiskProfileScoreResult,
   BudgetPacingProjectionRequest,
   BudgetPacingProjectionResult,
   CashReserveAnalysisRequest,
@@ -51,6 +52,7 @@ import type {
   PlanningReportPreset,
   WealthRoadmapScope,
 } from "../contract/planning";
+import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 import type {
   ContractFilingStatus,
   RothConversionAnalysis,
@@ -74,6 +76,7 @@ export type PlanningTool =
   | "portfolio_xray"
   | "fire"
   | "risk_metrics"
+  | "risk_profile"
   | "rebalance"
   | "optimize_allocation"
   | "build_report"
@@ -217,6 +220,11 @@ export interface RiskMetricsInputs {
   periodsPerYear: number;
 }
 
+export interface RiskProfileScoreInputs {
+  /** Fixed questionnaire answer ids keyed by canonical question id. */
+  answers: Record<string, string>;
+}
+
 export interface RebalanceInputs {
   /** Target weight per shared-portfolio asset-class id; must sum to 1. */
   targetWeights: Record<string, number>;
@@ -330,6 +338,7 @@ export interface ScenarioSnapshot {
   regimeGenInputs: RegimeGenInputs;
   fireInputs: FireInputs;
   riskMetricsInputs: RiskMetricsInputs;
+  riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
   buildReportInputs: BuildPlanningReportInputs;
@@ -356,6 +365,7 @@ interface ScenarioState {
   regimeGenInputs: RegimeGenInputs;
   fireInputs: FireInputs;
   riskMetricsInputs: RiskMetricsInputs;
+  riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
   buildReportInputs: BuildPlanningReportInputs;
@@ -379,6 +389,7 @@ interface ScenarioState {
   xrayResult: PortfolioXrayResult | null;
   fireResult: FireResult | null;
   riskMetricsResult: RiskMetricsResult | null;
+  riskProfileScoreResult: RiskProfileScoreResult | null;
   rebalanceResult: RebalanceResult | null;
   optimizeAllocationResult: OptimizeAllocationResult | null;
   buildReportResult: BuildPlanningReportResult | null;
@@ -416,6 +427,7 @@ interface ScenarioState {
   setRegimeGenInputs: (patch: Partial<RegimeGenInputs>) => void;
   setFireInputs: (patch: Partial<FireInputs>) => void;
   setRiskMetricsInputs: (patch: Partial<RiskMetricsInputs>) => void;
+  setRiskProfileScoreInputs: (patch: Partial<RiskProfileScoreInputs>) => void;
   setRebalanceInputs: (patch: Partial<RebalanceInputs>) => void;
   setOptimizeAllocationInputs: (
     patch: Partial<OptimizeAllocationInputs>,
@@ -446,6 +458,7 @@ interface ScenarioState {
   setXrayResult: (r: PortfolioXrayResult | null) => void;
   setFireResult: (r: FireResult | null) => void;
   setRiskMetricsResult: (r: RiskMetricsResult | null) => void;
+  setRiskProfileScoreResult: (r: RiskProfileScoreResult | null) => void;
   setRebalanceResult: (r: RebalanceResult | null) => void;
   setOptimizeAllocationResult: (r: OptimizeAllocationResult | null) => void;
   setBuildReportResult: (r: BuildPlanningReportResult | null) => void;
@@ -626,6 +639,10 @@ const DEFAULT_RISK_METRICS: RiskMetricsInputs = {
   periodsPerYear: 1,
 };
 
+const DEFAULT_RISK_PROFILE_SCORE: RiskProfileScoreInputs = {
+  answers: DEFAULT_RISK_PROFILE_ANSWERS,
+};
+
 const DEFAULT_REBALANCE: RebalanceInputs = {
   // Keyed to the shared portfolio's default asset classes; the form renders one
   // editable target per current asset-class id (missing ids default to 0).
@@ -735,6 +752,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   regimeGenInputs: DEFAULT_REGIME_GEN,
   fireInputs: DEFAULT_FIRE,
   riskMetricsInputs: DEFAULT_RISK_METRICS,
+  riskProfileScoreInputs: DEFAULT_RISK_PROFILE_SCORE,
   rebalanceInputs: DEFAULT_REBALANCE,
   optimizeAllocationInputs: DEFAULT_OPTIMIZE_ALLOCATION,
   buildReportInputs: DEFAULT_BUILD_REPORT,
@@ -758,6 +776,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   xrayResult: null,
   fireResult: null,
   riskMetricsResult: null,
+  riskProfileScoreResult: null,
   rebalanceResult: null,
   optimizeAllocationResult: null,
   buildReportResult: null,
@@ -796,6 +815,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       regimeGenInputs: snapshot.regimeGenInputs,
       fireInputs: snapshot.fireInputs,
       riskMetricsInputs: snapshot.riskMetricsInputs,
+      riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
       rebalanceInputs: snapshot.rebalanceInputs,
       optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
       buildReportInputs: snapshot.buildReportInputs,
@@ -818,6 +838,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       xrayResult: null,
       fireResult: null,
       riskMetricsResult: null,
+      riskProfileScoreResult: null,
       rebalanceResult: null,
       optimizeAllocationResult: null,
       buildReportResult: null,
@@ -862,6 +883,21 @@ export const useScenario = create<ScenarioState>((set) => ({
     set((s) => ({ fireInputs: { ...s.fireInputs, ...patch } })),
   setRiskMetricsInputs: (patch) =>
     set((s) => ({ riskMetricsInputs: { ...s.riskMetricsInputs, ...patch } })),
+  setRiskProfileScoreInputs: (patch) =>
+    set((s) => ({
+      riskProfileScoreInputs: {
+        ...s.riskProfileScoreInputs,
+        ...patch,
+        ...(patch.answers
+          ? {
+              answers: {
+                ...s.riskProfileScoreInputs.answers,
+                ...patch.answers,
+              },
+            }
+          : {}),
+      },
+    })),
   setRebalanceInputs: (patch) =>
     set((s) => ({ rebalanceInputs: { ...s.rebalanceInputs, ...patch } })),
   setOptimizeAllocationInputs: (patch) =>
@@ -911,6 +947,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   setXrayResult: (xrayResult) => set({ xrayResult }),
   setFireResult: (fireResult) => set({ fireResult }),
   setRiskMetricsResult: (riskMetricsResult) => set({ riskMetricsResult }),
+  setRiskProfileScoreResult: (riskProfileScoreResult) =>
+    set({ riskProfileScoreResult }),
   setRebalanceResult: (rebalanceResult) => set({ rebalanceResult }),
   setOptimizeAllocationResult: (optimizeAllocationResult) =>
     set({ optimizeAllocationResult }),

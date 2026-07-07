@@ -20,6 +20,7 @@ import {
   validateRegimeGen,
   validateRegimeSwr,
   validateRiskMetrics,
+  validateRiskProfileScore,
   validateRmd,
   validateRoth,
   validateRothIrmaa,
@@ -42,6 +43,7 @@ import type {
   RegimeGenInputs,
   RegimeSwrInputs,
   RiskMetricsInputs,
+  RiskProfileScoreInputs,
   RmdInputs,
   RothInputs,
   RothIrmaaInputs,
@@ -50,6 +52,7 @@ import type {
   TaxWithdrawalInputs,
 } from "../store/scenario";
 import type { Account, AssetClass } from "../contract/planning";
+import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
 const validGlide: GlidePathInputs = {
   currentAge: 45,
@@ -683,6 +686,39 @@ describe("validateRiskMetrics", () => {
     expect(validateRiskMetrics({ ...validRisk, periodsPerYear: 0 })).toContain(
       "Periods per year must be a whole number, one or more.",
     );
+  });
+});
+
+const validRiskProfile: RiskProfileScoreInputs = {
+  answers: DEFAULT_RISK_PROFILE_ANSWERS,
+};
+
+describe("validateRiskProfileScore", () => {
+  it("accepts a well-formed fixed-answer questionnaire", () => {
+    expect(validateRiskProfileScore(validRiskProfile)).toEqual([]);
+  });
+
+  it("requires every canonical question", () => {
+    const answers = { ...DEFAULT_RISK_PROFILE_ANSWERS };
+    delete answers.time_horizon;
+    expect(validateRiskProfileScore({ answers })).toContain(
+      "Answer every risk-profile question: time_horizon missing.",
+    );
+  });
+
+  it("rejects unknown question ids and invalid answer ids", () => {
+    expect(
+      validateRiskProfileScore({
+        answers: {
+          ...DEFAULT_RISK_PROFILE_ANSWERS,
+          unknown_question: "moderate",
+          time_horizon: "long",
+        },
+      }),
+    ).toEqual([
+      "Unknown risk-profile question id(s): unknown_question.",
+      "Risk-profile answer for time_horizon must be one of: under_3_years, 3_to_7_years, 7_to_15_years, 15_plus_years.",
+    ]);
   });
 });
 

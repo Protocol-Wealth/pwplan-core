@@ -47,6 +47,10 @@ import {
   RiskMetricsForm,
   RiskMetricsResults,
 } from "./components/RiskMetricsTool";
+import {
+  RiskProfileForm,
+  RiskProfileResults,
+} from "./components/RiskProfileTool";
 import { RebalanceForm, RebalanceResults } from "./components/RebalanceTool";
 import {
   OptimizeAllocationForm,
@@ -85,6 +89,7 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "portfolio_xray", label: "X-ray" },
   { value: "fire", label: "FIRE" },
   { value: "risk_metrics", label: "Risk metrics" },
+  { value: "risk_profile", label: "Risk profile" },
   { value: "rebalance", label: "Rebalance" },
   { value: "optimize_allocation", label: "Optimize" },
   { value: "build_report", label: "Report" },
@@ -215,6 +220,13 @@ function ActiveTool() {
         <>
           <RiskMetricsForm />
           <RiskMetricsResults />
+        </>
+      );
+    case "risk_profile":
+      return (
+        <>
+          <RiskProfileForm />
+          <RiskProfileResults />
         </>
       );
     case "rebalance":

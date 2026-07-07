@@ -10,6 +10,7 @@ import {
   validateCashflowPlanningBridge,
   validateEducationFunding,
   validateGlidePath,
+  validateRiskProfileScore,
   validateTaxWithdrawal,
 } from "./tool-validation";
 import { parseScenario, serializeScenario } from "./scenario-io";
@@ -74,6 +75,12 @@ describe("scenario presets", () => {
       it("passes education-funding validation", () => {
         expect(
           validateEducationFunding(preset.snapshot.educationFundingInputs),
+        ).toEqual([]);
+      });
+
+      it("passes risk-profile validation", () => {
+        expect(
+          validateRiskProfileScore(preset.snapshot.riskProfileScoreInputs),
         ).toEqual([]);
       });
 

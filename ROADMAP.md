@@ -153,6 +153,14 @@ on completion and note the version in CHANGELOG.md._
       remains schema-v4 and defaults older report snapshots. No new quant logic,
       persistence, raw ingestion, identity fields, advisor workflow state,
       approvals, audit trail, or private release workflow.)_
+- [x] S5 risk profile UI slice.
+      _(done 2026-07-07: added `RiskProfileTool` over `risk_profile_score`,
+      fixed-question/answer-id validation, schema-v4 scenario defaults,
+      suggested-weight and band rendering, and a local handoff that loads the
+      scored profile into Optimize Allocation while clearing stale explicit
+      optimizer objectives. No advisor override, notes, suitability workflow
+      state, persistence, identity fields, approvals, audit trail, or private
+      compliance workflow. 33 wire-contract tools, 22 UI tabs.)_
 
 ## Dependency on other repos (track, do not build here)
 

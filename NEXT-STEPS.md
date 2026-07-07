@@ -6,11 +6,12 @@ model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
 [`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
 current.
 
-_Last updated: 2026-07-07. 33 wire-contract tools, 21 UI tabs (17 one-tool wire
+_Last updated: 2026-07-07. 33 wire-contract tools, 22 UI tabs (18 one-tool wire
 tabs + Education + Cash Flow Bridge + Roth · IRMAA + Scenario Compare), the
-Report tab can dispatch the PW Wealth Roadmap preset with replay metadata,
-scenario files remain schema v4, and live Nexus was not re-smoked during the
-latest UI pass._
+Report tab can dispatch the PW Wealth Roadmap preset with replay metadata, the
+Risk Profile tab can load scored profiles into Optimize Allocation, scenario
+files remain schema v4, and live Nexus was not re-smoked during the latest UI
+pass._
 
 ## Orient yourself in 5 minutes
 
@@ -53,9 +54,10 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
 
 1. **UI tabs for newly gateway-ready Nexus tools.** The TypeScript contract now
    covers 33 Nexus planning tools, but `income_layering`, `historical_blend`,
-   `risk_profile_score`, and `performance_analysis` are gateway-only. Add
-   focused UI tabs in slice order. The Report tab already dispatches
-   `preset: "wealth_roadmap"` with focused/full scope and replay metadata.
+   and `performance_analysis` are gateway-only. Add focused UI tabs in slice
+   order. The Report tab already dispatches `preset: "wealth_roadmap"` with
+   focused/full scope and replay metadata; the Risk Profile tab already surfaces
+   `risk_profile_score`.
 2. **Live follow-up** — the synthetic Cash Flow Bridge and Education tabs are
    built against source-truth contracts. Re-check
    `https://nexusmcp.site/mcp/tools` before any live smoke because deployed

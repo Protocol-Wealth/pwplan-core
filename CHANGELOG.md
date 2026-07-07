@@ -9,6 +9,17 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **S5 risk profile UI slice (2026-07-07).** Added a Risk Profile tab over
+  `risk_profile_score`, using the engine's fixed question/answer ids with no
+  free text. Results render score, optimizer-compatible profile, volatility band,
+  suggested weights, band table, assumptions, and disclaimer, with a local
+  button to load the scored profile into the existing Optimize Allocation tab
+  while clearing any stale explicit optimizer objective. Scenario JSON remains
+  schema-v4 and defaults older saved files with the moderate-profile answer set.
+  No advisor override, suitability workflow state,
+  persistence, identity fields, notes, approvals, audit trail, or private
+  compliance workflow was added.
+
 - **Wealth Roadmap report UI controls (2026-07-07).** Extended the existing
   Report tab so it can dispatch `build_planning_report` as either custom
   sections or the `preset: "wealth_roadmap"` envelope, with focused/full scope
@@ -30,7 +41,7 @@ Semantic Versioning. The planning wire contract is versioned separately as
   contract/gateway-only: no UI tabs, no persistence, no raw ingestion, no
   identity fields, no advisor workflow state, no approvals, no release state
   accepted on requests, and no audit trail. The public wire contract now covers
-  33 tools; the UI remains 21 tabs.
+  33 tools; the UI remained 21 tabs at that milestone.
 
 - **S10 scenario compare UI slice (2026-07-07).** Added a UI-only Scenario
   Compare tab over the existing Monte Carlo contract. Advisors can add 2-3

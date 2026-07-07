@@ -55,6 +55,7 @@ import {
   type BuildPlanningReportRequest,
 } from "../contract/planning";
 import type { AnalyzeRothConversionRequest } from "../contract/roth-conversion";
+import { DEFAULT_RISK_PROFILE_ANSWERS } from "./risk-profile-questionnaire";
 
 // --- Minimal, well-typed requests (shape only; the engine does the math). ---
 
@@ -288,16 +289,7 @@ const riskReq: Omit<RiskMetricsRequest, "contractVersion"> = {
 };
 
 const riskProfileReq: Omit<RiskProfileScoreRequest, "contractVersion"> = {
-  answers: {
-    time_horizon: "long",
-    drawdown_tolerance: "medium",
-    income_stability: "stable",
-    investment_experience: "some",
-    liquidity_need: "moderate",
-    goal_flexibility: "some",
-    loss_reaction: "hold",
-    concentration_comfort: "moderate",
-  },
+  answers: DEFAULT_RISK_PROFILE_ANSWERS,
 };
 
 const performanceReq: Omit<PerformanceAnalysisRequest, "contractVersion"> = {
