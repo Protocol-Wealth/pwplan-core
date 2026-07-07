@@ -29,6 +29,12 @@ import {
   PLANNING_TOOLS,
   type MonteCarloRequest,
   type MonteCarloResult,
+  type SolveGoalRequest,
+  type SolveGoalResult,
+  type AnalyzeGoalsRequest,
+  type AnalyzeGoalsResult,
+  type ProjectCashFlowRequest,
+  type ProjectCashFlowResult,
   type GlidePathRequest,
   type GlidePathResult,
   type TaxWithdrawalRequest,
@@ -67,6 +73,8 @@ import {
   type RebalanceResult,
   type OptimizeAllocationRequest,
   type OptimizeAllocationResult,
+  type IrmaaHeadroomRequest,
+  type IrmaaHeadroomResult,
   type BuildPlanningReportRequest,
   type BuildPlanningReportResult,
   type PlanningToolName,
@@ -74,6 +82,7 @@ import {
 import type {
   AnalyzeRothConversionRequest,
   RothConversionAnalysis,
+  SequenceSummary,
 } from "../contract/roth-conversion";
 import { assertNoPII, auditCall } from "./compliance";
 
@@ -174,6 +183,36 @@ export const planning = {
   ) =>
     callTool<MonteCarloRequest, MonteCarloResult>(
       PLANNING_TOOLS.monteCarlo,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  solveGoal: (
+    req: Omit<SolveGoalRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<SolveGoalRequest, SolveGoalResult>(
+      PLANNING_TOOLS.solveGoal,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  analyzeGoals: (
+    req: Omit<AnalyzeGoalsRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<AnalyzeGoalsRequest, AnalyzeGoalsResult>(
+      PLANNING_TOOLS.analyzeGoals,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  projectCashFlow: (
+    req: Omit<ProjectCashFlowRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<ProjectCashFlowRequest, ProjectCashFlowResult>(
+      PLANNING_TOOLS.projectCashFlow,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),
@@ -362,6 +401,42 @@ export const planning = {
       opts,
     ),
 
+  irmaaHeadroom: (
+    req: Omit<IrmaaHeadroomRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<IrmaaHeadroomRequest, IrmaaHeadroomResult>(
+      PLANNING_TOOLS.irmaaHeadroom,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  analyzeRothConversion: (
+    req: AnalyzeRothConversionRequest,
+    opts?: CallOptions,
+  ) =>
+    callTool<
+      AnalyzeRothConversionRequest & { contractVersion: string },
+      RothConversionAnalysis
+    >(
+      PLANNING_TOOLS.analyzeRothConversion,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  sequenceConversions: (
+    req: AnalyzeRothConversionRequest,
+    opts?: CallOptions,
+  ) =>
+    callTool<
+      AnalyzeRothConversionRequest & { contractVersion: string },
+      SequenceSummary & { contractVersion?: string }
+    >(
+      PLANNING_TOOLS.sequenceConversions,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
   buildPlanningReport: (
     req: Omit<BuildPlanningReportRequest, "contractVersion">,
     opts?: CallOptions,
@@ -384,44 +459,7 @@ export async function analyzeRothConversion(
   req: AnalyzeRothConversionRequest,
   opts: CallOptions = {},
 ): Promise<RothConversionAnalysis> {
-  const safe = assertNoPII(req);
-  const auditId = await auditCall({
-    tool: "analyze_roth_conversion",
-    contractVersion: PLANNING_CONTRACT_VERSION,
-  });
-
-  const headers: Record<string, string> = {
-    "content-type": "application/json",
-    "x-pw-audit-id": auditId,
-    "x-pw-contract-version": PLANNING_CONTRACT_VERSION,
-  };
-  if (opts.subjectRef) headers["x-pw-subject-ref"] = opts.subjectRef;
-
-  const path =
-    BACKEND === "nexus-mcp"
-      ? "/mcp/tools/analyze_roth_conversion"
-      : "/v1/planning/analyze_roth_conversion";
-  const res = await fetch(`${GATEWAY_URL}${path}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(safe),
-  });
-  if (!res.ok) {
-    throw new Error(`planning gateway ${res.status}: ${await res.text()}`);
-  }
-
-  const data = (await res.json()) as RothConversionAnalysis;
-  // The gateway echoes the per-tool envelope version (0.1.0) on every response.
-  if (
-    data.contractVersion &&
-    data.contractVersion !== PLANNING_CONTRACT_VERSION
-  ) {
-    throw new ContractMismatchError(
-      PLANNING_CONTRACT_VERSION,
-      data.contractVersion,
-    );
-  }
-  return data;
+  return planning.analyzeRothConversion(req, opts);
 }
 
 export const ACTIVE_BACKEND = BACKEND;

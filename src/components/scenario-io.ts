@@ -651,7 +651,9 @@ function parseCashflowPlanningBridge(
   };
 }
 
-function parseCashReserveAnalysis(v: unknown): CashReserveAnalysisInputs | null {
+function parseCashReserveAnalysis(
+  v: unknown,
+): CashReserveAnalysisInputs | null {
   if (
     !isObject(v) ||
     !isNum(v.monthlyEssentialSpending) ||

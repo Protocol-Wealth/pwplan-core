@@ -67,7 +67,9 @@ function isNonNegative(n: number): boolean {
 
 function requireNoRawCashflowFields(value: unknown, issues: string[]): void {
   if (hasRawCashflowField(value)) {
-    issues.push("Cash-flow bridge inputs must not include raw transaction fields.");
+    issues.push(
+      "Cash-flow bridge inputs must not include raw transaction fields.",
+    );
   }
 }
 
@@ -284,8 +286,7 @@ export function validateCashReserveAnalysis(
   if (
     r.secondaryTargetMonths !== undefined &&
     r.secondaryTargetMonths !== 0 &&
-    (!Number.isFinite(r.secondaryTargetMonths) ||
-      r.secondaryTargetMonths <= 0)
+    (!Number.isFinite(r.secondaryTargetMonths) || r.secondaryTargetMonths <= 0)
   ) {
     issues.push("Secondary target months must be greater than zero when used.");
   }
@@ -300,7 +301,11 @@ export function validateBudgetPacingProjection(
   const issues: string[] = [];
   requireNoRawCashflowFields(b, issues);
 
-  if (!Number.isInteger(b.daysInMonth) || b.daysInMonth < 28 || b.daysInMonth > 31) {
+  if (
+    !Number.isInteger(b.daysInMonth) ||
+    b.daysInMonth < 28 ||
+    b.daysInMonth > 31
+  ) {
     issues.push("Days in month must be a whole number in [28, 31].");
   }
   if (

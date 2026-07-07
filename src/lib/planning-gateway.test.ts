@@ -23,6 +23,9 @@ import { PiiTripwireError } from "./compliance";
 import {
   PLANNING_CONTRACT_VERSION,
   type MonteCarloRequest,
+  type SolveGoalRequest,
+  type AnalyzeGoalsRequest,
+  type ProjectCashFlowRequest,
   type GlidePathRequest,
   type TaxWithdrawalRequest,
   type CorrelationRequest,
@@ -42,8 +45,10 @@ import {
   type RiskMetricsRequest,
   type RebalanceRequest,
   type OptimizeAllocationRequest,
+  type IrmaaHeadroomRequest,
   type BuildPlanningReportRequest,
 } from "../contract/planning";
+import type { AnalyzeRothConversionRequest } from "../contract/roth-conversion";
 
 // --- Minimal, well-typed requests (shape only; the engine does the math). ---
 
@@ -59,6 +64,42 @@ const mcReq: Omit<MonteCarloRequest, "contractVersion"> = {
   filingStatus: "single",
   returnModel: "emf_regime",
   paths: 1000,
+};
+
+const solveGoalReq: Omit<SolveGoalRequest, "contractVersion"> = {
+  ...mcReq,
+  solveFor: "annual_spend",
+  targetSuccess: 0.8,
+  bounds: { min: 60_000, max: 180_000 },
+};
+
+const analyzeGoalsReq: Omit<AnalyzeGoalsRequest, "contractVersion"> = {
+  goals: [
+    {
+      id: "education-1",
+      kind: "education",
+      targetAmount: 200_000,
+      yearsToGoal: 10,
+      currentAssets: 40_000,
+      monthlyContribution: 500,
+      priority: 1,
+      fundingYears: 4,
+    },
+  ],
+  sharedFundingPool: { currentAssets: 25_000, monthlyContribution: 250 },
+};
+
+const projectCashFlowReq: Omit<ProjectCashFlowRequest, "contractVersion"> = {
+  currentAge: 45,
+  retirementAge: 65,
+  terminalAge: 90,
+  currentIncome: 180_000,
+  currentExpenses: 90_000,
+  currentPortfolio: 600_000,
+  filingStatus: "married_joint",
+  retirementIncome: 45_000,
+  currentLiabilities: 250_000,
+  baseYear: 2026,
 };
 
 const gpReq: Omit<GlidePathRequest, "contractVersion"> = {
@@ -227,6 +268,15 @@ const optimizeReq: Omit<OptimizeAllocationRequest, "contractVersion"> = {
   riskFreeRate: 0.02,
 };
 
+const irmaaReq: Omit<IrmaaHeadroomRequest, "contractVersion"> = {
+  target_premium_year: 2028,
+  magi_ex_conversion: 180_000,
+  per_person: 2,
+  inflation: 0.03,
+  buffer: 5_000,
+  filing_status: "mfj",
+};
+
 const reportReq: Omit<BuildPlanningReportRequest, "contractVersion"> = {
   title: "Planning summary",
   includeRegime: true,
@@ -234,6 +284,30 @@ const reportReq: Omit<BuildPlanningReportRequest, "contractVersion"> = {
     { kind: "summary", title: "Overview", findings: ["funds the horizon"] },
     { kind: "allocation" },
   ],
+};
+
+const rothCaseReq: AnalyzeRothConversionRequest = {
+  contract: {
+    case_id: "case-123",
+    tax_year: 2026,
+    filing_status: "mfj",
+    state_code: "PA",
+    birth_years: [1962, 1963],
+    medicare_enrolled: 2,
+    income_ex_conversion: { pension: 30_000, social_security_gross: 48_000 },
+    accounts: {
+      trad_ira_aggregate: 1_400_000,
+      taxable_liquidity: 250_000,
+    },
+    intent: {
+      target_rule: "fill_to_rate",
+      years: [2026, 2027],
+      target_rate: 0.24,
+    },
+  },
+  irmaa_inflation: 0.03,
+  irmaa_buffer: 5_000,
+  growth_rate: 0.05,
 };
 
 /** Stub global fetch with a single canned response and return the spy. */
@@ -361,6 +435,45 @@ describe("planning gateway dispatch", () => {
     }
   });
 
+  it("throws PiiTripwireError before dispatch for newly reconciled planning tools", async () => {
+    const cases: (() => Promise<unknown>)[] = [
+      () =>
+        planning.solveGoal({ ...solveGoalReq, email: "client@example.com" }),
+      () =>
+        planning.analyzeGoals({
+          ...analyzeGoalsReq,
+          firstName: "Client",
+        }),
+      () =>
+        planning.projectCashFlow({
+          ...projectCashFlowReq,
+          dateOfBirth: "1980-01-01",
+        }),
+      () =>
+        planning.irmaaHeadroom({
+          ...irmaaReq,
+          phone: "555-555-5555",
+        }),
+      () =>
+        planning.analyzeRothConversion({
+          ...rothCaseReq,
+          address: "123 Main St",
+        }),
+      () =>
+        planning.sequenceConversions({
+          ...rothCaseReq,
+          ssn: "123-45-6789",
+        }),
+    ];
+
+    for (const call of cases) {
+      const fetchMock = stubFetch({ contractVersion: "0.1.0" });
+      await expect(call()).rejects.toBeInstanceOf(PiiTripwireError);
+      expect(fetchMock).not.toHaveBeenCalled();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("throws a gateway error carrying the status and body on a non-OK response", async () => {
     stubFetch({}, { ok: false, status: 400, text: "allocation must sum to 1" });
     await expect(planning.monteCarlo(mcReq)).rejects.toThrow(
@@ -373,6 +486,15 @@ describe("planning gateway dispatch", () => {
       {
         id: "monte_carlo_decumulation",
         call: () => planning.monteCarlo(mcReq),
+      },
+      { id: "solve_goal", call: () => planning.solveGoal(solveGoalReq) },
+      {
+        id: "analyze_goals",
+        call: () => planning.analyzeGoals(analyzeGoalsReq),
+      },
+      {
+        id: "project_cash_flow",
+        call: () => planning.projectCashFlow(projectCashFlowReq),
       },
       { id: "glide_path", call: () => planning.glidePath(gpReq) },
       {
@@ -434,6 +556,18 @@ describe("planning gateway dispatch", () => {
       {
         id: "optimize_allocation",
         call: () => planning.optimizeAllocation(optimizeReq),
+      },
+      {
+        id: "irmaa_headroom",
+        call: () => planning.irmaaHeadroom(irmaaReq),
+      },
+      {
+        id: "analyze_roth_conversion",
+        call: () => planning.analyzeRothConversion(rothCaseReq),
+      },
+      {
+        id: "sequence_conversions",
+        call: () => planning.sequenceConversions(rothCaseReq),
       },
       {
         id: "build_planning_report",
@@ -556,7 +690,8 @@ describe("planning gateway dispatch", () => {
       pacingStatus: "over",
       warningLevel: "warn",
       assumptions: {
-        recurringRemainingBasis: "Known future recurring spend not yet included",
+        recurringRemainingBasis:
+          "Known future recurring spend not yet included",
       },
     });
 
@@ -579,6 +714,186 @@ describe("planning gateway dispatch", () => {
     await planning.monteCarlo({ ...mcReq, pathCacheKey: "emf-cache-xyz" });
     const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(sent.pathCacheKey).toBe("emf-cache-xyz");
+  });
+
+  it("dispatches solve_goal and returns the monotone solution curve", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      solveFor: "annual_spend",
+      targetSuccess: 0.8,
+      feasible: true,
+      solvedValue: 112_000,
+      achievedSuccess: 0.81,
+      direction: "decreasing",
+      bounds: { min: 60_000, max: 180_000 },
+      iterations: 12,
+      pathsSearch: 800,
+      pathsConfirm: 1000,
+      seedUsed: 4242421,
+      successCurve: [{ x: 112_000, successProbability: 0.81 }],
+      terminalValues: { p50: 900_000 },
+    });
+
+    const result = await planning.solveGoal(solveGoalReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/solve_goal",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.solveFor).toBe("annual_spend");
+    expect(sent.targetSuccess).toBe(0.8);
+    expect(sent.bounds).toEqual({ min: 60_000, max: 180_000 });
+    expect(result.solvedValue).toBe(112_000);
+    expect(result.successCurve[0].successProbability).toBe(0.81);
+  });
+
+  it("dispatches analyze_goals with opaque goal ids", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      goals: [
+        {
+          id: "education-1",
+          kind: "education",
+          priority: 1,
+          yearsToGoal: 10,
+          fundingYears: 4,
+          inflationRate: 0.025,
+          expectedReturn: 0.05,
+          targetAmountToday: 200_000,
+          futureCost: 256_000,
+          projectedResources: 180_000,
+          projectedFromAssets: 65_000,
+          projectedFromContributions: 115_000,
+          fundedRatio: 0.7031,
+          fundedPct: 70.3,
+          status: "underfunded",
+          onTrack: false,
+          shortfallFuture: 76_000,
+          surplusFuture: 0,
+          shortfallPresent: 46_000,
+          requiredMonthlyContribution: 950,
+          currentMonthlyContribution: 500,
+          additionalMonthlyNeeded: 450,
+        },
+      ],
+      aggregate: {
+        goalCount: 1,
+        overallFundedRatio: 0.7031,
+        overallFundedPct: 70.3,
+        presentValueOfGoals: 157_000,
+        presentValueOfResources: 111_000,
+        totalShortfallPresent: 46_000,
+        fundedCount: 0,
+        onTrackCount: 0,
+        underfundedCount: 1,
+      },
+      onTrackThreshold: 0.85,
+      priorityAllocation: {
+        mode: "priority_ordered_shared_pool",
+        sharedPool: {
+          currentAssets: 50_000,
+          monthlyContribution: 500,
+          allocatedCurrentAssets: 50_000,
+          unallocatedCurrentAssets: 0,
+          allocatedMonthlyContribution: 450,
+          unallocatedMonthlyContribution: 50,
+        },
+        order: [{ id: "education-1", priority: 1, inputOrder: 0 }],
+        goals: [
+          {
+            id: "education-1",
+            priority: 1,
+            inputOrder: 0,
+            allocatedCurrentAssets: 50_000,
+            allocatedMonthlyContribution: 450,
+            fundedRatioAfterSharedAllocation: 0.85,
+            fundedPctAfterSharedAllocation: 85,
+            statusAfterSharedAllocation: "on_track",
+            shortfallFutureAfterSharedAllocation: 0,
+            shortfallPresentAfterSharedAllocation: 0,
+            bindingConstraint: {
+              code: "none",
+              description:
+                "The goal is fully funded under the priority allocation.",
+            },
+          },
+        ],
+        summary: {
+          goalCount: 1,
+          fundedCount: 0,
+          onTrackCount: 1,
+          underfundedCount: 0,
+          totalShortfallPresentAfterSharedAllocation: 0,
+          bindingConstraints: { none: 1 },
+        },
+      },
+    });
+
+    const result = await planning.analyzeGoals(analyzeGoalsReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/analyze_goals",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.goals[0].id).toBe("education-1");
+    expect(sent.goals[0].targetAmount).toBe(200_000);
+    expect(result.aggregate.goalCount).toBe(1);
+    expect(result.priorityAllocation?.order[0].id).toBe("education-1");
+    expect(result.priorityAllocation?.sharedPool.allocatedCurrentAssets).toBe(
+      50_000,
+    );
+    expect(result.priorityAllocation?.goals[0].bindingConstraint.code).toBe(
+      "none",
+    );
+    expect(result.priorityAllocation?.summary.bindingConstraints.none).toBe(1);
+  });
+
+  it("dispatches project_cash_flow and returns yearly cash-flow rows", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      years: [
+        {
+          age: 45,
+          year: 2026,
+          phase: "accumulation",
+          earnedIncome: 180_000,
+          retirementIncome: 0,
+          income: 180_000,
+          expenses: 90_000,
+          taxes: 25_000,
+          netCashFlow: 65_000,
+          portfolioBalance: 665_000,
+          liabilities: 250_000,
+          netWorth: 415_000,
+        },
+      ],
+      aggregate: {
+        startingPortfolio: 600_000,
+        startingNetWorth: 350_000,
+        endingPortfolio: 665_000,
+        endingNetWorth: 415_000,
+        peakNetWorth: 415_000,
+        depletionAge: null,
+        fundedThroughTerminal: true,
+      },
+      lifetimeTax: {
+        totalIncome: 180_000,
+        totalTaxesPaid: 25_000,
+        effectiveRate: 0.1389,
+      },
+      assumptions: { filingStatus: "married_joint" },
+    });
+
+    const result = await planning.projectCashFlow(projectCashFlowReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/project_cash_flow",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.currentAge).toBe(45);
+    expect(sent.baseYear).toBe(2026);
+    expect(result.years[0].phase).toBe("accumulation");
+    expect(result.aggregate.startingNetWorth).toBe(350_000);
   });
 
   it("dispatches roth_conversion and returns the comparison fields", async () => {
@@ -896,6 +1211,104 @@ describe("planning gateway dispatch", () => {
     expect(result.objectiveSource).toBe("regime");
     expect(result.sharpeRatio).toBe(0.33);
     expect(result.regimeNote).toBe("expansion favors max_sharpe");
+  });
+
+  it("dispatches irmaa_headroom and returns projected cliff room", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      target_premium_year: 2028,
+      tiers_source_year: 2025,
+      inflation_assumption: 0.03,
+      buffer: 5_000,
+      per_person: 2,
+      current_tier_index: 0,
+      in_top_tier: false,
+      projected_current_floor: 0,
+      projected_next_floor: 220_000,
+      irmaa_safe_headroom: 35_000,
+      current_annual_surcharge: 0,
+      cliff_cost_if_crossed: 2_000,
+    });
+    const result = await planning.irmaaHeadroom(irmaaReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/irmaa_headroom",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.target_premium_year).toBe(2028);
+    expect(sent.filing_status).toBe("mfj");
+    expect(result.irmaa_safe_headroom).toBe(35_000);
+    expect(result.cliff_cost_if_crossed).toBe(2_000);
+  });
+
+  it("dispatches analyze_roth_conversion through the planning registry", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      contract_version: "1.1.0",
+      engine_version: "0.1.0",
+      case_id: "case-123",
+      filing_status: "married_joint",
+      years: [],
+      sequence: {
+        years: [2026, 2027],
+        recommended_by_year: [50_000, 45_000],
+        total_recommended: 95_000,
+        total_incremental_tax: 22_000,
+        residual_trad_balance: 1_300_000,
+        note: "rollup",
+      },
+      do_nothing: {
+        rmd_start_age: 75,
+        first_rmd_year: 2037,
+        years_until_rmd: 11,
+        growth_rate_assumption: 0.05,
+        projected_trad_balance_at_rmd: 2_000_000,
+        first_year_rmd: 81_300,
+        first_year_rmd_marginal_rate: 0.24,
+        note: "do nothing",
+      },
+      snapshot: {
+        engine_version: "0.1.0",
+        contract_version: "1.1.0",
+        bracket_table_year: 2026,
+        bracket_table_source: "engine_reference",
+        irmaa_tiers_source_year: 2025,
+        irmaa_inflation_assumption: 0.03,
+        irmaa_buffer: 5_000,
+        irmaa_table_source: "engine_reference",
+        state_rule_source: "engine_reference",
+      },
+      assumptions: [],
+      disclaimer: "Educational.",
+    });
+    const result = await planning.analyzeRothConversion(rothCaseReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/analyze_roth_conversion",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.contract.case_id).toBe("case-123");
+    expect(sent.contractVersion).toBe(PLANNING_CONTRACT_VERSION);
+    expect(result.case_id).toBe("case-123");
+    expect(result.sequence.total_recommended).toBe(95_000);
+  });
+
+  it("dispatches sequence_conversions and returns the roll-up only", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      years: [2026, 2027],
+      recommended_by_year: [50_000, 45_000],
+      total_recommended: 95_000,
+      total_incremental_tax: 22_000,
+      residual_trad_balance: 1_300_000,
+      note: "rollup",
+    });
+    const result = await planning.sequenceConversions(rothCaseReq);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/sequence_conversions",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.contract.case_id).toBe("case-123");
+    expect(result.total_recommended).toBe(95_000);
+    expect(result.recommended_by_year).toEqual([50_000, 45_000]);
   });
 
   it("dispatches build_planning_report and returns the ordered report", async () => {
