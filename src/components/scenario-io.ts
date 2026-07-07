@@ -28,7 +28,9 @@ import type {
   AssetClass,
   FilingStatus,
   GuaranteedIncome,
+  PlanningReportPreset,
   ReturnModel,
+  WealthRoadmapScope,
 } from "../contract/planning";
 import { assertNoPII, PiiTripwireError } from "../lib/compliance";
 import type {
@@ -612,13 +614,43 @@ function parseReportSectionDraft(v: unknown): ReportSectionDraft | null {
   return { kind: v.kind, title: v.title, findingsText: v.findingsText };
 }
 
+function parsePlanningReportPreset(v: unknown): PlanningReportPreset | null {
+  if (v === undefined) return "custom";
+  if (v === "custom" || v === "wealth_roadmap") return v;
+  return null;
+}
+
+function parseWealthRoadmapScope(v: unknown): WealthRoadmapScope | null {
+  if (v === undefined) return "focused";
+  if (v === "focused" || v === "full") return v;
+  return null;
+}
+
 function parseBuildReport(v: unknown): BuildPlanningReportInputs | null {
   if (!isObject(v) || !isStr(v.title) || !isBool(v.includeRegime)) {
     return null;
   }
   const sections = parseArray(v.sections, parseReportSectionDraft);
   if (sections === null) return null;
-  return { title: v.title, includeRegime: v.includeRegime, sections };
+  const preset = parsePlanningReportPreset(v.preset);
+  const scope = parseWealthRoadmapScope(v.scope);
+  if (preset === null || scope === null) return null;
+  return {
+    title: v.title,
+    includeRegime: v.includeRegime,
+    preset,
+    scope,
+    assumptionVersion: isStr(v.assumptionVersion)
+      ? v.assumptionVersion
+      : "2026.07",
+    cmaVersion: isStr(v.cmaVersion) ? v.cmaVersion : "engine-default-cma",
+    taxYear: isNum(v.taxYear) ? v.taxYear : 2026,
+    seed: isNum(v.seed) ? v.seed : 20260707,
+    engineReference: isStr(v.engineReference)
+      ? v.engineReference
+      : "nexus-core",
+    sections,
+  };
 }
 
 function isSubjectRefToken(v: unknown): v is string {

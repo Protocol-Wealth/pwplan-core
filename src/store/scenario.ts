@@ -48,6 +48,8 @@ import type {
   AllocationObjective,
   SpendingVolatility,
   TaxWithdrawalResult,
+  PlanningReportPreset,
+  WealthRoadmapScope,
 } from "../contract/planning";
 import type {
   ContractFilingStatus,
@@ -244,6 +246,13 @@ export interface ReportSectionDraft {
 export interface BuildPlanningReportInputs {
   title: string;
   includeRegime: boolean;
+  preset: PlanningReportPreset;
+  scope: WealthRoadmapScope;
+  assumptionVersion: string;
+  cmaVersion: string;
+  taxYear: number;
+  seed: number;
+  engineReference: string;
   sections: ReportSectionDraft[];
 }
 
@@ -641,6 +650,13 @@ const DEFAULT_BUILD_REPORT: BuildPlanningReportInputs = {
   // normalizes titles and collates findings. Sections are de-identified.
   title: "Planning summary",
   includeRegime: true,
+  preset: "custom",
+  scope: "focused",
+  assumptionVersion: "2026.07",
+  cmaVersion: "engine-default-cma",
+  taxYear: 2026,
+  seed: 20260707,
+  engineReference: "nexus-core",
   sections: [
     {
       kind: "summary",

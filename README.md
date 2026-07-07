@@ -135,10 +135,11 @@ Monte Carlo tab, one Education tab that houses the two education funding tools,
 one synthetic Cash Flow Bridge tab that houses the three cash-flow bridge tools,
 the Roth · IRMAA tab over the composite case contract, and a UI-only Scenario
 Compare tab that replays 2-3 Monte Carlo scenario snapshots with one
-deterministic seed. The remaining parity tools are typed gateway methods ready
-for future UI slices. The Education tab uses opaque student refs only: no
-student names, schools, DOBs, emails, account names, notes, approvals, release
-state, or audit trail. The Cash Flow Bridge tab uses demo monthly-close
+deterministic seed. The Report tab supports the custom report assembler and the
+PW Wealth Roadmap preset with focused/full scope plus replay metadata. The
+remaining parity tools are typed gateway methods ready for future UI slices. The
+Education tab uses opaque student refs only: no student names, schools, DOBs,
+emails, account names, notes, approvals, release state, or audit trail. The Cash Flow Bridge tab uses demo monthly-close
 aggregates only: no CSV upload, transaction storage, merchant/payee/account/
 household fields, notes, approvals, release state, or audit trail. Scenario
 Compare stores only in-memory de-identified snapshots and adds no public wire

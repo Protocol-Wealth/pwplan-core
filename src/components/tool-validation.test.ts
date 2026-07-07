@@ -777,14 +777,35 @@ describe("validateOptimizeAllocation", () => {
 const validReport: BuildPlanningReportInputs = {
   title: "Planning summary",
   includeRegime: true,
+  preset: "custom",
+  scope: "focused",
+  assumptionVersion: "2026.07",
+  cmaVersion: "engine-default-cma",
+  taxYear: 2026,
+  seed: 20260707,
+  engineReference: "nexus-core",
   sections: [
     { kind: "summary", title: "Overview", findingsText: "funds the horizon" },
+  ],
+};
+
+const validRoadmap: BuildPlanningReportInputs = {
+  ...validReport,
+  title: "PW Wealth Roadmap",
+  preset: "wealth_roadmap",
+  sections: [
+    { kind: "snapshot", title: "Snapshot", findingsText: "snapshot" },
+    { kind: "trajectory", title: "Trajectory", findingsText: "trajectory" },
+    { kind: "goals", title: "Goals", findingsText: "goals" },
   ],
 };
 
 describe("validateBuildPlanningReport", () => {
   it("accepts a well-formed report", () => {
     expect(validateBuildPlanningReport(validReport)).toEqual([]);
+  });
+  it("accepts a well-formed focused Wealth Roadmap", () => {
+    expect(validateBuildPlanningReport(validRoadmap)).toEqual([]);
   });
   it("requires at least one section", () => {
     expect(
@@ -798,6 +819,51 @@ describe("validateBuildPlanningReport", () => {
         sections: [{ kind: "  ", title: "x", findingsText: "" }],
       }),
     ).toContain("Every section needs a kind.");
+  });
+  it("requires replay metadata for Wealth Roadmap reports", () => {
+    expect(
+      validateBuildPlanningReport({
+        ...validRoadmap,
+        assumptionVersion: " ",
+        cmaVersion: "",
+        taxYear: 1800,
+        seed: -1,
+      }),
+    ).toEqual([
+      "Wealth Roadmap needs an assumption version.",
+      "Wealth Roadmap needs a CMA version.",
+      "Wealth Roadmap tax year must be a plausible year.",
+      "Wealth Roadmap seed must be a non-negative integer.",
+    ]);
+  });
+  it("requires engine-valid Wealth Roadmap section kinds and scope-required sections", () => {
+    expect(
+      validateBuildPlanningReport({
+        ...validRoadmap,
+        sections: [
+          { kind: "summary", title: "Overview", findingsText: "old section" },
+          {
+            kind: "priority_actions",
+            title: "Priority Actions",
+            findingsText: "advisor curation pending",
+          },
+        ],
+      }),
+    ).toEqual([
+      "Wealth Roadmap sections must use snapshot, trajectory, goals, income, guardrails, historical_blend, or priority_actions.",
+      "Priority actions are only accepted for full scope.",
+      "Wealth Roadmap focused scope missing required sections: snapshot, trajectory, goals.",
+    ]);
+  });
+  it("requires full Wealth Roadmap income, guardrails, and historical context sections", () => {
+    expect(
+      validateBuildPlanningReport({
+        ...validRoadmap,
+        scope: "full",
+      }),
+    ).toEqual([
+      "Wealth Roadmap full scope missing required sections: income, guardrails, historical_blend.",
+    ]);
   });
 });
 
