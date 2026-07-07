@@ -9,6 +9,18 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **S10 scenario compare UI slice (2026-07-07).** Added a UI-only Scenario
+  Compare tab over the existing Monte Carlo contract. Advisors can add 2-3
+  in-memory, de-identified scenario snapshots, replay each through
+  `monte_carlo_decumulation` with one deterministic seed, block mixed
+  live-CMA/default-CMA source references, and review a success-probability,
+  P50-terminal, worst-path diff table plus a median-balance SVG overlay. Added
+  pure compare helpers/tests for seed gating, future additive `cmaVersion`
+  extraction, result mismatch checks, and row deltas. The public wire contract
+  remains 29 tools; the UI now exposes 21 tabs. No new quant logic, contract
+  fields, identity data, persistence, raw ingestion, advisor workflow state,
+  approvals, release state, or audit trail were added.
+
 - **S1 education funding consumer slice (2026-07-07).** Added
   `education_funding` and `education_vehicle_rules` to the TypeScript planning
   contract, `PLANNING_TOOLS`, gateway, mocked dispatch tests, scenario store,

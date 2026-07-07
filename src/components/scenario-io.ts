@@ -198,6 +198,7 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "build_report",
   "education",
   "cashflow_bridge",
+  "compare",
 ];
 
 function parseAssetClass(v: unknown): AssetClass | null {

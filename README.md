@@ -129,17 +129,20 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **29 planning tools**. The UI has 20 tabs:
-eighteen one-tool tabs, the `capital_market_assumptions` control inside the
+The wire contract covers **29 planning tools**. The UI has 21 tabs:
+seventeen one-tool tabs, the `capital_market_assumptions` control inside the
 Monte Carlo tab, one Education tab that houses the two education funding tools,
 one synthetic Cash Flow Bridge tab that houses the three cash-flow bridge tools,
-and the Roth · IRMAA tab over the composite case contract. The remaining parity
-tools are typed gateway methods ready for future UI slices. The Education tab
-uses opaque student refs only: no student names, schools, DOBs, emails, account
-names, notes, approvals, release state, or audit trail. The Cash Flow Bridge tab
-uses demo monthly-close aggregates only: no CSV upload, transaction storage,
-merchant/payee/account/household fields, notes, approvals, release state, or
-audit trail. The Roth · IRMAA tab uses a separate case contract
+the Roth · IRMAA tab over the composite case contract, and a UI-only Scenario
+Compare tab that replays 2-3 Monte Carlo scenario snapshots with one
+deterministic seed. The remaining parity tools are typed gateway methods ready
+for future UI slices. The Education tab uses opaque student refs only: no
+student names, schools, DOBs, emails, account names, notes, approvals, release
+state, or audit trail. The Cash Flow Bridge tab uses demo monthly-close
+aggregates only: no CSV upload, transaction storage, merchant/payee/account/
+household fields, notes, approvals, release state, or audit trail. Scenario
+Compare stores only in-memory de-identified snapshots and adds no public wire
+type. The Roth · IRMAA tab uses a separate case contract
 (`PLANNING_CASE_CONTRACT_VERSION`) because it mirrors the canonical
 Roth-conversion planning schema.
 

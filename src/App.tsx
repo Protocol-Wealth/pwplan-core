@@ -64,6 +64,7 @@ import {
   CashflowBridgeForm,
   CashflowBridgeResults,
 } from "./components/CashflowBridgeTool";
+import { CompareTool } from "./components/CompareTool";
 import { ScenarioIO } from "./components/ScenarioIO";
 import { useScenario, type PlanningTool } from "./store/scenario";
 import { PLANNING_CONTRACT_VERSION } from "./contract/planning";
@@ -89,6 +90,7 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "build_report", label: "Report" },
   { value: "education", label: "Education" },
   { value: "cashflow_bridge", label: "Cash Flow Bridge" },
+  { value: "compare", label: "Compare" },
 ];
 
 function ToolTabs() {
@@ -250,6 +252,8 @@ function ActiveTool() {
           <CashflowBridgeResults />
         </>
       );
+    case "compare":
+      return <CompareTool />;
     case "monte_carlo":
       return (
         <>

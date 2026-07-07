@@ -76,7 +76,8 @@ export type PlanningTool =
   | "optimize_allocation"
   | "build_report"
   | "education"
-  | "cashflow_bridge";
+  | "cashflow_bridge"
+  | "compare";
 
 /** Glide-path shape, derived from the wire contract (no new wire type). */
 export type GlidePathShape = GlidePathRequest["shape"];
@@ -291,6 +292,19 @@ export interface MarketAssumptions {
   correlations: Record<string, Record<string, number>>;
 }
 
+export interface CompareScenario {
+  id: string;
+  label: string;
+  snapshot: ScenarioSnapshot;
+  assumptions: MarketAssumptions | null;
+}
+
+export interface CompareRunResult {
+  id: string;
+  label: string;
+  result: MonteCarloResult;
+}
+
 export interface ScenarioSnapshot {
   tool: PlanningTool;
   inputs: ScenarioInputs;
@@ -364,6 +378,9 @@ interface ScenarioState {
   cashflowPlanningBridgeResult: CashflowPlanningBridgeResult | null;
   cashReserveAnalysisResult: CashReserveAnalysisResult | null;
   budgetPacingProjectionResult: BudgetPacingProjectionResult | null;
+  compareScenarios: CompareScenario[];
+  compareSeed: number;
+  compareResults: CompareRunResult[] | null;
 
   /** Live engine assumptions from capital_market_assumptions; null until loaded. */
   assumptions: MarketAssumptions | null;
@@ -434,6 +451,9 @@ interface ScenarioState {
   setBudgetPacingProjectionResult: (
     r: BudgetPacingProjectionResult | null,
   ) => void;
+  setCompareScenarios: (scenarios: CompareScenario[]) => void;
+  setCompareSeed: (seed: number) => void;
+  setCompareResults: (results: CompareRunResult[] | null) => void;
   setAssumptions: (a: MarketAssumptions | null) => void;
   setLoadingAssumptions: (b: boolean) => void;
   setRunning: (b: boolean) => void;
@@ -730,6 +750,9 @@ export const useScenario = create<ScenarioState>((set) => ({
   cashflowPlanningBridgeResult: null,
   cashReserveAnalysisResult: null,
   budgetPacingProjectionResult: null,
+  compareScenarios: [],
+  compareSeed: 20260707,
+  compareResults: null,
 
   assumptions: null,
   loadingAssumptions: false,
@@ -787,6 +810,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       cashflowPlanningBridgeResult: null,
       cashReserveAnalysisResult: null,
       budgetPacingProjectionResult: null,
+      compareResults: null,
       // Assumptions are live engine data tied to the prior inputs; drop them so a
       // loaded plan does not silently reuse a stale correlation matrix.
       assumptions: null,
@@ -885,6 +909,9 @@ export const useScenario = create<ScenarioState>((set) => ({
     set({ cashReserveAnalysisResult }),
   setBudgetPacingProjectionResult: (budgetPacingProjectionResult) =>
     set({ budgetPacingProjectionResult }),
+  setCompareScenarios: (compareScenarios) => set({ compareScenarios }),
+  setCompareSeed: (compareSeed) => set({ compareSeed }),
+  setCompareResults: (compareResults) => set({ compareResults }),
   setAssumptions: (assumptions) => set({ assumptions }),
   setLoadingAssumptions: (loadingAssumptions) => set({ loadingAssumptions }),
   setRunning: (running) => set({ running }),

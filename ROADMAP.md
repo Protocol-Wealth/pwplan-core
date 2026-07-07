@@ -123,9 +123,18 @@ on completion and note the version in CHANGELOG.md._
       contract/gateway methods, schema-v4 scenario round-trip, built-in preset
       coverage, validators, and an Education tab with opaque student refs,
       savings-need results, cost-schedule SVG bars, and vehicle-rule table.
-      29 wire-contract tools, 20 UI tabs; no student identity fields, raw
+      29 wire-contract tools, 20 UI tabs at that milestone; no student identity fields, raw
       ingestion, advisor workflow state, approvals, release state, persistence,
       or audit trail.)_
+- [x] S10 scenario compare UI slice.
+      _(done 2026-07-07: UI-only Compare tab over existing Monte Carlo replay.
+      The store holds 2-3 in-memory scenario snapshots and one deterministic
+      seed; the tab blocks mixed live-CMA/default-CMA sources, runs each
+      scenario through the same `monte_carlo_decumulation` request shape, and
+      renders a success/P50/worst-path diff table plus median-balance SVG
+      overlay. No contract change, new quant logic, persistence, identity
+      fields, raw ingestion, advisor workflow state, approvals, release state,
+      or audit trail. 29 wire-contract tools, 21 UI tabs.)_
 
 ## Dependency on other repos (track, do not build here)
 
