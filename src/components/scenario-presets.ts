@@ -135,6 +135,22 @@ const DEFAULT_TOOL_INPUTS: Omit<
       },
     ],
   },
+  educationFundingInputs: {
+    taxYear: 2026,
+    selectedVehicle: "529",
+    tuitionInflation: 0.05,
+    afterTaxReturn: 0.055,
+    students: [
+      {
+        subjectRef: "student-1",
+        annualCost: 45_000,
+        yearsUntilStart: 8,
+        fundingYears: 4,
+        currentSavings: 15_000,
+        monthlyContribution: 500,
+      },
+    ],
+  },
   cashflowPlanningBridgeInputs: {
     monthsAnalyzed: 6,
     averageMonthlySpending: 8_000,
@@ -219,6 +235,19 @@ export const SCENARIO_PRESETS: ScenarioPreset[] = [
         otherTaxableIncome: 0,
       },
       ...DEFAULT_TOOL_INPUTS,
+      educationFundingInputs: {
+        ...DEFAULT_TOOL_INPUTS.educationFundingInputs,
+        students: [
+          {
+            subjectRef: "student-1",
+            annualCost: 38_000,
+            yearsUntilStart: 12,
+            fundingYears: 4,
+            currentSavings: 22_000,
+            monthlyContribution: 650,
+          },
+        ],
+      },
     },
   },
   {

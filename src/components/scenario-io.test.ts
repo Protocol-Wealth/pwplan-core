@@ -186,6 +186,22 @@ const snapshot: ScenarioSnapshot = {
     recurringRemaining: 1_250,
     knownOneTimeRemaining: 300,
   },
+  educationFundingInputs: {
+    taxYear: 2026,
+    selectedVehicle: "529",
+    tuitionInflation: 0.05,
+    afterTaxReturn: 0.055,
+    students: [
+      {
+        subjectRef: "student-1",
+        annualCost: 45_000,
+        yearsUntilStart: 8,
+        fundingYears: 4,
+        currentSavings: 15_000,
+        monthlyContribution: 500,
+      },
+    ],
+  },
 };
 
 describe("serializeScenario", () => {

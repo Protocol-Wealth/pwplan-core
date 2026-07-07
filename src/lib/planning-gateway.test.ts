@@ -34,6 +34,8 @@ import {
   type CashflowPlanningBridgeRequest,
   type CashReserveAnalysisRequest,
   type BudgetPacingProjectionRequest,
+  type EducationFundingRequest,
+  type EducationVehicleRulesRequest,
   type RothConversionRequest,
   type SequenceOfReturnsStressRequest,
   type RmdRequest,
@@ -168,6 +170,26 @@ const budgetPacingReq: Omit<BudgetPacingProjectionRequest, "contractVersion"> =
     monthlyBudget: 5_000,
     recurringRemaining: 250,
     knownOneTimeRemaining: 125,
+  };
+
+const educationFundingReq: Omit<EducationFundingRequest, "contractVersion"> = {
+  tuitionInflation: 0.05,
+  afterTaxReturn: 0.055,
+  students: [
+    {
+      subjectRef: "student-1",
+      annualCost: 45_000,
+      yearsUntilStart: 8,
+      fundingYears: 4,
+      currentSavings: 15_000,
+      monthlyContribution: 500,
+    },
+  ],
+};
+
+const educationRulesReq: Omit<EducationVehicleRulesRequest, "contractVersion"> =
+  {
+    taxYear: 2026,
   };
 
 const rothReq: Omit<RothConversionRequest, "contractVersion"> = {
@@ -450,6 +472,11 @@ describe("planning gateway dispatch", () => {
           dateOfBirth: "1980-01-01",
         }),
       () =>
+        planning.educationFunding({
+          ...educationFundingReq,
+          email: "client@example.com",
+        }),
+      () =>
         planning.irmaaHeadroom({
           ...irmaaReq,
           phone: "555-555-5555",
@@ -472,6 +499,23 @@ describe("planning gateway dispatch", () => {
       expect(fetchMock).not.toHaveBeenCalled();
       vi.unstubAllGlobals();
     }
+  });
+
+  it("rejects identity-shaped education subject refs before dispatch", async () => {
+    const fetchMock = stubFetch({ contractVersion: "0.1.0" });
+
+    expect(() =>
+      planning.educationFunding({
+        ...educationFundingReq,
+        students: [
+          {
+            ...educationFundingReq.students[0],
+            subjectRef: "Jane Student",
+          },
+        ],
+      }),
+    ).toThrow(/subjectRef must be an opaque non-identity token/);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("throws a gateway error carrying the status and body on a non-OK response", async () => {
@@ -526,6 +570,15 @@ describe("planning gateway dispatch", () => {
         call: () => planning.budgetPacingProjection(budgetPacingReq),
       },
       {
+        id: "education_funding",
+        call: () => planning.educationFunding(educationFundingReq),
+      },
+      {
+        id: "education_vehicle_rules",
+        call: () => planning.educationVehicleRules(educationRulesReq),
+        response: { contractVersion: "0.1.0", rules: [] },
+      },
+      {
         id: "roth_conversion",
         call: () => planning.rothConversion(rothReq),
       },
@@ -575,8 +628,8 @@ describe("planning gateway dispatch", () => {
       },
     ];
 
-    for (const { id, call } of dispatches) {
-      const fetchMock = stubFetch({ contractVersion: "0.1.0" });
+    for (const { id, call, response } of dispatches) {
+      const fetchMock = stubFetch(response ?? { contractVersion: "0.1.0" });
       await call();
       expect(fetchMock.mock.calls[0][0]).toBe(
         `https://nexusmcp.site/mcp/tools/${id}`,
@@ -707,6 +760,108 @@ describe("planning gateway dispatch", () => {
     expect(sent.knownOneTimeRemaining).toBe(125);
     expect(result.pacingStatus).toBe("over");
     expect(result.warningLevel).toBe("warn");
+  });
+
+  it("dispatches education_funding with de-identified student rows", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      tuitionInflation: 0.05,
+      afterTaxReturn: 0.055,
+      students: [
+        {
+          subjectRef: "student-1",
+          cost: {
+            annualCost: 45_000,
+            tuitionInflation: 0.05,
+            yearsUntilStart: 8,
+            fundingYears: 4,
+            firstYearCost: 66_466.85,
+            totalFutureCost: 286_066.29,
+            totalCostAtGoalStart: 265_867.4,
+            costSchedule: [
+              {
+                yearIndex: 0,
+                yearsFromNow: 8,
+                cost: 66_466.85,
+                costAtGoalStart: 66_466.85,
+              },
+            ],
+          },
+          projectedSavingsAtStart: 86_985.22,
+          savingsGapAtStart: 178_882.18,
+          savingsNeed: {
+            targetFv: 265_867.4,
+            currentSavings: 15_000,
+            afterTaxReturn: 0.055,
+            yearsUntilStart: 8,
+            monthly: 2_037.19,
+            annual: 24_446.28,
+            lumpSum: 157_621.91,
+          },
+        },
+      ],
+      householdTotals: {
+        totalFutureCost: 286_066.29,
+        totalCostAtGoalStart: 265_867.4,
+        projectedSavingsAtStart: 86_985.22,
+        savingsGapAtStart: 178_882.18,
+        savingsNeed: {
+          monthly: 2_037.19,
+          annual: 24_446.28,
+          lumpSum: 157_621.91,
+        },
+      },
+    });
+
+    const result = await planning.educationFunding(educationFundingReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/education_funding",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.contractVersion).toBe(PLANNING_CONTRACT_VERSION);
+    expect(sent.students[0].subjectRef).toBe("student-1");
+    expect(sent.students[0].email).toBeUndefined();
+    expect(result.householdTotals.savingsNeed.monthly).toBe(2_037.19);
+  });
+
+  it("dispatches education_vehicle_rules and normalizes public reference notes", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      taxYear: 2026,
+      tableVersion: "education-vehicle-reference-2026-irs-pub970-giftfaq-v1",
+      rules: [
+        {
+          taxYear: 2026,
+          vehicle: "529",
+          label: "529 qualified tuition program",
+          contributionLimit: null,
+          annualGiftExclusion: 19_000,
+          fiveYearSuperfundingSingle: 95_000,
+          fiveYearSuperfundingMarriedJoint: 190_000,
+          magiPhaseoutSingle: null,
+          magiPhaseoutMarriedJoint: null,
+          qualifiedDistributionTreatment:
+            "Federal tax-free when used for qualified education expenses.",
+          nonqualifiedDistributionPenaltyRate: 0.1,
+          notes: ["State aggregate account limits vary."],
+          tableVersion:
+            "education-vehicle-reference-2026-irs-pub970-giftfaq-v1",
+        },
+      ],
+    });
+
+    const result = await planning.educationVehicleRules(educationRulesReq);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://nexusmcp.site/mcp/tools/education_vehicle_rules",
+    );
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.taxYear).toBe(2026);
+    expect(result.rules[0].referenceNotes).toEqual([
+      "State aggregate account limits vary.",
+    ]);
+    expect("notes" in result.rules[0]).toBe(false);
   });
 
   it("rides an optional pathCacheKey through the monte_carlo dispatch", async () => {

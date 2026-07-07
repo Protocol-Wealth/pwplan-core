@@ -51,6 +51,11 @@ import {
   type CashReserveAnalysisResult,
   type BudgetPacingProjectionRequest,
   type BudgetPacingProjectionResult,
+  type EducationFundingRequest,
+  type EducationFundingResult,
+  type EducationVehicleRule,
+  type EducationVehicleRulesRequest,
+  type EducationVehicleRulesResult,
   type RothConversionRequest,
   type RothConversionResult,
   type SequenceOfReturnsStressRequest,
@@ -87,6 +92,14 @@ import type {
 import { assertNoPII, auditCall } from "./compliance";
 
 type Backend = "nexus-mcp" | "pw-api";
+type EducationVehicleRulesWireResult = Omit<
+  EducationVehicleRulesResult,
+  "rules"
+> & {
+  rules: Array<
+    Omit<EducationVehicleRule, "referenceNotes"> & { notes: string[] }
+  >;
+};
 
 function parseBackend(value: unknown): Backend {
   if (value === undefined || value === "") return "nexus-mcp";
@@ -119,6 +132,22 @@ function toolPath(tool: PlanningToolName): string {
  *  books-and-records without exposing identity to the planning layer. */
 export interface CallOptions {
   subjectRef?: string;
+}
+
+function isOpaqueSubjectRef(value: string): boolean {
+  return /^[A-Za-z0-9._:-]{1,80}$/.test(value);
+}
+
+function assertEducationSubjectRefs(
+  req: Omit<EducationFundingRequest, "contractVersion">,
+): void {
+  for (const [index, student] of req.students.entries()) {
+    if (!isOpaqueSubjectRef(student.subjectRef)) {
+      throw new Error(
+        `education_funding students.${index}.subjectRef must be an opaque non-identity token.`,
+      );
+    }
+  }
 }
 
 export class ContractMismatchError extends Error {
@@ -296,6 +325,39 @@ export const planning = {
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),
+
+  educationFunding: (
+    req: Omit<EducationFundingRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) => {
+    assertEducationSubjectRefs(req);
+    return callTool<EducationFundingRequest, EducationFundingResult>(
+      PLANNING_TOOLS.educationFunding,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    );
+  },
+
+  educationVehicleRules: async (
+    req: Omit<EducationVehicleRulesRequest, "contractVersion"> = {},
+    opts?: CallOptions,
+  ): Promise<EducationVehicleRulesResult> => {
+    const result = await callTool<
+      EducationVehicleRulesRequest,
+      EducationVehicleRulesWireResult
+    >(
+      PLANNING_TOOLS.educationVehicleRules,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    );
+    return {
+      ...result,
+      rules: result.rules.map(({ notes, ...rule }) => ({
+        ...rule,
+        referenceNotes: notes,
+      })),
+    };
+  },
 
   rothConversion: (
     req: Omit<RothConversionRequest, "contractVersion">,

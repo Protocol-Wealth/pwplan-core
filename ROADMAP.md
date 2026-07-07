@@ -118,6 +118,14 @@ on completion and note the version in CHANGELOG.md._
       `irmaa_headroom`, `analyze_roth_conversion`, and `sequence_conversions`;
       no new UI tabs, persistence, raw ingestion, advisor workflow state,
       approvals, release state, audit trail, or identity fields.)_
+- [x] S1 education funding consumer slice.
+      _(done 2026-07-07: `education_funding` and `education_vehicle_rules`
+      contract/gateway methods, schema-v4 scenario round-trip, built-in preset
+      coverage, validators, and an Education tab with opaque student refs,
+      savings-need results, cost-schedule SVG bars, and vehicle-rule table.
+      29 wire-contract tools, 20 UI tabs; no student identity fields, raw
+      ingestion, advisor workflow state, approvals, release state, persistence,
+      or audit trail.)_
 
 ## Dependency on other repos (track, do not build here)
 
