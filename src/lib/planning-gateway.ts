@@ -41,10 +41,14 @@ import {
   type TaxWithdrawalResult,
   type CorrelationRequest,
   type CorrelationResult,
+  type HistoricalBlendRequest,
+  type HistoricalBlendResult,
   type RegimeReturnRequest,
   type RegimeReturnResult,
   type CapitalMarketAssumptionsRequest,
   type CapitalMarketAssumptionsResult,
+  type IncomeLayeringRequest,
+  type IncomeLayeringResult,
   type CashflowPlanningBridgeRequest,
   type CashflowPlanningBridgeResult,
   type CashReserveAnalysisRequest,
@@ -74,6 +78,10 @@ import {
   type FireResult,
   type RiskMetricsRequest,
   type RiskMetricsResult,
+  type RiskProfileScoreRequest,
+  type RiskProfileScoreResult,
+  type PerformanceAnalysisRequest,
+  type PerformanceAnalysisResult,
   type RebalanceRequest,
   type RebalanceResult,
   type OptimizeAllocationRequest,
@@ -276,6 +284,16 @@ export const planning = {
       opts,
     ),
 
+  historicalBlend: (
+    req: Omit<HistoricalBlendRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<HistoricalBlendRequest, HistoricalBlendResult>(
+      PLANNING_TOOLS.historicalBlend,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
   regimeReturnGenerator: (
     req: Omit<RegimeReturnRequest, "contractVersion">,
     opts?: CallOptions,
@@ -359,6 +377,16 @@ export const planning = {
     };
   },
 
+  incomeLayering: (
+    req: Omit<IncomeLayeringRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<IncomeLayeringRequest, IncomeLayeringResult>(
+      PLANNING_TOOLS.incomeLayering,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
   rothConversion: (
     req: Omit<RothConversionRequest, "contractVersion">,
     opts?: CallOptions,
@@ -439,6 +467,26 @@ export const planning = {
   ) =>
     callTool<RiskMetricsRequest, RiskMetricsResult>(
       PLANNING_TOOLS.riskMetrics,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  riskProfileScore: (
+    req: Omit<RiskProfileScoreRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<RiskProfileScoreRequest, RiskProfileScoreResult>(
+      PLANNING_TOOLS.riskProfileScore,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  performanceAnalysis: (
+    req: Omit<PerformanceAnalysisRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<PerformanceAnalysisRequest, PerformanceAnalysisResult>(
+      PLANNING_TOOLS.performanceAnalysis,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),

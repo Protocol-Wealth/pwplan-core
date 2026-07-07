@@ -6,10 +6,10 @@ model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
 [`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
 current.
 
-_Last updated: 2026-07-07. 29 wire-contract tools, 21 UI tabs (17 one-tool wire
+_Last updated: 2026-07-07. 33 wire-contract tools, 21 UI tabs (17 one-tool wire
 tabs + Education + Cash Flow Bridge + Roth · IRMAA + Scenario Compare), scenario
-files at schema v4, and live Nexus was not re-smoked during the latest S10 UI
-pass._
+files at schema v4, and live Nexus was not re-smoked during the latest contract
+reconciliation pass._
 
 ## Orient yourself in 5 minutes
 
@@ -50,12 +50,11 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
 
 ## Prioritized next tasks (from ROADMAP)
 
-1. **Contract/UI reconciliation to newer nexus-core planning slices.** S10
-   Compare is UI-only and leaves the pwplan-core wire contract at 29 tools. If
-   nexus-core has since added S2/S3/S4/S5/S6/S7/S8/S9 tools, reconcile the
-   TypeScript contract/gateway first, then add focused tabs in slice order. Keep
-   Scenario Compare contract-free unless the Monte Carlo result receives an
-   additive stable `cmaVersion`, in which case tighten the compare gate.
+1. **UI tabs for newly gateway-ready Nexus tools.** The TypeScript contract now
+   covers 33 Nexus planning tools, but `income_layering`, `historical_blend`,
+   `risk_profile_score`, and `performance_analysis` are gateway-only. Add
+   focused UI tabs in slice order, and extend the Report tab for
+   `preset: "wealth_roadmap"` with the required metadata/scope controls.
 2. **Live follow-up** — the synthetic Cash Flow Bridge and Education tabs are
    built against source-truth contracts. Re-check
    `https://nexusmcp.site/mcp/tools` before any live smoke because deployed

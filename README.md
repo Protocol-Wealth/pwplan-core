@@ -129,7 +129,7 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **29 planning tools**. The UI has 21 tabs:
+The wire contract covers **33 planning tools**. The UI has 21 tabs:
 seventeen one-tool tabs, the `capital_market_assumptions` control inside the
 Monte Carlo tab, one Education tab that houses the two education funding tools,
 one synthetic Cash Flow Bridge tab that houses the three cash-flow bridge tools,
@@ -152,6 +152,7 @@ Roth-conversion planning schema.
 | `solve_goal`                 | Solve one planning variable to target success         | gateway    |
 | `analyze_goals`              | Goal funding status + priority pool allocation        | gateway    |
 | `project_cash_flow`          | Deterministic cash-flow + net-worth projection        | gateway    |
+| `income_layering`            | Stacked retirement income timeline                    | gateway    |
 | `glide_path`                 | Target equity weight by age                           | tab        |
 | `tax_aware_withdrawal`       | Per-year withdrawal ordering + RMD                    | tab        |
 | `roth_conversion`            | Convert-now vs. leave-pre-tax after-tax comparison    | tab        |
@@ -161,16 +162,19 @@ Roth-conversion planning schema.
 | `social_security_claiming`   | Benefit by claim age 62–70 + breakeven ages           | tab        |
 | `regime_conditioned_swr`     | Base SWR adjusted for the live macro regime           | tab        |
 | `correlation_matrix`         | Real-data return correlations (shrinkage optional)    | tab        |
+| `historical_blend`           | Historical index-blend exhibit                        | gateway    |
 | `regime_return_generator`    | Live regime + transition matrix + path cache key      | tab        |
 | `portfolio_xray`             | Regime-aware structural diagnostics + findings        | tab        |
 | `fire`                       | FIRE / Coast-FIRE number + years to independence      | tab        |
 | `risk_metrics`               | Sharpe / Sortino / drawdown / VaR for a return series | tab        |
+| `risk_profile_score`         | Risk questionnaire → optimizer-compatible profile     | gateway    |
+| `performance_analysis`       | TWR / MWR / fee drag / benchmark-relative math        | gateway    |
 | `rebalance`                  | Drift + self-financing trades to target weights       | tab        |
 | `optimize_allocation`        | Mean-variance allocation over engine-sourced data     | tab        |
 | `irmaa_headroom`             | Room before next projected Medicare IRMAA cliff       | gateway    |
 | `analyze_roth_conversion`    | Composite Roth / IRMAA analysis                       | Roth tab   |
 | `sequence_conversions`       | Multi-year Roth conversion roll-up                    | gateway    |
-| `build_planning_report`      | Assemble de-identified planning sections into report  | tab        |
+| `build_planning_report`      | Custom report + PW Wealth Roadmap preset              | tab        |
 | `education_funding`          | Education cost FV + savings-need solver               | tab        |
 | `education_vehicle_rules`    | Education savings vehicle reference rules             | tab        |
 | `capital_market_assumptions` | Real returns / vols / λ / correlations                | MC control |
