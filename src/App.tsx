@@ -56,6 +56,10 @@ import {
   HistoricalBlendResults,
 } from "./components/HistoricalBlendTool";
 import {
+  PerformanceAnalysisForm,
+  PerformanceAnalysisResults,
+} from "./components/PerformanceAnalysisTool";
+import {
   RiskProfileForm,
   RiskProfileResults,
 } from "./components/RiskProfileTool";
@@ -99,6 +103,7 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "risk_metrics", label: "Risk metrics" },
   { value: "income_layering", label: "Income layers" },
   { value: "historical_blend", label: "History" },
+  { value: "performance_analysis", label: "Performance" },
   { value: "risk_profile", label: "Risk profile" },
   { value: "rebalance", label: "Rebalance" },
   { value: "optimize_allocation", label: "Optimize" },
@@ -244,6 +249,13 @@ function ActiveTool() {
         <>
           <HistoricalBlendForm />
           <HistoricalBlendResults />
+        </>
+      );
+    case "performance_analysis":
+      return (
+        <>
+          <PerformanceAnalysisForm />
+          <PerformanceAnalysisResults />
         </>
       );
     case "risk_profile":

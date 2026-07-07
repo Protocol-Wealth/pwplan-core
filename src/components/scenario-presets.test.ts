@@ -12,6 +12,7 @@ import {
   validateGlidePath,
   validateHistoricalBlend,
   validateIncomeLayering,
+  validatePerformanceAnalysis,
   validateRiskProfileScore,
   validateTaxWithdrawal,
 } from "./tool-validation";
@@ -98,6 +99,14 @@ describe("scenario presets", () => {
       it("passes historical-blend validation", () => {
         expect(
           validateHistoricalBlend(preset.snapshot.historicalBlendInputs),
+        ).toEqual([]);
+      });
+
+      it("passes performance-analysis validation", () => {
+        expect(
+          validatePerformanceAnalysis(
+            preset.snapshot.performanceAnalysisInputs,
+          ),
         ).toEqual([]);
       });
 

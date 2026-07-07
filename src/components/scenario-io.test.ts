@@ -14,6 +14,7 @@ import {
 import { PLANNING_CONTRACT_VERSION } from "../contract/planning";
 import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
+import { DEFAULT_PERFORMANCE_ANALYSIS_INPUTS } from "../lib/performance-analysis-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
 const snapshot: ScenarioSnapshot = {
@@ -142,6 +143,7 @@ const snapshot: ScenarioSnapshot = {
   },
   incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
   historicalBlendInputs: DEFAULT_HISTORICAL_BLEND_INPUTS,
+  performanceAnalysisInputs: DEFAULT_PERFORMANCE_ANALYSIS_INPUTS,
   riskProfileScoreInputs: {
     answers: DEFAULT_RISK_PROFILE_ANSWERS,
   },
@@ -361,6 +363,20 @@ describe("round-trip", () => {
     if (result.ok) {
       expect(result.value.historicalBlendInputs).toEqual(
         DEFAULT_HISTORICAL_BLEND_INPUTS,
+      );
+    }
+  });
+
+  it("defaults performance-analysis inputs when loading an older scenario file", () => {
+    const env = serializeScenario(snapshot);
+    const result = parseScenario({
+      ...env,
+      performanceAnalysisInputs: undefined,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.performanceAnalysisInputs).toEqual(
+        DEFAULT_PERFORMANCE_ANALYSIS_INPUTS,
       );
     }
   });

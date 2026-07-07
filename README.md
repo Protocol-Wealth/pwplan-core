@@ -129,8 +129,8 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **33 planning tools**. The UI has 24 tabs:
-twenty one-tool tabs, the `capital_market_assumptions` control inside the
+The wire contract covers **33 planning tools**. The UI has 25 tabs:
+twenty-one one-tool tabs, the `capital_market_assumptions` control inside the
 Monte Carlo tab, one Education tab that houses the two education funding tools,
 one synthetic Cash Flow Bridge tab that houses the three cash-flow bridge tools,
 the Roth · IRMAA tab over the composite case contract, and a UI-only Scenario
@@ -169,7 +169,7 @@ Roth-conversion planning schema.
 | `fire`                       | FIRE / Coast-FIRE number + years to independence      | tab        |
 | `risk_metrics`               | Sharpe / Sortino / drawdown / VaR for a return series | tab        |
 | `risk_profile_score`         | Risk questionnaire → optimizer-compatible profile     | tab        |
-| `performance_analysis`       | TWR / MWR / fee drag / benchmark-relative math        | gateway    |
+| `performance_analysis`       | TWR / MWR / fee drag / benchmark-relative math        | tab        |
 | `rebalance`                  | Drift + self-financing trades to target weights       | tab        |
 | `optimize_allocation`        | Mean-variance allocation over engine-sourced data     | tab        |
 | `irmaa_headroom`             | Room before next projected Medicare IRMAA cliff       | gateway    |

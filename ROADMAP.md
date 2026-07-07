@@ -181,6 +181,16 @@ on completion and note the version in CHANGELOG.md._
       ingestion, notes, advisor workflow state, approvals, release state,
       persistence, audit trail, or private compliance workflow. 33 wire-contract
       tools, 24 UI tabs.)_
+- [x] S4 performance-analysis UI slice.
+      _(done 2026-07-07: added `PerformanceAnalysisTool` over
+      `performance_analysis`, using only numeric TWR periods, MWR cash-flow
+      rows, terminal value/time, fee-drag return series, benchmark return
+      series, and periods-per-year. Results render TWR, MWR, fee drag,
+      benchmark-relative figures, assumptions, and disclaimer. Scenario JSON
+      remains schema-v4 and defaults older snapshots. No symbols, client
+      identity, account names, holdings, raw transactions, notes, advisor
+      workflow state, approvals, release state, persistence, audit trail, or
+      private compliance workflow. 33 wire-contract tools, 25 UI tabs.)_
 
 ## Dependency on other repos (track, do not build here)
 

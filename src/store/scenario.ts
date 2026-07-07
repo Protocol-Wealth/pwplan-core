@@ -55,9 +55,12 @@ import type {
   PlanningReportPreset,
   WealthRoadmapScope,
   HistoricalBlendRebalanceFrequency,
+  TwrFlowTiming,
+  PerformanceAnalysisResult,
 } from "../contract/planning";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
+import { DEFAULT_PERFORMANCE_ANALYSIS_INPUTS } from "../lib/performance-analysis-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 import type {
   ContractFilingStatus,
@@ -84,6 +87,7 @@ export type PlanningTool =
   | "risk_metrics"
   | "income_layering"
   | "historical_blend"
+  | "performance_analysis"
   | "risk_profile"
   | "rebalance"
   | "optimize_allocation"
@@ -278,6 +282,30 @@ export interface HistoricalBlendInputs {
   initialValue: number;
 }
 
+export interface PerformanceTwrPeriodDraft {
+  startValue: number;
+  endValue: number;
+  netExternalFlow: number;
+}
+
+export interface PerformanceMwrFlowDraft {
+  tYears: number;
+  amount: number;
+}
+
+export interface PerformanceAnalysisInputs {
+  twrPeriods: PerformanceTwrPeriodDraft[];
+  flowTiming: TwrFlowTiming;
+  periodsPerYear: number;
+  mwrFlows: PerformanceMwrFlowDraft[];
+  terminalValue: number;
+  terminalTimeYears: number;
+  grossReturnsText: string;
+  feeRatesText: string;
+  portfolioReturnsText: string;
+  benchmarkReturnsText: string;
+}
+
 export interface RiskProfileScoreInputs {
   /** Fixed questionnaire answer ids keyed by canonical question id. */
   answers: Record<string, string>;
@@ -398,6 +426,7 @@ export interface ScenarioSnapshot {
   riskMetricsInputs: RiskMetricsInputs;
   incomeLayeringInputs: IncomeLayeringInputs;
   historicalBlendInputs: HistoricalBlendInputs;
+  performanceAnalysisInputs: PerformanceAnalysisInputs;
   riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
@@ -427,6 +456,7 @@ interface ScenarioState {
   riskMetricsInputs: RiskMetricsInputs;
   incomeLayeringInputs: IncomeLayeringInputs;
   historicalBlendInputs: HistoricalBlendInputs;
+  performanceAnalysisInputs: PerformanceAnalysisInputs;
   riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
@@ -453,6 +483,7 @@ interface ScenarioState {
   riskMetricsResult: RiskMetricsResult | null;
   incomeLayeringResult: IncomeLayeringResult | null;
   historicalBlendResult: HistoricalBlendResult | null;
+  performanceAnalysisResult: PerformanceAnalysisResult | null;
   riskProfileScoreResult: RiskProfileScoreResult | null;
   rebalanceResult: RebalanceResult | null;
   optimizeAllocationResult: OptimizeAllocationResult | null;
@@ -493,6 +524,9 @@ interface ScenarioState {
   setRiskMetricsInputs: (patch: Partial<RiskMetricsInputs>) => void;
   setIncomeLayeringInputs: (patch: Partial<IncomeLayeringInputs>) => void;
   setHistoricalBlendInputs: (patch: Partial<HistoricalBlendInputs>) => void;
+  setPerformanceAnalysisInputs: (
+    patch: Partial<PerformanceAnalysisInputs>,
+  ) => void;
   setRiskProfileScoreInputs: (patch: Partial<RiskProfileScoreInputs>) => void;
   setRebalanceInputs: (patch: Partial<RebalanceInputs>) => void;
   setOptimizeAllocationInputs: (
@@ -526,6 +560,7 @@ interface ScenarioState {
   setRiskMetricsResult: (r: RiskMetricsResult | null) => void;
   setIncomeLayeringResult: (r: IncomeLayeringResult | null) => void;
   setHistoricalBlendResult: (r: HistoricalBlendResult | null) => void;
+  setPerformanceAnalysisResult: (r: PerformanceAnalysisResult | null) => void;
   setRiskProfileScoreResult: (r: RiskProfileScoreResult | null) => void;
   setRebalanceResult: (r: RebalanceResult | null) => void;
   setOptimizeAllocationResult: (r: OptimizeAllocationResult | null) => void;
@@ -822,6 +857,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   riskMetricsInputs: DEFAULT_RISK_METRICS,
   incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
   historicalBlendInputs: DEFAULT_HISTORICAL_BLEND_INPUTS,
+  performanceAnalysisInputs: DEFAULT_PERFORMANCE_ANALYSIS_INPUTS,
   riskProfileScoreInputs: DEFAULT_RISK_PROFILE_SCORE,
   rebalanceInputs: DEFAULT_REBALANCE,
   optimizeAllocationInputs: DEFAULT_OPTIMIZE_ALLOCATION,
@@ -848,6 +884,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   riskMetricsResult: null,
   incomeLayeringResult: null,
   historicalBlendResult: null,
+  performanceAnalysisResult: null,
   riskProfileScoreResult: null,
   rebalanceResult: null,
   optimizeAllocationResult: null,
@@ -889,6 +926,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       riskMetricsInputs: snapshot.riskMetricsInputs,
       incomeLayeringInputs: snapshot.incomeLayeringInputs,
       historicalBlendInputs: snapshot.historicalBlendInputs,
+      performanceAnalysisInputs: snapshot.performanceAnalysisInputs,
       riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
       rebalanceInputs: snapshot.rebalanceInputs,
       optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
@@ -914,6 +952,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       riskMetricsResult: null,
       incomeLayeringResult: null,
       historicalBlendResult: null,
+      performanceAnalysisResult: null,
       riskProfileScoreResult: null,
       rebalanceResult: null,
       optimizeAllocationResult: null,
@@ -986,6 +1025,15 @@ export const useScenario = create<ScenarioState>((set) => ({
           : {}),
       },
     })),
+  setPerformanceAnalysisInputs: (patch) =>
+    set((s) => ({
+      performanceAnalysisInputs: {
+        ...s.performanceAnalysisInputs,
+        ...patch,
+        ...(patch.twrPeriods ? { twrPeriods: patch.twrPeriods } : {}),
+        ...(patch.mwrFlows ? { mwrFlows: patch.mwrFlows } : {}),
+      },
+    })),
   setRiskProfileScoreInputs: (patch) =>
     set((s) => ({
       riskProfileScoreInputs: {
@@ -1054,6 +1102,8 @@ export const useScenario = create<ScenarioState>((set) => ({
     set({ incomeLayeringResult }),
   setHistoricalBlendResult: (historicalBlendResult) =>
     set({ historicalBlendResult }),
+  setPerformanceAnalysisResult: (performanceAnalysisResult) =>
+    set({ performanceAnalysisResult }),
   setRiskProfileScoreResult: (riskProfileScoreResult) =>
     set({ riskProfileScoreResult }),
   setRebalanceResult: (rebalanceResult) => set({ rebalanceResult }),

@@ -9,6 +9,17 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **S4 performance-analysis UI slice (2026-07-07).** Added a Performance tab
+  over `performance_analysis`, collecting only TWR value/flow rows, MWR
+  time/amount flows, periods-per-year, terminal value/time, fee-drag return
+  series, and benchmark-relative return series. Results render time-weighted
+  return, money-weighted return, fee drag, benchmark-relative figures, engine
+  assumptions, and the engine disclaimer. Scenario JSON remains schema-v4 and
+  defaults older saved files with public-safe numeric examples. No symbols,
+  client identity, account names, holdings, transaction rows, notes, advisor
+  workflow state, approvals, release state, persistence, audit trail, or private
+  compliance workflow was added.
+
 - **S3 historical blend UI slice (2026-07-07).** Added a History tab over
   `historical_blend`, collecting only asset-class ids, weights, lookback,
   optional as-of date, rebalance frequency, and initial value. Results render

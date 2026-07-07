@@ -17,6 +17,7 @@ import {
   validateHistoricalBlend,
   validateIncomeLayering,
   validateOptimizeAllocation,
+  validatePerformanceAnalysis,
   validatePortfolioXray,
   validateRebalance,
   validateRegimeGen,
@@ -43,6 +44,7 @@ import type {
   HistoricalBlendInputs,
   IncomeLayeringInputs,
   OptimizeAllocationInputs,
+  PerformanceAnalysisInputs,
   RebalanceInputs,
   RegimeGenInputs,
   RegimeSwrInputs,
@@ -58,6 +60,7 @@ import type {
 import type { Account, AssetClass } from "../contract/planning";
 import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
+import { DEFAULT_PERFORMANCE_ANALYSIS_INPUTS } from "../lib/performance-analysis-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
 const validGlide: GlidePathInputs = {
@@ -860,6 +863,105 @@ describe("validateRiskMetrics", () => {
     expect(validateRiskMetrics({ ...validRisk, periodsPerYear: 0 })).toContain(
       "Periods per year must be a whole number, one or more.",
     );
+  });
+});
+
+const validPerformance: PerformanceAnalysisInputs =
+  DEFAULT_PERFORMANCE_ANALYSIS_INPUTS;
+
+describe("validatePerformanceAnalysis", () => {
+  it("accepts a well-formed composite request", () => {
+    expect(validatePerformanceAnalysis(validPerformance)).toEqual([]);
+  });
+
+  it("requires at least one analysis section", () => {
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        twrPeriods: [],
+        mwrFlows: [],
+        grossReturnsText: "",
+        feeRatesText: "",
+        portfolioReturnsText: "",
+        benchmarkReturnsText: "",
+      }),
+    ).toContain("Enable at least one performance analysis section.");
+  });
+
+  it("validates TWR period shape against flow timing", () => {
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        twrPeriods: [{ startValue: 0, endValue: 10_000, netExternalFlow: 0 }],
+      }),
+    ).toContain(
+      "TWR period 1 start value plus flow must be greater than zero.",
+    );
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        flowTiming: "end",
+        twrPeriods: [
+          { startValue: 100_000, endValue: 1_000, netExternalFlow: 2_000 },
+        ],
+      }),
+    ).toContain("TWR period 1 end value minus flow cannot be negative.");
+  });
+
+  it("validates MWR terminal and flow requirements", () => {
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        terminalTimeYears: 0,
+      }),
+    ).toContain("Terminal time must be a finite number greater than zero.");
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        mwrFlows: [{ tYears: 3, amount: -100_000 }],
+        terminalTimeYears: 2,
+      }),
+    ).toContain("Terminal time must be at or after every MWR flow time.");
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        mwrFlows: [{ tYears: 0, amount: 100_000 }],
+      }),
+    ).toContain("MWR needs at least one negative contribution flow.");
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        mwrFlows: [
+          { tYears: 0, amount: -100_000 },
+          { tYears: 1, amount: 50_000 },
+          { tYears: 1.5, amount: -10_000 },
+        ],
+        terminalValue: 70_000,
+        terminalTimeYears: 2,
+      }),
+    ).toContain("MWR cash-flow signs allow multiple possible IRR roots.");
+  });
+
+  it("validates fee-drag and benchmark return series", () => {
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        feeRatesText: "",
+      }),
+    ).toContain("Gross returns and fee rates must be supplied together.");
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        feeRatesText: "0.01, 1.0",
+      }),
+    ).toContain("Fee rates must be greater than or equal to 0 and below 1.");
+    expect(
+      validatePerformanceAnalysis({
+        ...validPerformance,
+        portfolioReturnsText: "0.08",
+        benchmarkReturnsText: "0.07, 0.055",
+      }),
+    ).toContain("Portfolio and benchmark returns must have the same length.");
   });
 });
 
