@@ -129,10 +129,12 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **21 planning tools**, all surfaced in the UI: seventeen
-one-tool tabs, the `capital_market_assumptions` control inside the Monte Carlo
-tab, and one synthetic Cash Flow Bridge tab that houses the three cash-flow
-bridge tools. The Cash Flow Bridge tab uses demo monthly-close aggregates only:
+The wire contract covers **27 planning tools**. The UI still has 19 tabs:
+seventeen one-tool tabs, the `capital_market_assumptions` control inside the
+Monte Carlo tab, one synthetic Cash Flow Bridge tab that houses the three
+cash-flow bridge tools, and the Roth · IRMAA tab over the composite case
+contract. The remaining parity tools are typed gateway methods ready for future
+UI slices. The Cash Flow Bridge tab uses demo monthly-close aggregates only:
 no CSV upload, transaction storage, merchant/payee/account/household fields,
 notes, approvals, release state, or audit trail. The Roth · IRMAA tab uses a separate case contract
 (`PLANNING_CASE_CONTRACT_VERSION`) because it mirrors the canonical
@@ -141,6 +143,9 @@ Roth-conversion planning schema.
 | Tool                         | Purpose                                               | UI         |
 | ---------------------------- | ----------------------------------------------------- | ---------- |
 | `monte_carlo_decumulation`   | Path simulation with tax-aware spend-down             | tab        |
+| `solve_goal`                 | Solve one planning variable to target success         | gateway    |
+| `analyze_goals`              | Goal funding status + priority pool allocation        | gateway    |
+| `project_cash_flow`          | Deterministic cash-flow + net-worth projection        | gateway    |
 | `glide_path`                 | Target equity weight by age                           | tab        |
 | `tax_aware_withdrawal`       | Per-year withdrawal ordering + RMD                    | tab        |
 | `roth_conversion`            | Convert-now vs. leave-pre-tax after-tax comparison    | tab        |
@@ -156,6 +161,9 @@ Roth-conversion planning schema.
 | `risk_metrics`               | Sharpe / Sortino / drawdown / VaR for a return series | tab        |
 | `rebalance`                  | Drift + self-financing trades to target weights       | tab        |
 | `optimize_allocation`        | Mean-variance allocation over engine-sourced data     | tab        |
+| `irmaa_headroom`             | Room before next projected Medicare IRMAA cliff       | gateway    |
+| `analyze_roth_conversion`    | Composite Roth / IRMAA analysis                       | Roth tab   |
+| `sequence_conversions`       | Multi-year Roth conversion roll-up                    | gateway    |
 | `build_planning_report`      | Assemble de-identified planning sections into report  | tab        |
 | `capital_market_assumptions` | Real returns / vols / λ / correlations                | MC control |
 | `cashflow_planning_bridge`   | Monthly-close aggregates → planning assumptions       | bridge tab |

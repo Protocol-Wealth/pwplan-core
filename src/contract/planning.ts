@@ -18,13 +18,14 @@
  *
  * INVARIANT — PII-FREE BY CONSTRUCTION:
  * No type in this file may carry client identity. Allowed: derived planning
- * variables (age, NOT date of birth) and de-identified financials. Forbidden as
- * field names anywhere: name, firstName, lastName, dob, dateOfBirth, ssn, email,
- * phone, address. Client↔run correlation is handled OUT OF BAND via an opaque,
- * non-identity-derived `subjectRef` carried as a transport header (see
- * planning-gateway.ts), never in these payloads. This invariant is enforced by
- * planning.test.ts and is what makes the thin UI safe to open-source and to
- * point at either the public MCP backend or pw-api.
+ * variables (age, and year-only birthYear where tax policy requires it, NOT date
+ * of birth) and de-identified financials. Forbidden as field names anywhere:
+ * name, firstName, lastName, dob, dateOfBirth, ssn, email, phone, address.
+ * Client↔run correlation is handled OUT OF BAND via an opaque, non-identity-
+ * derived `subjectRef` carried as a transport header (see planning-gateway.ts),
+ * never in these payloads. This invariant is enforced by planning.test.ts and is
+ * what makes the thin UI safe to open-source and to point at either the public
+ * MCP backend or pw-api.
  */
 
 export const PLANNING_CONTRACT_VERSION = "0.1.0" as const;
@@ -134,6 +135,255 @@ export interface MonteCarloResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: solve_goal
+// ---------------------------------------------------------------------------
+
+export type GoalSolveFor =
+  | "annual_spend"
+  | "annual_contribution"
+  | "savings_rate"
+  | "retirement_age"
+  | "initial_savings";
+
+export interface SolveGoalRequest extends Omit<
+  MonteCarloRequest,
+  "contractVersion"
+> {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  solveFor: GoalSolveFor;
+  targetSuccess: number;
+  bounds?: { min?: number; max?: number };
+  /** Required only for solveFor = "savings_rate". */
+  annualIncome?: number;
+}
+
+export interface SolveGoalPoint {
+  x: number;
+  successProbability: number;
+}
+
+export interface SolveGoalResult {
+  contractVersion: string;
+  solveFor: GoalSolveFor;
+  targetSuccess: number;
+  feasible: boolean;
+  solvedValue: number;
+  achievedSuccess: number;
+  direction: "increasing" | "decreasing";
+  bounds: { min: number; max: number };
+  iterations: number;
+  pathsSearch: number;
+  pathsConfirm: number;
+  seedUsed: number;
+  successCurve: SolveGoalPoint[];
+  terminalValues: Record<string, number>;
+  bestAchievable?: number;
+  savingsMethod?: "net_spend_inflow";
+  disclaimer?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Tool: analyze_goals
+// ---------------------------------------------------------------------------
+
+export type GoalKind =
+  | "retirement"
+  | "education"
+  | "home"
+  | "legacy"
+  | "major_purchase"
+  | "emergency_fund"
+  | "custom";
+
+export interface PlanningGoalInput {
+  /** Opaque local id for reconciling UI labels outside this PII-free contract. */
+  id: string;
+  kind?: GoalKind | string;
+  targetAmount: number;
+  yearsToGoal: number;
+  currentAssets?: number;
+  monthlyContribution?: number;
+  priority?: number;
+  fundingYears?: number;
+  inflationRate?: number;
+  expectedReturn?: number;
+}
+
+export interface SharedFundingPool {
+  currentAssets?: number;
+  monthlyContribution?: number;
+}
+
+export interface AnalyzeGoalsRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  goals: PlanningGoalInput[];
+  defaultInflationRate?: number;
+  defaultExpectedReturn?: number;
+  sharedFundingPool?: SharedFundingPool;
+}
+
+export type GoalFundingStatus = "funded" | "on_track" | "underfunded";
+
+export interface GoalAnalysis {
+  id: string;
+  kind: string;
+  priority: number;
+  yearsToGoal: number;
+  fundingYears: number;
+  inflationRate: number;
+  expectedReturn: number;
+  targetAmountToday: number;
+  futureCost: number;
+  projectedResources: number;
+  projectedFromAssets: number;
+  projectedFromContributions: number;
+  fundedRatio: number;
+  fundedPct: number;
+  status: GoalFundingStatus;
+  onTrack: boolean;
+  shortfallFuture: number;
+  surplusFuture: number;
+  shortfallPresent: number;
+  requiredMonthlyContribution: number | null;
+  currentMonthlyContribution: number;
+  additionalMonthlyNeeded: number | null;
+}
+
+export interface AnalyzeGoalsAggregate {
+  goalCount: number;
+  overallFundedRatio: number;
+  overallFundedPct: number;
+  presentValueOfGoals: number;
+  presentValueOfResources: number;
+  totalShortfallPresent: number;
+  fundedCount: number;
+  onTrackCount: number;
+  underfundedCount: number;
+}
+
+export type GoalPriorityBindingCode =
+  | "none"
+  | "shared_pool"
+  | "shared_current_assets"
+  | "time_horizon"
+  | "shared_monthly_contribution"
+  | "dedicated_goal_resources";
+
+export interface GoalPriorityBindingConstraint {
+  code: GoalPriorityBindingCode;
+  description: string;
+}
+
+export interface GoalPrioritySharedPool {
+  currentAssets: number;
+  monthlyContribution: number;
+  allocatedCurrentAssets: number;
+  unallocatedCurrentAssets: number;
+  allocatedMonthlyContribution: number;
+  unallocatedMonthlyContribution: number;
+}
+
+export interface GoalPriorityAllocationGoal {
+  id: string;
+  priority: number;
+  inputOrder: number;
+  allocatedCurrentAssets: number;
+  allocatedMonthlyContribution: number;
+  fundedRatioAfterSharedAllocation: number;
+  fundedPctAfterSharedAllocation: number;
+  statusAfterSharedAllocation: GoalFundingStatus;
+  shortfallFutureAfterSharedAllocation: number;
+  shortfallPresentAfterSharedAllocation: number;
+  bindingConstraint: GoalPriorityBindingConstraint;
+}
+
+export interface GoalPriorityAllocationSummary {
+  goalCount: number;
+  fundedCount: number;
+  onTrackCount: number;
+  underfundedCount: number;
+  totalShortfallPresentAfterSharedAllocation: number;
+  bindingConstraints: Partial<Record<GoalPriorityBindingCode, number>>;
+}
+
+export interface GoalPriorityAllocation {
+  mode: "priority_ordered_shared_pool";
+  sharedPool: GoalPrioritySharedPool;
+  order: { id: string; priority: number; inputOrder: number }[];
+  goals: GoalPriorityAllocationGoal[];
+  summary: GoalPriorityAllocationSummary;
+}
+
+export interface AnalyzeGoalsResult {
+  contractVersion: string;
+  goals: GoalAnalysis[];
+  aggregate: AnalyzeGoalsAggregate;
+  onTrackThreshold: number;
+  priorityAllocation?: GoalPriorityAllocation;
+  disclaimer?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Tool: project_cash_flow
+// ---------------------------------------------------------------------------
+
+export interface ProjectCashFlowRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  currentAge: number;
+  retirementAge: number;
+  terminalAge: number;
+  currentIncome: number;
+  currentExpenses: number;
+  currentPortfolio: number;
+  filingStatus?: FilingStatus;
+  incomeGrowthRate?: number;
+  expenseInflationRate?: number;
+  expectedReturn?: number;
+  retirementIncome?: number;
+  currentLiabilities?: number;
+  baseYear?: number;
+}
+
+export type CashFlowPhase = "accumulation" | "retirement";
+
+export interface CashFlowYear {
+  age: number;
+  year: number;
+  phase: CashFlowPhase;
+  earnedIncome: number;
+  retirementIncome: number;
+  income: number;
+  expenses: number;
+  taxes: number;
+  netCashFlow: number;
+  portfolioBalance: number;
+  liabilities: number;
+  netWorth: number;
+}
+
+export interface ProjectCashFlowResult {
+  contractVersion: string;
+  years: CashFlowYear[];
+  aggregate: {
+    startingPortfolio: number;
+    startingNetWorth: number;
+    endingPortfolio: number;
+    endingNetWorth: number;
+    peakNetWorth: number;
+    depletionAge: number | null;
+    fundedThroughTerminal: boolean;
+    [key: string]: number | boolean | null;
+  };
+  lifetimeTax: {
+    totalIncome: number;
+    totalTaxesPaid: number;
+    effectiveRate: number;
+  };
+  assumptions: Record<string, number | string>;
+  disclaimer?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Tool: glide_path
 // ---------------------------------------------------------------------------
 
@@ -165,6 +415,8 @@ export interface TaxWithdrawalRequest {
   accounts: Account[];
   grossNeed: number;
   age: number; // for RMD determination
+  /** Optional birth year for SECURE 2.0 RMD start-age policy; never DOB. */
+  birthYear?: number;
   otherTaxableIncome: number;
 }
 
@@ -174,6 +426,8 @@ export interface TaxWithdrawalResult {
   withdrawals: { type: AccountType; gross: number; tax: number }[];
   totalTax: number;
   effectiveRate: number;
+  rmdStartAge?: number;
+  rmdStartAgePolicyVersion?: string;
   rmdSatisfied: boolean;
 }
 
@@ -428,6 +682,8 @@ export interface RmdRequest {
   contractVersion: typeof PLANNING_CONTRACT_VERSION;
   age: number; // owner's age at year end
   balance: number; // prior-year-end traditional balance
+  /** Optional birth year for SECURE 2.0 RMD start-age policy; never DOB. */
+  birthYear?: number;
 }
 
 export interface RmdResult {
@@ -437,6 +693,7 @@ export interface RmdResult {
   distributionPeriod: number; // IRS Uniform Lifetime Table factor
   rmdAmount: number; // 0 before the start age
   effectiveRate: number; // rmdAmount / balance
+  rmdStartAgePolicyVersion?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -722,6 +979,40 @@ export interface OptimizeAllocationResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: irmaa_headroom
+// ---------------------------------------------------------------------------
+
+/** Room before the next projected Medicare IRMAA cliff. Uses year-only,
+ *  filing-status, and MAGI aggregates; no identity data. */
+export interface IrmaaHeadroomRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  target_premium_year: number;
+  magi_ex_conversion: number;
+  per_person: number;
+  inflation: number;
+  buffer: number;
+  filing_status?: FilingStatus | "mfj" | "mfs";
+  source_year?: number;
+  irmaa_table?: Record<string, unknown>;
+}
+
+export interface IrmaaHeadroomResult {
+  contractVersion: string;
+  target_premium_year: number;
+  tiers_source_year: number;
+  inflation_assumption: number;
+  buffer: number;
+  per_person: number;
+  current_tier_index: number;
+  in_top_tier: boolean;
+  projected_current_floor: number;
+  projected_next_floor: number | null;
+  irmaa_safe_headroom: number | null;
+  current_annual_surcharge: number;
+  cliff_cost_if_crossed: number | null;
+}
+
+// ---------------------------------------------------------------------------
 // Tool: build_planning_report
 // ---------------------------------------------------------------------------
 
@@ -771,6 +1062,9 @@ export interface BuildPlanningReportResult {
 
 export const PLANNING_TOOLS = {
   monteCarlo: "monte_carlo_decumulation",
+  solveGoal: "solve_goal",
+  analyzeGoals: "analyze_goals",
+  projectCashFlow: "project_cash_flow",
   glidePath: "glide_path",
   taxWithdrawal: "tax_aware_withdrawal",
   correlationMatrix: "correlation_matrix",
@@ -790,6 +1084,9 @@ export const PLANNING_TOOLS = {
   riskMetrics: "risk_metrics",
   rebalance: "rebalance",
   optimizeAllocation: "optimize_allocation",
+  irmaaHeadroom: "irmaa_headroom",
+  analyzeRothConversion: "analyze_roth_conversion",
+  sequenceConversions: "sequence_conversions",
   buildPlanningReport: "build_planning_report",
 } as const;
 

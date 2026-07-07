@@ -6,9 +6,9 @@ model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
 [`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
 current.
 
-_Last updated: 2026-07-05. 21 wire-contract tools, 19 UI tabs (17 one-tool wire
+_Last updated: 2026-07-07. 27 wire-contract tools, 19 UI tabs (17 one-tool wire
 tabs + Cash Flow Bridge + Roth · IRMAA), scenario files at schema v3, and live
-Nexus has not yet caught up to the three new cash-flow bridge tools._
+Nexus was not re-smoked during the latest contract-parity pass._
 
 ## Orient yourself in 5 minutes
 
@@ -20,7 +20,8 @@ Nexus has not yet caught up to the three new cash-flow bridge tools._
 - **The contract:** `src/contract/planning.ts` is the single source of truth for
   the wire interface to nexus-core (`PLANNING_CONTRACT_VERSION`). It is **PII-free
   by construction** — no name/DOB/SSN/email/phone/address field may ever appear;
-  `planning.test.ts` fails the build if one does. Use age, never date of birth.
+  `planning.test.ts` fails the build if one does. Use age, and only year-of-birth
+  when a tax policy requires it; never use date of birth.
 - **Module boundaries:** `contract/` (wire types, no logic) · `lib/` (gateway +
   PII tripwire) · `store/` (Zustand) · `components/` (UI + pure validation /
   presentation helpers). Keep them clean.
@@ -48,11 +49,11 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
 
 ## Prioritized next tasks (from ROADMAP)
 
-1. **Cash Flow Bridge polish / live follow-up** — the synthetic tab is built with
-   demo monthly-close aggregates only. Re-check `https://nexusmcp.site/mcp/tools`
-   before any live smoke; as of this slice it still returned the older 23-tool
-   list without the three cash-flow bridge tools. Keep tests mocked/offline until
-   live Nexus catches up. Tracked in
+1. **Live follow-up** — the synthetic Cash Flow Bridge tab is built with demo
+   monthly-close aggregates only, and the contract now matches current
+   nexus-core source at 27 tools. Re-check `https://nexusmcp.site/mcp/tools`
+   before any live smoke because deployed Nexus can lag source. Keep tests
+   mocked/offline. Tracked in
    [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
 2. **Theming** to the `-core` family visual language — held for a design reference;
    ask the maintainer for it before starting. Tracked in

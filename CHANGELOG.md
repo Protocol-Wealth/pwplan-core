@@ -9,6 +9,17 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Planning contract parity with current nexus-core source (2026-07-07).**
+  Reconciled `src/contract/planning.ts` and `planning-gateway` from 21 to 27
+  public-safe wire tools by adding typed contract/gateway coverage for
+  `solve_goal`, `analyze_goals`, `project_cash_flow`, `irmaa_headroom`,
+  `analyze_roth_conversion`, and `sequence_conversions`. The existing Roth ·
+  IRMAA tab keeps its compatibility helper, now routed through the shared
+  registry. Added optional `birthYear` / RMD policy-version fields for the
+  latest Nexus RMD start-age kernel. No new UI tabs, persistence, raw ingestion,
+  identity fields, advisor workflow state, approvals, release state, or audit
+  trail were added.
+
 - **Slice 4 synthetic Cash Flow Bridge UI (2026-07-05).** Added the
   `CashflowBridgeTool` tab, which uses demo/de-identified monthly-close aggregate
   values to call `planning.cashflowPlanningBridge`,

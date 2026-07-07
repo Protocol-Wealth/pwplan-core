@@ -9,7 +9,13 @@ import {
   validateCashflowPlanningBridge,
 } from "./tool-validation";
 import { ResultShell } from "./result-shell";
-import { Field, IssueList, NumberInput, RunButton, Select } from "./form-controls";
+import {
+  Field,
+  IssueList,
+  NumberInput,
+  RunButton,
+  Select,
+} from "./form-controls";
 import { pct, usd } from "./format";
 import type {
   BudgetPacingProjectionResult,
@@ -284,7 +290,9 @@ export function CashflowBridgeForm() {
             <NumberInput
               value={reserve.targetMonths}
               step={0.5}
-              onChange={(v) => setCashReserveAnalysisInputs({ targetMonths: v })}
+              onChange={(v) =>
+                setCashReserveAnalysisInputs({ targetMonths: v })
+              }
             />
           </Field>
           <Field label="Secondary months">
@@ -311,9 +319,7 @@ export function CashflowBridgeForm() {
           <Field label="Month day">
             <NumberInput
               value={pacing.monthDay}
-              onChange={(v) =>
-                setBudgetPacingProjectionInputs({ monthDay: v })
-              }
+              onChange={(v) => setBudgetPacingProjectionInputs({ monthDay: v })}
             />
           </Field>
           <Field label="Days in month">
@@ -445,7 +451,10 @@ function PlanningBridgePanel({
         <List title="Warnings" values={result.planningWarnings} />
       )}
       {result.recommendedNextTools.length > 0 && (
-        <List title="Recommended next tools" values={result.recommendedNextTools} />
+        <List
+          title="Recommended next tools"
+          values={result.recommendedNextTools}
+        />
       )}
       <p className="font-mono text-[0.65rem] text-stone-500">
         contract {result.contractVersion} · educational, not advice

@@ -339,7 +339,10 @@ describe("validateBudgetPacingProjection", () => {
   });
   it("requires a positive monthly budget", () => {
     expect(
-      validateBudgetPacingProjection({ ...validBudgetPacing, monthlyBudget: 0 }),
+      validateBudgetPacingProjection({
+        ...validBudgetPacing,
+        monthlyBudget: 0,
+      }),
     ).toContain("Monthly budget must be greater than zero.");
   });
   it("rejects raw CSV-shaped fields", () => {

@@ -112,6 +112,12 @@ on completion and note the version in CHANGELOG.md._
       merchant/payee/account/household fields, approvals, release state, audit
       trail, or private workflow state. Live `nexusmcp.site` had not caught up to
       the three cash-flow bridge tools during this pass, so tests stay mocked.)_
+- [x] Reconcile the public-safe planning contract to current nexus-core source.
+      _(done 2026-07-07: 27 wire-contract tool ids and typed gateway methods,
+      adding `solve_goal`, `analyze_goals`, `project_cash_flow`,
+      `irmaa_headroom`, `analyze_roth_conversion`, and `sequence_conversions`;
+      no new UI tabs, persistence, raw ingestion, advisor workflow state,
+      approvals, release state, audit trail, or identity fields.)_
 
 ## Dependency on other repos (track, do not build here)
 
