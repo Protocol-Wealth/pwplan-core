@@ -38,6 +38,7 @@ import type {
   CashReserveAnalysisInputs,
   CashflowPlanningBridgeInputs,
   CorrelationInputs,
+  EducationFundingInputs,
   FireInputs,
   GlidePathInputs,
   GlidePathShape,
@@ -60,7 +61,7 @@ import type {
 export type { ScenarioSnapshot } from "../store/scenario";
 
 /** Bump when the envelope shape changes incompatibly. */
-export const SCENARIO_FILE_VERSION = "3" as const;
+export const SCENARIO_FILE_VERSION = "4" as const;
 
 /** Tag identifying a pwplan-core scenario file, to reject unrelated JSON. */
 export const SCENARIO_FILE_KIND = "pwplan-core/scenario" as const;
@@ -103,6 +104,7 @@ export function serializeScenario(
     rebalanceInputs: snapshot.rebalanceInputs,
     optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
     buildReportInputs: snapshot.buildReportInputs,
+    educationFundingInputs: snapshot.educationFundingInputs,
     cashflowPlanningBridgeInputs: snapshot.cashflowPlanningBridgeInputs,
     cashReserveAnalysisInputs: snapshot.cashReserveAnalysisInputs,
     budgetPacingProjectionInputs: snapshot.budgetPacingProjectionInputs,
@@ -194,6 +196,7 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "rebalance",
   "optimize_allocation",
   "build_report",
+  "education",
   "cashflow_bridge",
 ];
 
@@ -617,6 +620,56 @@ function parseBuildReport(v: unknown): BuildPlanningReportInputs | null {
   return { title: v.title, includeRegime: v.includeRegime, sections };
 }
 
+function isSubjectRefToken(v: unknown): v is string {
+  return isStr(v) && /^[A-Za-z0-9._:-]{1,80}$/.test(v);
+}
+
+function parseEducationStudent(
+  v: unknown,
+): EducationFundingInputs["students"][number] | null {
+  if (
+    !isObject(v) ||
+    !isSubjectRefToken(v.subjectRef) ||
+    !isNum(v.annualCost) ||
+    !isNum(v.yearsUntilStart) ||
+    !isNum(v.fundingYears)
+  ) {
+    return null;
+  }
+  const student: EducationFundingInputs["students"][number] = {
+    subjectRef: v.subjectRef,
+    annualCost: v.annualCost,
+    yearsUntilStart: v.yearsUntilStart,
+    fundingYears: v.fundingYears,
+  };
+  if (isNum(v.currentSavings)) student.currentSavings = v.currentSavings;
+  if (isNum(v.monthlyContribution)) {
+    student.monthlyContribution = v.monthlyContribution;
+  }
+  return student;
+}
+
+function parseEducationFunding(v: unknown): EducationFundingInputs | null {
+  if (
+    !isObject(v) ||
+    !isNum(v.taxYear) ||
+    !isStr(v.selectedVehicle) ||
+    !isNum(v.tuitionInflation) ||
+    !isNum(v.afterTaxReturn)
+  ) {
+    return null;
+  }
+  const students = parseArray(v.students, parseEducationStudent);
+  if (students === null) return null;
+  return {
+    taxYear: v.taxYear,
+    selectedVehicle: v.selectedVehicle,
+    tuitionInflation: v.tuitionInflation,
+    afterTaxReturn: v.afterTaxReturn,
+    students,
+  };
+}
+
 function parseCashflowPlanningBridge(
   v: unknown,
 ): CashflowPlanningBridgeInputs | null {
@@ -814,6 +867,12 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
   if (buildReportInputs === null) {
     return { ok: false, error: "Malformed or missing report-builder inputs." };
   }
+  const educationFundingInputs = parseEducationFunding(
+    raw.educationFundingInputs,
+  );
+  if (educationFundingInputs === null) {
+    return { ok: false, error: "Malformed or missing education inputs." };
+  }
   const cashflowPlanningBridgeInputs = parseCashflowPlanningBridge(
     raw.cashflowPlanningBridgeInputs,
   );
@@ -861,6 +920,7 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
     rebalanceInputs,
     optimizeAllocationInputs,
     buildReportInputs,
+    educationFundingInputs,
     cashflowPlanningBridgeInputs,
     cashReserveAnalysisInputs,
     budgetPacingProjectionInputs,

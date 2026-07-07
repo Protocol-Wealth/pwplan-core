@@ -8,6 +8,7 @@ import {
   validateBudgetPacingProjection,
   validateCashReserveAnalysis,
   validateCashflowPlanningBridge,
+  validateEducationFunding,
   validateGlidePath,
   validateTaxWithdrawal,
 } from "./tool-validation";
@@ -67,6 +68,12 @@ describe("scenario presets", () => {
           validateBudgetPacingProjection(
             preset.snapshot.budgetPacingProjectionInputs,
           ),
+        ).toEqual([]);
+      });
+
+      it("passes education-funding validation", () => {
+        expect(
+          validateEducationFunding(preset.snapshot.educationFundingInputs),
         ).toEqual([]);
       });
 

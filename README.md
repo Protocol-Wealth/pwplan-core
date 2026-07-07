@@ -129,14 +129,17 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **27 planning tools**. The UI still has 19 tabs:
-seventeen one-tool tabs, the `capital_market_assumptions` control inside the
-Monte Carlo tab, one synthetic Cash Flow Bridge tab that houses the three
-cash-flow bridge tools, and the Roth · IRMAA tab over the composite case
-contract. The remaining parity tools are typed gateway methods ready for future
-UI slices. The Cash Flow Bridge tab uses demo monthly-close aggregates only:
-no CSV upload, transaction storage, merchant/payee/account/household fields,
-notes, approvals, release state, or audit trail. The Roth · IRMAA tab uses a separate case contract
+The wire contract covers **29 planning tools**. The UI has 20 tabs:
+eighteen one-tool tabs, the `capital_market_assumptions` control inside the
+Monte Carlo tab, one Education tab that houses the two education funding tools,
+one synthetic Cash Flow Bridge tab that houses the three cash-flow bridge tools,
+and the Roth · IRMAA tab over the composite case contract. The remaining parity
+tools are typed gateway methods ready for future UI slices. The Education tab
+uses opaque student refs only: no student names, schools, DOBs, emails, account
+names, notes, approvals, release state, or audit trail. The Cash Flow Bridge tab
+uses demo monthly-close aggregates only: no CSV upload, transaction storage,
+merchant/payee/account/household fields, notes, approvals, release state, or
+audit trail. The Roth · IRMAA tab uses a separate case contract
 (`PLANNING_CASE_CONTRACT_VERSION`) because it mirrors the canonical
 Roth-conversion planning schema.
 
@@ -165,6 +168,8 @@ Roth-conversion planning schema.
 | `analyze_roth_conversion`    | Composite Roth / IRMAA analysis                       | Roth tab   |
 | `sequence_conversions`       | Multi-year Roth conversion roll-up                    | gateway    |
 | `build_planning_report`      | Assemble de-identified planning sections into report  | tab        |
+| `education_funding`          | Education cost FV + savings-need solver               | tab        |
+| `education_vehicle_rules`    | Education savings vehicle reference rules             | tab        |
 | `capital_market_assumptions` | Real returns / vols / λ / correlations                | MC control |
 | `cashflow_planning_bridge`   | Monthly-close aggregates → planning assumptions       | bridge tab |
 | `cash_reserve_analysis`      | Reserve target / coverage / funding status            | bridge tab |

@@ -18,6 +18,7 @@ import type {
   CashReserveAnalysisInputs,
   CashflowPlanningBridgeInputs,
   CorrelationInputs,
+  EducationFundingInputs,
   FireInputs,
   GlidePathInputs,
   OptimizeAllocationInputs,
@@ -63,6 +64,10 @@ function isWeight(n: number): boolean {
 
 function isNonNegative(n: number): boolean {
   return Number.isFinite(n) && n >= 0;
+}
+
+function isSubjectRefToken(v: string): boolean {
+  return /^[A-Za-z0-9._:-]{1,80}$/.test(v);
 }
 
 function requireNoRawCashflowFields(value: unknown, issues: string[]): void {
@@ -626,6 +631,67 @@ export function validateBuildPlanningReport(
   }
   if (r.sections.some((s) => s.kind.trim().length === 0)) {
     issues.push("Every section needs a kind.");
+  }
+  return issues;
+}
+
+/** Validate education-funding tool inputs. Structural only; engine does math. */
+export function validateEducationFunding(e: EducationFundingInputs): string[] {
+  const issues: string[] = [];
+  if (!Number.isInteger(e.taxYear) || e.taxYear < 2000 || e.taxYear > 2100) {
+    issues.push("Tax year must be a plausible year.");
+  }
+  if (e.selectedVehicle.trim().length === 0) {
+    issues.push("Select an education vehicle.");
+  }
+  if (e.tuitionInflation <= -1) {
+    issues.push("Tuition inflation must be greater than -1.");
+  }
+  if (e.afterTaxReturn <= -1) {
+    issues.push("After-tax return must be greater than -1.");
+  }
+  if (e.students.length === 0) {
+    issues.push("Add at least one student row.");
+  }
+  if (e.students.length > 12) {
+    issues.push("Education funding supports at most 12 student rows.");
+  }
+  const subjectRefs = new Set<string>();
+  for (const [i, s] of e.students.entries()) {
+    const row = i + 1;
+    if (!isSubjectRefToken(s.subjectRef)) {
+      issues.push(
+        `Student ${row} subject ref must be an opaque token of letters, digits, '.', '_', ':', or '-'.`,
+      );
+    } else if (subjectRefs.has(s.subjectRef)) {
+      issues.push(`Student ${row} subject ref must be unique.`);
+    } else {
+      subjectRefs.add(s.subjectRef);
+    }
+    if (!isNonNegative(s.annualCost)) {
+      issues.push(`Student ${row} annual cost cannot be negative.`);
+    }
+    if (!Number.isInteger(s.yearsUntilStart) || s.yearsUntilStart < 0) {
+      issues.push(`Student ${row} years until start must be a whole number.`);
+    }
+    if (
+      !Number.isInteger(s.fundingYears) ||
+      s.fundingYears < 1 ||
+      s.fundingYears > 8
+    ) {
+      issues.push(
+        `Student ${row} funding years must be a whole number in [1, 8].`,
+      );
+    }
+    if (s.currentSavings !== undefined && !isNonNegative(s.currentSavings)) {
+      issues.push(`Student ${row} current savings cannot be negative.`);
+    }
+    if (
+      s.monthlyContribution !== undefined &&
+      !isNonNegative(s.monthlyContribution)
+    ) {
+      issues.push(`Student ${row} monthly contribution cannot be negative.`);
+    }
   }
   return issues;
 }

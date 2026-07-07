@@ -6,9 +6,9 @@ model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
 [`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
 current.
 
-_Last updated: 2026-07-07. 27 wire-contract tools, 19 UI tabs (17 one-tool wire
-tabs + Cash Flow Bridge + Roth · IRMAA), scenario files at schema v3, and live
-Nexus was not re-smoked during the latest contract-parity pass._
+_Last updated: 2026-07-07. 29 wire-contract tools, 20 UI tabs (18 one-tool wire
+tabs + Education + Cash Flow Bridge + Roth · IRMAA), scenario files at schema
+v4, and live Nexus was not re-smoked during the latest S1 consumer pass._
 
 ## Orient yourself in 5 minutes
 
@@ -49,22 +49,25 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
 
 ## Prioritized next tasks (from ROADMAP)
 
-1. **Live follow-up** — the synthetic Cash Flow Bridge tab is built with demo
-   monthly-close aggregates only, and the contract now matches current
-   nexus-core source at 27 tools. Re-check `https://nexusmcp.site/mcp/tools`
-   before any live smoke because deployed Nexus can lag source. Keep tests
-   mocked/offline. Tracked in
+1. **Next engine slice: S8 multi-account deterministic waterfall.** S1 education
+   is now wired on both sides. The Wealth Roadmap should wait for the
+   deterministic waterfall / goal-priority checks so the Goals and Trajectory
+   sections do not overstate single-bucket behavior.
+2. **Live follow-up** — the synthetic Cash Flow Bridge and Education tabs are
+   built against source-truth contracts. Re-check
+   `https://nexusmcp.site/mcp/tools` before any live smoke because deployed
+   Nexus can lag source. Keep tests mocked/offline. Tracked in
    [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
-2. **Theming** to the `-core` family visual language — held for a design reference;
+3. **Theming** to the `-core` family visual language — held for a design reference;
    ask the maintainer for it before starting. Tracked in
    [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16).
-3. **Optional further calculators** inspired by OSS finance apps (dividend income,
+4. **Optional further calculators** inspired by OSS finance apps (dividend income,
    a withdrawal-tax-aware Roth ladder). Net-worth / holdings tracking stays **out
    of scope** (it would require PII / production data). Each new tool follows the
    established pattern: contract type → gateway method → store slice → pure
    validator → UI tab → tests → docs; engine side ships in nexus-core first.
    Tracked in [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17).
-4. **`NOTICE` patent application number** — DONE: filed 2026-06-04 as USPTO
+5. **`NOTICE` patent application number** — DONE: filed 2026-06-04 as USPTO
    #64/082,241 (PW-PROV-003 provisional; conversion deadline 2027-06-04).
 
 ## Non-negotiable invariants (do not violate — see CLAUDE.md)

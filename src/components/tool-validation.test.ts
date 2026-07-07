@@ -11,6 +11,7 @@ import {
   validateBracketHeadroom,
   validateBuildPlanningReport,
   validateCorrelation,
+  validateEducationFunding,
   validateFire,
   validateGlidePath,
   validateOptimizeAllocation,
@@ -33,6 +34,7 @@ import type {
   CashReserveAnalysisInputs,
   CashflowPlanningBridgeInputs,
   CorrelationInputs,
+  EducationFundingInputs,
   FireInputs,
   GlidePathInputs,
   OptimizeAllocationInputs,
@@ -796,5 +798,83 @@ describe("validateBuildPlanningReport", () => {
         sections: [{ kind: "  ", title: "x", findingsText: "" }],
       }),
     ).toContain("Every section needs a kind.");
+  });
+});
+
+const validEducation: EducationFundingInputs = {
+  taxYear: 2026,
+  selectedVehicle: "529",
+  tuitionInflation: 0.05,
+  afterTaxReturn: 0.055,
+  students: [
+    {
+      subjectRef: "student-1",
+      annualCost: 45_000,
+      yearsUntilStart: 8,
+      fundingYears: 4,
+      currentSavings: 15_000,
+      monthlyContribution: 500,
+    },
+  ],
+};
+
+describe("validateEducationFunding", () => {
+  it("accepts a well-formed education funding request", () => {
+    expect(validateEducationFunding(validEducation)).toEqual([]);
+  });
+
+  it("requires an opaque subject ref token", () => {
+    expect(
+      validateEducationFunding({
+        ...validEducation,
+        students: [
+          { ...validEducation.students[0], subjectRef: "Jane Student" },
+        ],
+      }),
+    ).toContain(
+      "Student 1 subject ref must be an opaque token of letters, digits, '.', '_', ':', or '-'.",
+    );
+  });
+
+  it("requires at least one student and caps row count", () => {
+    expect(
+      validateEducationFunding({ ...validEducation, students: [] }),
+    ).toContain("Add at least one student row.");
+    expect(
+      validateEducationFunding({
+        ...validEducation,
+        students: Array.from({ length: 13 }, (_, i) => ({
+          ...validEducation.students[0],
+          subjectRef: `student-${i + 1}`,
+        })),
+      }),
+    ).toContain("Education funding supports at most 12 student rows.");
+  });
+
+  it("requires unique subject refs for result reconciliation", () => {
+    expect(
+      validateEducationFunding({
+        ...validEducation,
+        students: [
+          validEducation.students[0],
+          { ...validEducation.students[0], annualCost: 30_000 },
+        ],
+      }),
+    ).toContain("Student 2 subject ref must be unique.");
+  });
+
+  it("checks rates and non-negative amounts", () => {
+    expect(
+      validateEducationFunding({
+        ...validEducation,
+        tuitionInflation: -1,
+        students: [{ ...validEducation.students[0], annualCost: -1 }],
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        "Tuition inflation must be greater than -1.",
+        "Student 1 annual cost cannot be negative.",
+      ]),
+    );
   });
 });

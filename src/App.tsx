@@ -57,6 +57,10 @@ import {
   BuildPlanningReportResults,
 } from "./components/BuildPlanningReportTool";
 import {
+  EducationFundingForm,
+  EducationFundingResults,
+} from "./components/EducationTool";
+import {
   CashflowBridgeForm,
   CashflowBridgeResults,
 } from "./components/CashflowBridgeTool";
@@ -83,6 +87,7 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "rebalance", label: "Rebalance" },
   { value: "optimize_allocation", label: "Optimize" },
   { value: "build_report", label: "Report" },
+  { value: "education", label: "Education" },
   { value: "cashflow_bridge", label: "Cash Flow Bridge" },
 ];
 
@@ -229,6 +234,13 @@ function ActiveTool() {
         <>
           <BuildPlanningReportForm />
           <BuildPlanningReportResults />
+        </>
+      );
+    case "education":
+      return (
+        <>
+          <EducationFundingForm />
+          <EducationFundingResults />
         </>
       );
     case "cashflow_bridge":

@@ -9,6 +9,17 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **S1 education funding consumer slice (2026-07-07).** Added
+  `education_funding` and `education_vehicle_rules` to the TypeScript planning
+  contract, `PLANNING_TOOLS`, gateway, mocked dispatch tests, scenario store,
+  schema-v4 scenario import/export, built-in presets, and validation. Added an
+  Education tab with opaque student refs, annual-cost presets, start year,
+  funding years, savings/contribution inputs, household monthly/annual/lump-sum
+  needs, per-student cost schedule SVG bars, and a normalized education vehicle
+  rules table. The public contract now covers 29 wire tools and the UI exposes
+  20 tabs. No student identity fields, raw ingestion, advisor workflow state,
+  approvals, release state, persistence, or audit trail were added.
+
 - **Planning contract parity with current nexus-core source (2026-07-07).**
   Reconciled `src/contract/planning.ts` and `planning-gateway` from 21 to 27
   public-safe wire tools by adding typed contract/gateway coverage for

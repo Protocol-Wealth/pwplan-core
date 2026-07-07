@@ -41,6 +41,9 @@ import type {
   CashReserveAnalysisResult,
   CashflowPlanningBridgeRequest,
   CashflowPlanningBridgeResult,
+  EducationFundingRequest,
+  EducationFundingResult,
+  EducationVehicleRulesResult,
   RiskProfile,
   AllocationObjective,
   SpendingVolatility,
@@ -72,6 +75,7 @@ export type PlanningTool =
   | "rebalance"
   | "optimize_allocation"
   | "build_report"
+  | "education"
   | "cashflow_bridge";
 
 /** Glide-path shape, derived from the wire contract (no new wire type). */
@@ -265,6 +269,14 @@ export type BudgetPacingProjectionInputs = Omit<
   knownOneTimeRemaining: number;
 };
 
+export type EducationFundingInputs = Omit<
+  EducationFundingRequest,
+  "contractVersion"
+> & {
+  taxYear: number;
+  selectedVehicle: string;
+};
+
 /**
  * Live, engine-sourced capital-market assumptions (the "real data, fake clients"
  * flow). Fetched from the `capital_market_assumptions` tool and threaded into the
@@ -298,6 +310,7 @@ export interface ScenarioSnapshot {
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
   buildReportInputs: BuildPlanningReportInputs;
+  educationFundingInputs: EducationFundingInputs;
   cashflowPlanningBridgeInputs: CashflowPlanningBridgeInputs;
   cashReserveAnalysisInputs: CashReserveAnalysisInputs;
   budgetPacingProjectionInputs: BudgetPacingProjectionInputs;
@@ -323,6 +336,7 @@ interface ScenarioState {
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
   buildReportInputs: BuildPlanningReportInputs;
+  educationFundingInputs: EducationFundingInputs;
   cashflowPlanningBridgeInputs: CashflowPlanningBridgeInputs;
   cashReserveAnalysisInputs: CashReserveAnalysisInputs;
   budgetPacingProjectionInputs: BudgetPacingProjectionInputs;
@@ -345,6 +359,8 @@ interface ScenarioState {
   rebalanceResult: RebalanceResult | null;
   optimizeAllocationResult: OptimizeAllocationResult | null;
   buildReportResult: BuildPlanningReportResult | null;
+  educationFundingResult: EducationFundingResult | null;
+  educationVehicleRulesResult: EducationVehicleRulesResult | null;
   cashflowPlanningBridgeResult: CashflowPlanningBridgeResult | null;
   cashReserveAnalysisResult: CashReserveAnalysisResult | null;
   budgetPacingProjectionResult: BudgetPacingProjectionResult | null;
@@ -379,6 +395,7 @@ interface ScenarioState {
     patch: Partial<OptimizeAllocationInputs>,
   ) => void;
   setBuildReportInputs: (patch: Partial<BuildPlanningReportInputs>) => void;
+  setEducationFundingInputs: (patch: Partial<EducationFundingInputs>) => void;
   setCashflowPlanningBridgeInputs: (
     patch: Partial<CashflowPlanningBridgeInputs>,
   ) => void;
@@ -406,6 +423,10 @@ interface ScenarioState {
   setRebalanceResult: (r: RebalanceResult | null) => void;
   setOptimizeAllocationResult: (r: OptimizeAllocationResult | null) => void;
   setBuildReportResult: (r: BuildPlanningReportResult | null) => void;
+  setEducationFundingResult: (r: EducationFundingResult | null) => void;
+  setEducationVehicleRulesResult: (
+    r: EducationVehicleRulesResult | null,
+  ) => void;
   setCashflowPlanningBridgeResult: (
     r: CashflowPlanningBridgeResult | null,
   ) => void;
@@ -614,6 +635,23 @@ const DEFAULT_BUILD_REPORT: BuildPlanningReportInputs = {
   ],
 };
 
+const DEFAULT_EDUCATION_FUNDING: EducationFundingInputs = {
+  taxYear: 2026,
+  selectedVehicle: "529",
+  tuitionInflation: 0.05,
+  afterTaxReturn: 0.055,
+  students: [
+    {
+      subjectRef: "student-1",
+      annualCost: 45_000,
+      yearsUntilStart: 8,
+      fundingYears: 4,
+      currentSavings: 15_000,
+      monthlyContribution: 500,
+    },
+  ],
+};
+
 const DEFAULT_CASHFLOW_PLANNING_BRIDGE: CashflowPlanningBridgeInputs = {
   monthsAnalyzed: 6,
   averageMonthlySpending: 8_000,
@@ -664,6 +702,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   rebalanceInputs: DEFAULT_REBALANCE,
   optimizeAllocationInputs: DEFAULT_OPTIMIZE_ALLOCATION,
   buildReportInputs: DEFAULT_BUILD_REPORT,
+  educationFundingInputs: DEFAULT_EDUCATION_FUNDING,
   cashflowPlanningBridgeInputs: DEFAULT_CASHFLOW_PLANNING_BRIDGE,
   cashReserveAnalysisInputs: DEFAULT_CASH_RESERVE_ANALYSIS,
   budgetPacingProjectionInputs: DEFAULT_BUDGET_PACING,
@@ -686,6 +725,8 @@ export const useScenario = create<ScenarioState>((set) => ({
   rebalanceResult: null,
   optimizeAllocationResult: null,
   buildReportResult: null,
+  educationFundingResult: null,
+  educationVehicleRulesResult: null,
   cashflowPlanningBridgeResult: null,
   cashReserveAnalysisResult: null,
   budgetPacingProjectionResult: null,
@@ -719,6 +760,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       rebalanceInputs: snapshot.rebalanceInputs,
       optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
       buildReportInputs: snapshot.buildReportInputs,
+      educationFundingInputs: snapshot.educationFundingInputs,
       cashflowPlanningBridgeInputs: snapshot.cashflowPlanningBridgeInputs,
       cashReserveAnalysisInputs: snapshot.cashReserveAnalysisInputs,
       budgetPacingProjectionInputs: snapshot.budgetPacingProjectionInputs,
@@ -740,6 +782,8 @@ export const useScenario = create<ScenarioState>((set) => ({
       rebalanceResult: null,
       optimizeAllocationResult: null,
       buildReportResult: null,
+      educationFundingResult: null,
+      educationVehicleRulesResult: null,
       cashflowPlanningBridgeResult: null,
       cashReserveAnalysisResult: null,
       budgetPacingProjectionResult: null,
@@ -786,6 +830,10 @@ export const useScenario = create<ScenarioState>((set) => ({
     })),
   setBuildReportInputs: (patch) =>
     set((s) => ({ buildReportInputs: { ...s.buildReportInputs, ...patch } })),
+  setEducationFundingInputs: (patch) =>
+    set((s) => ({
+      educationFundingInputs: { ...s.educationFundingInputs, ...patch },
+    })),
   setCashflowPlanningBridgeInputs: (patch) =>
     set((s) => ({
       cashflowPlanningBridgeInputs: {
@@ -827,6 +875,10 @@ export const useScenario = create<ScenarioState>((set) => ({
   setOptimizeAllocationResult: (optimizeAllocationResult) =>
     set({ optimizeAllocationResult }),
   setBuildReportResult: (buildReportResult) => set({ buildReportResult }),
+  setEducationFundingResult: (educationFundingResult) =>
+    set({ educationFundingResult }),
+  setEducationVehicleRulesResult: (educationVehicleRulesResult) =>
+    set({ educationVehicleRulesResult }),
   setCashflowPlanningBridgeResult: (cashflowPlanningBridgeResult) =>
     set({ cashflowPlanningBridgeResult }),
   setCashReserveAnalysisResult: (cashReserveAnalysisResult) =>

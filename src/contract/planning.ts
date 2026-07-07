@@ -21,11 +21,13 @@
  * variables (age, and year-only birthYear where tax policy requires it, NOT date
  * of birth) and de-identified financials. Forbidden as field names anywhere:
  * name, firstName, lastName, dob, dateOfBirth, ssn, email, phone, address.
- * Client↔run correlation is handled OUT OF BAND via an opaque, non-identity-
- * derived `subjectRef` carried as a transport header (see planning-gateway.ts),
- * never in these payloads. This invariant is enforced by planning.test.ts and is
- * what makes the thin UI safe to open-source and to point at either the public
- * MCP backend or pw-api.
+ * Client↔run correlation is usually handled OUT OF BAND via an opaque,
+ * non-identity-derived `subjectRef` carried as a transport header (see
+ * planning-gateway.ts). Tool-local row reconciliation may use an explicit
+ * `subjectRef` field only when the engine needs to match de-identified rows in
+ * its output; it must be an opaque token, never identity-derived. This invariant
+ * is enforced by planning.test.ts and is what makes the thin UI safe to
+ * open-source and to point at either the public MCP backend or pw-api.
  */
 
 export const PLANNING_CONTRACT_VERSION = "0.1.0" as const;
@@ -601,6 +603,112 @@ export interface BudgetPacingProjectionResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tools: education_funding + education_vehicle_rules
+// ---------------------------------------------------------------------------
+
+export interface EducationStudentFundingInput {
+  /** Opaque row token for reconciling UI rows. Not a student identifier. */
+  subjectRef: string;
+  annualCost: number;
+  yearsUntilStart: number;
+  fundingYears: number;
+  currentSavings?: number;
+  monthlyContribution?: number;
+}
+
+export interface EducationFundingRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  students: EducationStudentFundingInput[];
+  tuitionInflation: number;
+  afterTaxReturn: number;
+}
+
+export interface EducationCostYear {
+  yearIndex: number;
+  yearsFromNow: number;
+  cost: number;
+  costAtGoalStart: number;
+}
+
+export interface EducationCostResult {
+  annualCost: number;
+  tuitionInflation: number;
+  yearsUntilStart: number;
+  fundingYears: number;
+  firstYearCost: number;
+  totalFutureCost: number;
+  totalCostAtGoalStart: number;
+  costSchedule: EducationCostYear[];
+}
+
+export interface EducationSavingsNeed {
+  targetFv: number;
+  currentSavings: number;
+  afterTaxReturn: number;
+  yearsUntilStart: number;
+  monthly: number;
+  annual: number;
+  lumpSum: number;
+}
+
+export interface EducationStudentFundingResult {
+  subjectRef: string;
+  cost: EducationCostResult;
+  projectedSavingsAtStart: number;
+  savingsGapAtStart: number;
+  savingsNeed: EducationSavingsNeed;
+}
+
+export interface EducationFundingResult {
+  contractVersion: string;
+  tuitionInflation: number;
+  afterTaxReturn: number;
+  students: EducationStudentFundingResult[];
+  householdTotals: {
+    totalFutureCost: number;
+    totalCostAtGoalStart: number;
+    projectedSavingsAtStart: number;
+    savingsGapAtStart: number;
+    savingsNeed: {
+      monthly: number;
+      annual: number;
+      lumpSum: number;
+    };
+  };
+  disclaimer?: string;
+}
+
+export interface EducationVehicleRulesRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  taxYear?: number;
+}
+
+export interface EducationVehicleRule {
+  taxYear: number;
+  vehicle: string;
+  label: string;
+  contributionLimit: number | null;
+  annualGiftExclusion: number | null;
+  fiveYearSuperfundingSingle: number | null;
+  fiveYearSuperfundingMarriedJoint: number | null;
+  magiPhaseoutSingle: [number, number] | null;
+  magiPhaseoutMarriedJoint: [number, number] | null;
+  qualifiedDistributionTreatment: string;
+  nonqualifiedDistributionPenaltyRate: number | null;
+  /** Public table copy from the engine, normalized from wire `notes`. */
+  referenceNotes: string[];
+  tableVersion: string;
+}
+
+export interface EducationVehicleRulesResult {
+  contractVersion: string;
+  taxYear: number;
+  tableVersion: string;
+  rules: EducationVehicleRule[];
+  disclaimer?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Tool: roth_conversion
 // ---------------------------------------------------------------------------
 
@@ -1073,6 +1181,8 @@ export const PLANNING_TOOLS = {
   cashflowPlanningBridge: "cashflow_planning_bridge",
   cashReserveAnalysis: "cash_reserve_analysis",
   budgetPacingProjection: "budget_pacing_projection",
+  educationFunding: "education_funding",
+  educationVehicleRules: "education_vehicle_rules",
   rothConversion: "roth_conversion",
   sequenceOfReturnsStress: "sequence_of_returns_stress",
   rmd: "rmd",
