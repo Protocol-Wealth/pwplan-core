@@ -1,10 +1,10 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-07-07 (S1 education funding consumer slice: 29 public-safe wire tools, 20 UI tabs). Maintain it._
+_Last updated: 2026-07-07 (S10 scenario compare UI slice: 29 public-safe wire tools, 21 UI tabs). Maintain it._
 
 ## Status
 
-Last local gate for the S1 education funding consumer slice was green:
+Last local gate for the S10 scenario compare UI slice was green:
 typecheck clean, lint clean, format check clean, tests pass, and build succeeds.
 **This repo is now
 positioned as demo / case-study tooling**: it runs
@@ -13,8 +13,9 @@ against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
 stack (pwos-core PII de-identification + audit log) and any pw-api integration
 have been **removed from this OSS repo** and live only in a private fork; the
 `pw-api` gateway seam is kept so that fork stays a low-diff sync. The wire
-contract has **29** tools; the UI exposes **20 tabs** (18 one-tool wire tabs, the
-synthetic Cash Flow Bridge tab, and the Roth · IRMAA case-contract tab), with
+contract has **29** tools; the UI exposes **21 tabs** (17 one-tool wire tabs, the
+Education tab, the synthetic Cash Flow Bridge tab, the Roth · IRMAA
+case-contract tab, and the Scenario Compare tab), with
 `capital_market_assumptions` surfaced as the Monte Carlo "Load real market
 assumptions" control. Each UI tab is wired to its gateway method with
 client-side request-shape validation and hand-rolled SVG/CSS results (no chart
@@ -86,7 +87,7 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; fail-fast backend env parsing; one `planning.*` method per wire tool (29) plus the compatibility `analyzeRothConversion(req)` helper, now routed through the shared registry. `education_funding` additionally rejects non-opaque student `subjectRef` values before dispatch.
 - `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 29 tools, cash-flow bridge dispatch checks, education dispatch + `notes`→`referenceNotes` normalization, CMA drop-in round-trip, `pathCacheKey` passthrough, per-tool dispatch shape checks (incl. solve_goal, analyze_goals, project_cash_flow, education_funding, education_vehicle_rules, irmaa_headroom, analyze_roth_conversion, sequence_conversions, optimize_allocation, and build_planning_report), pw-api seam, and invalid-backend fail-fast behavior.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
-- `src/store/scenario.ts` — Zustand store: active `tool` (20 UI tabs) + per-tool inputs (scenario / glidePath / tax / roth / rothIrmaa / sor / rmd / bracket / socialSecurity / regimeSwr / correlation / regimeGen / fire / riskMetrics / rebalance / optimizeAllocation / buildReport / educationFunding / cashflowBridge) + result slots (incl. `xrayResult` / `fireResult` / `riskMetricsResult` / `rebalanceResult` / `optimizeAllocationResult` / `buildReportResult` / education results / cash-flow bridge results); the Portfolio X-ray + Rebalance reuse the shared scenario portfolio. Accounts/asset classes are one shared portfolio. Seeded valid defaults. `ScenarioSnapshot` captures every current tool input, and `loadSnapshot` clears every result slot plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions.
+- `src/store/scenario.ts` — Zustand store: active `tool` (21 UI tabs) + per-tool inputs (scenario / glidePath / tax / roth / rothIrmaa / sor / rmd / bracket / socialSecurity / regimeSwr / correlation / regimeGen / fire / riskMetrics / rebalance / optimizeAllocation / buildReport / educationFunding / cashflowBridge / compare) + result slots (incl. `xrayResult` / `fireResult` / `riskMetricsResult` / `rebalanceResult` / `optimizeAllocationResult` / `buildReportResult` / education results / cash-flow bridge results / compare results); the Portfolio X-ray + Rebalance reuse the shared scenario portfolio. Accounts/asset classes are one shared portfolio. Seeded valid defaults. `ScenarioSnapshot` captures every current tool input, and `loadSnapshot` clears every result slot plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions. The compare queue holds 2-3 in-memory scenario snapshots and a replay seed only; it is not persisted and adds no wire type.
 - `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity. Includes the **"Load real market assumptions"** control (calls `capital_market_assumptions`, drops real returns/vols/λ onto the current portfolio + carries the engine correlation matrix into the run; provenance `asOf` line + the shared `MatrixTable`).
 - `src/components/MatrixTable.tsx` — generic read-only square-matrix renderer (ids × ids → numbers); shared by the CMA control, the Correlation tab, and the Regime-paths transition matrix.
 - `src/components/GlidePathTool.tsx` — glide-path form + equity-weight-by-age line chart (fixed 0–1 axis).
@@ -107,6 +108,8 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/components/BuildPlanningReportTool.tsx` — build-planning-report form (title, add/remove de-identified sections with kind + optional title + findings textarea, regime-annotate toggle) + results (ordered sections with findings + the engine's assumptions list). `validateBuildPlanningReport`.
 - `src/components/EducationTool.tsx` — education-funding form (opaque student refs, annual cost presets, start year, funding years, current savings, monthly contribution, tuition inflation, after-tax return, vehicle focus) + results (household monthly/annual/lump-sum need, per-student cost schedule SVG bars, and normalized vehicle-rule comparison table). Uses `education_funding` + `education_vehicle_rules`; no student names, DOBs, emails, schools, account names, notes, or workflow state.
 - `src/components/CashflowBridgeTool.tsx` — synthetic Cash Flow Bridge tab: three aggregate-only panels over `cashflow_planning_bridge`, `cash_reserve_analysis`, and `budget_pacing_projection`; no import, no transactions, no merchant/payee/account/household fields, no workflow state.
+- `src/components/CompareTool.tsx` — S10 Scenario Compare tab: captures 2-3 current scenario snapshots into an in-memory queue, replays `monte_carlo_decumulation` for each with one deterministic seed, blocks mixed live-CMA/default-CMA source references, surfaces seed + best-effort `cmaVersion` metadata, and renders a success/P50/worst-path diff table plus median-balance SVG overlay. UI-only; no new contract fields, persistence, raw data, workflow state, approvals, release state, or audit trail.
+- `src/components/scenario-compare.ts` / `.test.ts` — pure compare gating and display helpers (scenario count, deterministic seed, CMA-source consistency, future additive `cmaVersion` extraction, result seed/cmaVersion mismatch checks, and row deltas).
 - `src/components/scenario-io.ts` / `.test.ts` — pure, versioned, PII-free schema-v4 serialize/parse for all current tool inputs (fail-closed `assertNoPII` on save + on the raw input at load); no browser storage.
 - `src/components/scenario-presets.ts` / `.test.ts` — three built-in case-study snapshots (accumulator / near-retiree / crisis-stress), each validator-clean and round-trip-safe.
 - `src/components/ScenarioIO.tsx` — Save (Blob download) / Load (file input) / preset picker; uses the store's `loadSnapshot`.
@@ -115,7 +118,7 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/components/ResultsPanel.tsx` — Monte Carlo results: success probability + 3 hand-rolled charts (median-balance line/area, terminal percentile bars, regime strip when present). Inline SVG/CSS, no chart lib.
 - `src/components/results-viz.ts` / `.test.ts` — pure geometry helpers (seriesGeometry incl. forcedMax, percentileBars, regimeRuns, ageWeightSeries); 20 tests. Presentation math only.
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
-- `src/App.tsx` (20-tab bar + ScenarioIO), `src/main.tsx`, `src/index.css`, `index.html` — shell.
+- `src/App.tsx` (21-tab bar + ScenarioIO), `src/main.tsx`, `src/index.css`, `index.html` — shell.
 - `scripts/smoke-nexus.mjs` — opt-in live round-trip against nexusmcp.site (PII-free default scenario); not in the gate suite, never in CI.
 - `docs/nexus-core-requirements.md` — the original consumer-side spec handed to nexus-core (the first 6 tools, enums, CORS/determinism). Historical: nexus-core now exposes a larger planning surface, while this client intentionally exposes 29 wire tools plus the Roth · IRMAA case contract payload; `src/contract/planning.ts` is the source of truth for this OSS UI.
 - Configs: `package.json`, `tsconfig*.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `.env.example`.
@@ -147,10 +150,10 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
   CI); `scripts/smoke-nexus.mjs` is the opt-in manual check.
 - `NOTICE` patent application number is USPTO #64/082,241 (PW-PROV-003, filed
   2026-06-04; conversion deadline 2027-06-04).
-- **UI surface is intentionally narrower than the 29-tool contract** — 18
+- **UI surface is intentionally narrower than the 29-tool contract** — 17
   one-tool tabs, the `capital_market_assumptions` Monte Carlo control, the
-  Education tab for the two education tools, the synthetic Cash Flow Bridge tab for the three cash-flow tools, and the **Roth ·
-  IRMAA tab** over the composite case contract (v1.1.0). `solve_goal`,
+  Education tab for the two education tools, the synthetic Cash Flow Bridge tab for the three cash-flow tools, the **Roth ·
+  IRMAA tab** over the composite case contract (v1.1.0), and the S10 Scenario Compare tab over Monte Carlo replay. `solve_goal`,
   `analyze_goals`, `project_cash_flow`, `irmaa_headroom`, and
   `sequence_conversions` are gateway-ready but do not yet have dedicated tabs.
 - There is no public Cash Flow OS ingestion workflow. The UI is synthetic and
