@@ -14,6 +14,7 @@ import {
   validateEducationFunding,
   validateFire,
   validateGlidePath,
+  validateHistoricalBlend,
   validateIncomeLayering,
   validateOptimizeAllocation,
   validatePortfolioXray,
@@ -39,6 +40,7 @@ import type {
   EducationFundingInputs,
   FireInputs,
   GlidePathInputs,
+  HistoricalBlendInputs,
   IncomeLayeringInputs,
   OptimizeAllocationInputs,
   RebalanceInputs,
@@ -54,6 +56,7 @@ import type {
   TaxWithdrawalInputs,
 } from "../store/scenario";
 import type { Account, AssetClass } from "../contract/planning";
+import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import { DEFAULT_RISK_PROFILE_ANSWERS } from "../lib/risk-profile-questionnaire";
 
@@ -668,6 +671,68 @@ const validRisk: RiskMetricsInputs = {
 
 const validIncomeLayering: IncomeLayeringInputs =
   DEFAULT_INCOME_LAYERING_INPUTS;
+
+const validHistoricalBlend: HistoricalBlendInputs =
+  DEFAULT_HISTORICAL_BLEND_INPUTS;
+
+describe("validateHistoricalBlend", () => {
+  it("accepts a well-formed index blend", () => {
+    expect(validateHistoricalBlend(validHistoricalBlend)).toEqual([]);
+  });
+
+  it("requires at least two distinct asset-class ids", () => {
+    expect(
+      validateHistoricalBlend({
+        ...validHistoricalBlend,
+        assetClassIdsText: "us_equity",
+        weights: { us_equity: 1 },
+      }),
+    ).toContain("Enter at least two asset-class ids.");
+    expect(
+      validateHistoricalBlend({
+        ...validHistoricalBlend,
+        assetClassIdsText: "us_equity us_equity",
+      }),
+    ).toContain("Asset-class ids must be distinct.");
+  });
+
+  it("requires selected weights to sum to one", () => {
+    expect(
+      validateHistoricalBlend({
+        ...validHistoricalBlend,
+        weights: { us_equity: 0.6, us_bonds: 0.3 },
+      }),
+    ).toContain("Weights must sum to 1 across the selected asset classes.");
+  });
+
+  it("validates lookback, optional date, frequency, and initial value", () => {
+    expect(
+      validateHistoricalBlend({ ...validHistoricalBlend, lookbackDays: 10 }),
+    ).toContain("Lookback days must be a whole number in [30, 3650].");
+    expect(
+      validateHistoricalBlend({ ...validHistoricalBlend, lookbackDays: 3651 }),
+    ).toContain("Lookback days must be a whole number in [30, 3650].");
+    expect(
+      validateHistoricalBlend({ ...validHistoricalBlend, asOf: "07/07/2026" }),
+    ).toContain("As-of date must be blank or YYYY-MM-DD.");
+    expect(
+      validateHistoricalBlend({
+        ...validHistoricalBlend,
+        rebalanceFrequency:
+          "daily" as HistoricalBlendInputs["rebalanceFrequency"],
+      }),
+    ).toContain("Rebalance frequency must be monthly, annual, or none.");
+    expect(
+      validateHistoricalBlend({ ...validHistoricalBlend, initialValue: 0 }),
+    ).toContain("Initial value must be greater than zero.");
+    expect(
+      validateHistoricalBlend({
+        ...validHistoricalBlend,
+        initialValue: Number.POSITIVE_INFINITY,
+      }),
+    ).toContain("Initial value must be greater than zero.");
+  });
+});
 
 describe("validateIncomeLayering", () => {
   it("accepts a well-formed request with shared accounts", () => {
