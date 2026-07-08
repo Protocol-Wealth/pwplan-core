@@ -56,6 +56,24 @@ const snapshot: ScenarioSnapshot = {
         colaRate: 0.02,
       },
     ],
+    goals: [
+      {
+        id: "goal-1",
+        targetAmount: 75_000,
+        yearsToGoal: 10,
+        fundingYears: 2,
+        inflationRate: 0.025,
+        tier: "want",
+      },
+    ],
+    guardrails: {
+      rule: "guyton_klinger",
+      band: 0.2,
+      raise: 0.1,
+      cut: 0.1,
+      freezeAfterLoss: true,
+      preservationFinalYears: 15,
+    },
     returnModel: "emf_regime",
     paths: 10_000,
   },
@@ -290,6 +308,21 @@ describe("round-trip", () => {
         (a) => a.id === "us_bonds",
       );
       expect(bonds?.lambda).toBeUndefined();
+    }
+  });
+
+  it("defaults optional Monte Carlo goals and guardrails when loading an older scenario file", () => {
+    const env = serializeScenario(snapshot);
+    const oldInputs = { ...env.inputs };
+    delete (oldInputs as Partial<typeof oldInputs>).goals;
+    delete (oldInputs as Partial<typeof oldInputs>).guardrails;
+
+    const result = parseScenario({ ...env, inputs: oldInputs });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.inputs.goals).toEqual([]);
+      expect(result.value.inputs.guardrails).toBeNull();
     }
   });
 

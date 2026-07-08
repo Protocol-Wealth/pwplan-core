@@ -13,8 +13,11 @@ Risk Profile tab can load scored profiles into Optimize Allocation, the Income
 Layers tab surfaces retirement-income layering, the History tab surfaces
 historical index blends, the Performance tab surfaces TWR/MWR/fee-drag/
 benchmark-relative math, the Inherited IRA tab surfaces 10-year strategy
-comparisons, scenario files remain schema v4, and live Nexus was deployed and
-smoked after S11/S12._
+comparisons, the Monte Carlo result view surfaces Nexus report diagnostics
+(Wilson CI, depletion/shortfall, first-decade deciles, run manifest, guardrails,
+goal funding, and LTC shock impact) with typed request controls for opaque goals
+and Guyton-Klinger guardrails, scenario files remain schema v4, and live Nexus
+was deployed and smoked after S11/S12._
 
 ## Orient yourself in 5 minutes
 

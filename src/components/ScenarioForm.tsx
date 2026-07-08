@@ -24,6 +24,9 @@ import type {
   AccountType,
   AssetClass,
   FilingStatus,
+  MonteCarloGoalInput,
+  MonteCarloGoalTier,
+  MonteCarloGuardrailsInput,
   ReturnModel,
 } from "../contract/planning";
 
@@ -47,6 +50,21 @@ const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "married_separate", label: "Married — separate" },
   { value: "head_of_household", label: "Head of household" },
 ];
+
+const GOAL_TIERS: { value: MonteCarloGoalTier; label: string }[] = [
+  { value: "need", label: "Need" },
+  { value: "want", label: "Want" },
+  { value: "wish", label: "Wish" },
+];
+
+const DEFAULT_GUARDRAILS: MonteCarloGuardrailsInput = {
+  rule: "guyton_klinger",
+  band: 0.2,
+  raise: 0.1,
+  cut: 0.1,
+  freezeAfterLoss: true,
+  preservationFinalYears: 15,
+};
 
 function replaceAt<T>(arr: T[], i: number, next: T): T[] {
   return arr.map((x, j) => (j === i ? next : x));
@@ -93,6 +111,8 @@ export function ScenarioForm() {
         filingStatus: inputs.filingStatus,
         returnModel: inputs.returnModel,
         paths: inputs.paths,
+        ...(inputs.goals.length > 0 ? { goals: inputs.goals } : {}),
+        ...(inputs.guardrails ? { guardrails: inputs.guardrails } : {}),
       });
       setResult(result);
     } catch (e) {
@@ -242,6 +262,40 @@ export function ScenarioForm() {
     setInputs({ guaranteedIncome: removeAt(inputs.guaranteedIncome, i) });
   }
 
+  // --- path-funded goals + guardrails -------------------------------------
+
+  function addGoal() {
+    setInputs({
+      goals: [
+        ...inputs.goals,
+        {
+          id: `goal-${inputs.goals.length + 1}`,
+          targetAmount: 50_000,
+          yearsToGoal: Math.max(inputs.retirementAge - inputs.currentAge, 1),
+          fundingYears: 1,
+          inflationRate: inputs.spendColaRate,
+          tier: "want",
+        },
+      ],
+    });
+  }
+
+  function updateGoal(i: number, patch: Partial<MonteCarloGoalInput>) {
+    setInputs({
+      goals: replaceAt(inputs.goals, i, { ...inputs.goals[i], ...patch }),
+    });
+  }
+
+  function removeGoal(i: number) {
+    setInputs({ goals: removeAt(inputs.goals, i) });
+  }
+
+  function setGuardrails(patch: Partial<MonteCarloGuardrailsInput>) {
+    setInputs({
+      guardrails: { ...DEFAULT_GUARDRAILS, ...inputs.guardrails, ...patch },
+    });
+  }
+
   return (
     <section className="space-y-6">
       <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-stone-500">
@@ -303,6 +357,147 @@ export function ScenarioForm() {
             />
           </Field>
         </div>
+      </div>
+
+      {/* Goals + guardrails ---------------------------------------------- */}
+      <div className="space-y-3">
+        <SectionHeader
+          title="Path-funded goals"
+          addLabel="goal"
+          onAdd={addGoal}
+        />
+        {inputs.goals.length === 0 && (
+          <Empty>
+            No additional path-funded goals. The base run uses annual spend
+            only.
+          </Empty>
+        )}
+        {inputs.goals.map((goal, i) => (
+          <Card key={i} onRemove={() => removeGoal(i)}>
+            <div className="grid grid-cols-2 gap-3 pr-4">
+              <Field label="Opaque id">
+                <TextInput
+                  value={goal.id}
+                  placeholder="goal-1"
+                  onChange={(v) => updateGoal(i, { id: v.trim() })}
+                />
+              </Field>
+              <Field label="Tier">
+                <Select
+                  value={goal.tier ?? "want"}
+                  onChange={(v) =>
+                    updateGoal(i, { tier: v as MonteCarloGoalTier })
+                  }
+                  options={GOAL_TIERS}
+                />
+              </Field>
+              <Field label="Target amount">
+                <NumberInput
+                  value={goal.targetAmount}
+                  onChange={(v) => updateGoal(i, { targetAmount: v })}
+                />
+              </Field>
+              <Field label="Years to goal">
+                <NumberInput
+                  value={goal.yearsToGoal}
+                  onChange={(v) => updateGoal(i, { yearsToGoal: v })}
+                />
+              </Field>
+              <Field label="Funding years">
+                <NumberInput
+                  value={goal.fundingYears ?? 1}
+                  onChange={(v) => updateGoal(i, { fundingYears: v })}
+                />
+              </Field>
+              <Field label="Inflation">
+                <NumberInput
+                  step={0.001}
+                  value={goal.inflationRate ?? 0}
+                  onChange={(v) => updateGoal(i, { inflationRate: v })}
+                />
+              </Field>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between border-b border-stone-200 pb-1">
+          <h3 className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-stone-500">
+            Guardrails
+          </h3>
+          <button
+            type="button"
+            onClick={() =>
+              setInputs({
+                guardrails: inputs.guardrails ? null : DEFAULT_GUARDRAILS,
+              })
+            }
+            className="font-mono text-[0.65rem] uppercase tracking-wider text-stone-600 underline-offset-2 hover:underline"
+          >
+            {inputs.guardrails ? "Disable" : "Enable"}
+          </button>
+        </div>
+        {!inputs.guardrails && (
+          <Empty>
+            Static withdrawal run. Enable guardrails to request Guyton-Klinger
+            activity stats.
+          </Empty>
+        )}
+        {inputs.guardrails && (
+          <div className="grid grid-cols-2 gap-3 border border-stone-300 p-3">
+            <Field label="Band">
+              <NumberInput
+                step={0.01}
+                value={inputs.guardrails.band ?? DEFAULT_GUARDRAILS.band ?? 0.2}
+                onChange={(v) => setGuardrails({ band: v })}
+              />
+            </Field>
+            <Field label="Raise">
+              <NumberInput
+                step={0.01}
+                value={
+                  inputs.guardrails.raise ?? DEFAULT_GUARDRAILS.raise ?? 0.1
+                }
+                onChange={(v) => setGuardrails({ raise: v })}
+              />
+            </Field>
+            <Field label="Cut">
+              <NumberInput
+                step={0.01}
+                value={inputs.guardrails.cut ?? DEFAULT_GUARDRAILS.cut ?? 0.1}
+                onChange={(v) => setGuardrails({ cut: v })}
+              />
+            </Field>
+            <Field label="Inflation">
+              <NumberInput
+                step={0.001}
+                value={inputs.guardrails.inflation ?? inputs.spendColaRate}
+                onChange={(v) => setGuardrails({ inflation: v })}
+              />
+            </Field>
+            <Field label="Preservation years">
+              <NumberInput
+                value={
+                  inputs.guardrails.preservationFinalYears ??
+                  DEFAULT_GUARDRAILS.preservationFinalYears ??
+                  15
+                }
+                onChange={(v) => setGuardrails({ preservationFinalYears: v })}
+              />
+            </Field>
+            <label className="flex items-center gap-2 pt-5 font-mono text-[0.65rem] uppercase tracking-wider text-stone-500">
+              <input
+                type="checkbox"
+                checked={inputs.guardrails.freezeAfterLoss ?? true}
+                onChange={(e) =>
+                  setGuardrails({ freezeAfterLoss: e.target.checked })
+                }
+              />
+              Freeze after loss
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Asset classes --------------------------------------------------- */}
