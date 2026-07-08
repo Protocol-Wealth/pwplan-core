@@ -159,6 +159,117 @@ describe("validateScenario", () => {
     ).toEqual([]);
   });
 
+  it("accepts well-formed path-funded goals and guardrails", () => {
+    expect(
+      validateScenario({
+        assetClasses,
+        accounts: balanced,
+        currentAge: 45,
+        retirementAge: 65,
+        horizonAge: 95,
+        goals: [
+          {
+            id: "goal-1",
+            targetAmount: 75_000,
+            yearsToGoal: 10,
+            fundingYears: 2,
+            inflationRate: 0.025,
+            tier: "want",
+          },
+        ],
+        guardrails: {
+          rule: "guyton_klinger",
+          band: 0.2,
+          raise: 0.1,
+          cut: 0.1,
+          inflation: 0.025,
+          freezeAfterLoss: true,
+          preservationFinalYears: 15,
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("rejects malformed path-funded goals and guardrails", () => {
+    const issues = validateScenario({
+      assetClasses,
+      accounts: balanced,
+      currentAge: 45,
+      retirementAge: 65,
+      horizonAge: 50,
+      goals: [
+        {
+          id: "goalone",
+          targetAmount: -1,
+          yearsToGoal: 10,
+          fundingYears: 0,
+          inflationRate: -1.1,
+          priority: 101,
+        },
+      ],
+      guardrails: {
+        band: 1,
+        raise: -0.1,
+        cut: 2,
+        inflation: -0.01,
+        preservationFinalYears: -1,
+      },
+    });
+
+    expect(issues).toContain("Goal 1 needs an opaque id token.");
+    expect(issues).toContain("Goal 1 target amount must be non-negative.");
+    expect(issues).toContain(
+      "Goal 1 funding years must be an integer in [1, 40].",
+    );
+    expect(issues).toContain("Goal 1 must fit inside the Monte Carlo horizon.");
+    expect(issues).toContain(
+      "Goal 1 inflation rate must be greater than -100%.",
+    );
+    expect(issues).toContain("Goal 1 priority must be an integer in [1, 100].");
+    expect(issues).toContain("Guardrail band must be between 0% and 100%.");
+    expect(issues).toContain("Guardrail raise must be between 0% and 100%.");
+    expect(issues).toContain("Guardrail cut must be between 0% and 100%.");
+    expect(issues).toContain("Guardrail inflation must be non-negative.");
+    expect(issues).toContain(
+      "Guardrail preservation years must be a non-negative integer.",
+    );
+  });
+
+  it("matches the Nexus limit of 100 path-funded goals", () => {
+    const goal = {
+      id: "goal-1",
+      targetAmount: 1,
+      yearsToGoal: 1,
+      fundingYears: 1,
+    };
+    expect(
+      validateScenario({
+        assetClasses,
+        accounts: balanced,
+        currentAge: 45,
+        retirementAge: 65,
+        horizonAge: 95,
+        goals: Array.from({ length: 100 }, (_, i) => ({
+          ...goal,
+          id: `goal-${i + 1}`,
+        })),
+      }),
+    ).toEqual([]);
+    expect(
+      validateScenario({
+        assetClasses,
+        accounts: balanced,
+        currentAge: 45,
+        retirementAge: 65,
+        horizonAge: 95,
+        goals: Array.from({ length: 101 }, (_, i) => ({
+          ...goal,
+          id: `goal-${i + 1}`,
+        })),
+      }),
+    ).toContain("Monte Carlo supports at most 100 path-funded goals.");
+  });
+
   it("accepts retirement age equal to current age (already retired)", () => {
     expect(
       validateScenario({

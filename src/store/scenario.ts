@@ -19,6 +19,8 @@ import type {
   GlidePathRequest,
   GlidePathResult,
   GuaranteedIncome,
+  MonteCarloGoalInput,
+  MonteCarloGuardrailsInput,
   MonteCarloResult,
   ReturnModel,
   RothConversionResult,
@@ -112,6 +114,8 @@ export interface ScenarioInputs {
   accounts: Account[];
   assetClasses: AssetClass[];
   guaranteedIncome: GuaranteedIncome[];
+  goals: MonteCarloGoalInput[];
+  guardrails: MonteCarloGuardrailsInput | null;
   returnModel: ReturnModel;
   paths: number;
 }
@@ -654,6 +658,8 @@ const DEFAULT_INPUTS: ScenarioInputs = {
       colaRate: 0.02,
     },
   ],
+  goals: [],
+  guardrails: null,
   returnModel: "emf_regime",
   paths: 10_000,
 };

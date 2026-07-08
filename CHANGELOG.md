@@ -9,6 +9,18 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **Monte Carlo report diagnostics reconciliation (2026-07-07).** Added
+  TypeScript contract fields and results rendering for the newer nexus-core
+  Monte Carlo report-quality output: Wilson success-probability confidence
+  interval, balance percentile bands, sticky depletion stats/curve,
+  failed-path conditional shortfall, first-decade return-vs-outcome deciles,
+  replay run manifest, goal-funding stats, Guyton-Klinger guardrail activity
+  stats, and LTC shock impact. Also added optional Monte Carlo request controls
+  for opaque path-funded goals and Guyton-Klinger guardrails so those result
+  families are reachable through the typed public contract. No new quant logic,
+  persistence, raw ingestion, identity fields, advisor workflow state, approvals,
+  audit trail, or private release workflow was added.
+
 - **S11 inherited IRA + S12 LTC contract reconciliation (2026-07-07).** Added
   `inherited_ira_analysis` to the public-safe TypeScript contract, gateway, tool
   registry, and UI as an Inherited IRA tab. Inputs are numeric/de-identified:

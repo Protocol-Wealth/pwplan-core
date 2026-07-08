@@ -455,10 +455,69 @@ describe("planning gateway dispatch", () => {
     const fetchMock = stubFetch({
       contractVersion: "0.1.0",
       successProbability: 0.83,
+      successProbabilityConfidenceInterval: {
+        method: "wilson",
+        confidenceLevel: 0.95,
+        successes: 830,
+        paths: 1000,
+        lower: 0.804,
+        upper: 0.852,
+        halfWidth: 0.024,
+      },
       terminalValues: { p50: 1_000_000 },
+      balancePercentilesByYear: {
+        p10: [900_000, 870_000, 830_000],
+        p50: [1_000_000, 1_020_000, 1_050_000],
+        p90: [1_100_000, 1_180_000, 1_250_000],
+      },
       medianBalanceByYear: [1, 2, 3],
+      depletionStats: {
+        failedPathCount: 170,
+        failedPathProbability: 0.17,
+        depletionYearPercentiles: { p10: 24, p50: 38, p90: 48 },
+        depletionAgePercentiles: { p10: 69, p50: 83, p90: 93 },
+      },
+      depletionCurve: [
+        { projectionYear: 1, age: 45, depletionProbability: 0 },
+        { projectionYear: 2, age: 46, depletionProbability: 0.01 },
+      ],
+      conditionalShortfall: {
+        basis: "cumulative_unmet_portfolio_withdrawal_nominal",
+        failedPathCount: 170,
+        p50: 120_000,
+        p90: 450_000,
+        mean: 180_000,
+      },
+      firstDecadeReturnVsOutcome: {
+        years: 10,
+        successfulMedianAnnualReturn: 0.074,
+        failedMedianAnnualReturn: -0.012,
+        deciles: [
+          {
+            decile: 1,
+            pathCount: 100,
+            returnMin: -0.08,
+            returnMax: -0.02,
+            medianAnnualReturn: -0.04,
+            successProbability: 0.12,
+          },
+        ],
+      },
       worstPathTerminal: 0,
       seedUsed: 7,
+      runManifest: {
+        manifestVersion: "monte_carlo_run_manifest_0.1.0",
+        engineVersion: "0.1.0",
+        assumptionsHash: "a".repeat(64),
+        returnModel: "multivariate_normal",
+        paths: 1000,
+        years: 50,
+        seed: 7,
+        regimeSeed: 7,
+        successProbabilityCiHalfWidth: 0.024,
+        successProbabilityCiMaxReportHalfWidth: 0.015,
+        successProbabilityCiWithinReportTolerance: false,
+      },
     });
 
     const result = await planning.monteCarlo(mcReq);
@@ -484,7 +543,96 @@ describe("planning gateway dispatch", () => {
     expect(sent.retirementAge).toBe(65);
 
     expect(result.successProbability).toBe(0.83);
+    expect(result.successProbabilityConfidenceInterval?.method).toBe("wilson");
+    expect(result.depletionStats?.depletionAgePercentiles?.p50).toBe(83);
+    expect(result.depletionCurve?.[1].depletionProbability).toBe(0.01);
+    expect(result.conditionalShortfall?.p90).toBe(450_000);
+    expect(
+      result.firstDecadeReturnVsOutcome?.deciles[0].successProbability,
+    ).toBe(0.12);
+    expect(result.balancePercentilesByYear?.p90[2]).toBe(1_250_000);
+    expect(result.runManifest?.assumptionsHash).toHaveLength(64);
     expect(result.seedUsed).toBe(7);
+  });
+
+  it("dispatches Monte Carlo path-funded goals and guardrail inputs", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      successProbability: 0.83,
+      terminalValues: { p50: 1_000_000 },
+      medianBalanceByYear: [1, 2, 3],
+      worstPathTerminal: 0,
+      seedUsed: 7,
+      withdrawalRule: "guyton_klinger",
+      guardrailActivity: {
+        pathsWithCut: 0.4,
+        pathsWithRaise: 0.1,
+        band: 0.2,
+        cut: 0.1,
+        raise: 0.1,
+      },
+      guardrailStats: {
+        cutCountPercentiles: { p10: 0, p50: 2, p90: 5 },
+        raiseCountPercentiles: { p10: 0, p50: 1, p90: 3 },
+        pathsWithMultipleCuts: 0.31,
+        firstCutProjectionYearPercentiles: { p10: 4, p50: 9, p90: 18 },
+        firstCutAgePercentiles: { p10: 49, p50: 54, p90: 63 },
+      },
+      goalFunding: {
+        goals: [
+          {
+            id: "goal-1",
+            requestedAmount: 75_000,
+            fullyFundedProbability: 0.81,
+            averageFundedRatio: 0.9,
+            fundedAmountPercentiles: { p10: 40_000, p50: 75_000, p90: 75_000 },
+          },
+        ],
+      },
+    });
+
+    const result = await planning.monteCarlo({
+      ...mcReq,
+      goals: [
+        {
+          id: "goal-1",
+          targetAmount: 75_000,
+          yearsToGoal: 10,
+          fundingYears: 2,
+          inflationRate: 0.025,
+          tier: "want",
+        },
+      ],
+      guardrails: {
+        rule: "guyton_klinger",
+        band: 0.2,
+        raise: 0.1,
+        cut: 0.1,
+        inflation: 0.025,
+        freezeAfterLoss: true,
+        preservationFinalYears: 15,
+      },
+    });
+
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.goals).toEqual([
+      {
+        id: "goal-1",
+        targetAmount: 75_000,
+        yearsToGoal: 10,
+        fundingYears: 2,
+        inflationRate: 0.025,
+        tier: "want",
+      },
+    ]);
+    expect(sent.guardrails).toMatchObject({
+      rule: "guyton_klinger",
+      band: 0.2,
+      raise: 0.1,
+      cut: 0.1,
+    });
+    expect(result.guardrailStats?.cutCountPercentiles.p50).toBe(2);
+    expect(result.goalFunding?.goals[0].fullyFundedProbability).toBe(0.81);
   });
 
   it("dispatches Monte Carlo LTC shock inputs and returns same-seed impact fields", async () => {

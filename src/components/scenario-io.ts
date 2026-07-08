@@ -30,6 +30,9 @@ import type {
   GuaranteedIncome,
   HistoricalBlendRebalanceFrequency,
   InheritedIraBeneficiaryType,
+  MonteCarloGoalInput,
+  MonteCarloGoalTier,
+  MonteCarloGuardrailsInput,
   PlanningReportPreset,
   ReturnModel,
   TwrFlowTiming,
@@ -219,6 +222,7 @@ const INHERITED_IRA_BENEFICIARY_TYPES = [
 ] as const;
 const INCOME_STREAM_KINDS = ["pension", "annuity"] as const;
 const SPENDING_VOLATILITY = ["low", "medium", "high"] as const;
+const MONTE_CARLO_GOAL_TIERS: MonteCarloGoalTier[] = ["need", "want", "wish"];
 const PLANNING_TOOLS: PlanningTool[] = [
   "monte_carlo",
   "glide_path",
@@ -298,6 +302,76 @@ function parseGuaranteedIncome(v: unknown): GuaranteedIncome | null {
   };
 }
 
+function isOpaqueRef(value: string): boolean {
+  return /^[A-Za-z0-9._:-]{1,80}$/.test(value) && /[0-9._:-]/.test(value);
+}
+
+function parseMonteCarloGoal(v: unknown): MonteCarloGoalInput | null {
+  if (!isObject(v)) return null;
+  if (!isStr(v.id) || !isOpaqueRef(v.id)) return null;
+  if (!isNum(v.targetAmount) || !isNum(v.yearsToGoal)) return null;
+  if (v.fundingYears !== undefined && !isNum(v.fundingYears)) return null;
+  if (v.inflationRate !== undefined && !isNum(v.inflationRate)) return null;
+  if (v.priority !== undefined && !isNum(v.priority)) return null;
+  if (
+    v.tier !== undefined &&
+    (!isStr(v.tier) ||
+      !MONTE_CARLO_GOAL_TIERS.includes(v.tier as MonteCarloGoalTier))
+  ) {
+    return null;
+  }
+  return {
+    id: v.id,
+    targetAmount: v.targetAmount,
+    yearsToGoal: v.yearsToGoal,
+    ...(v.fundingYears !== undefined ? { fundingYears: v.fundingYears } : {}),
+    ...(v.inflationRate !== undefined
+      ? { inflationRate: v.inflationRate }
+      : {}),
+    ...(v.tier !== undefined ? { tier: v.tier as MonteCarloGoalTier } : {}),
+    ...(v.priority !== undefined ? { priority: v.priority } : {}),
+  };
+}
+
+function parseMonteCarloGuardrails(
+  v: unknown,
+): MonteCarloGuardrailsInput | null {
+  if (v === undefined || v === null) return null;
+  if (!isObject(v)) return null;
+  if (v.rule !== undefined && (!isStr(v.rule) || v.rule !== "guyton_klinger")) {
+    return null;
+  }
+  if (v.band !== undefined && !isNum(v.band)) return null;
+  if (v.raise !== undefined && !isNum(v.raise)) return null;
+  if (v.cut !== undefined && !isNum(v.cut)) return null;
+  if (v.inflation !== undefined && !isNum(v.inflation)) return null;
+  if (
+    v.freezeAfterLoss !== undefined &&
+    typeof v.freezeAfterLoss !== "boolean"
+  ) {
+    return null;
+  }
+  if (
+    v.preservationFinalYears !== undefined &&
+    !isNum(v.preservationFinalYears)
+  ) {
+    return null;
+  }
+  return {
+    ...(v.rule !== undefined ? { rule: "guyton_klinger" as const } : {}),
+    ...(v.band !== undefined ? { band: v.band } : {}),
+    ...(v.raise !== undefined ? { raise: v.raise } : {}),
+    ...(v.cut !== undefined ? { cut: v.cut } : {}),
+    ...(v.inflation !== undefined ? { inflation: v.inflation } : {}),
+    ...(v.freezeAfterLoss !== undefined
+      ? { freezeAfterLoss: v.freezeAfterLoss }
+      : {}),
+    ...(v.preservationFinalYears !== undefined
+      ? { preservationFinalYears: v.preservationFinalYears }
+      : {}),
+  };
+}
+
 function parseArray<T>(v: unknown, each: (x: unknown) => T | null): T[] | null {
   if (!Array.isArray(v)) return null;
   const out: T[] = [];
@@ -339,7 +413,19 @@ function parseInputs(v: unknown): ScenarioInputs | null {
     v.guaranteedIncome,
     parseGuaranteedIncome,
   );
+  const goals =
+    v.goals === undefined ? [] : parseArray(v.goals, parseMonteCarloGoal);
+  const guardrails =
+    v.guardrails === undefined || v.guardrails === null
+      ? null
+      : parseMonteCarloGuardrails(v.guardrails);
   if (accounts === null || assetClasses === null || guaranteedIncome === null) {
+    return null;
+  }
+  if (
+    goals === null ||
+    (v.guardrails !== undefined && v.guardrails !== null && guardrails === null)
+  ) {
     return null;
   }
   return {
@@ -352,6 +438,8 @@ function parseInputs(v: unknown): ScenarioInputs | null {
     accounts,
     assetClasses,
     guaranteedIncome,
+    goals,
+    guardrails,
     returnModel: v.returnModel as ReturnModel,
     paths: v.paths,
   };

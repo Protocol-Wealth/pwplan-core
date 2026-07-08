@@ -92,6 +92,15 @@ guidelines; this repo intentionally ships none of it. The `pw-api` value of
 `VITE_PLANNING_BACKEND` exists only so that private fork stays a low-diff sync;
 this OSS build never reaches pw-api.
 
+The Monte Carlo tab renders the engine's report-quality diagnostics when the
+live contract returns them: Wilson success-probability confidence intervals,
+sticky depletion probability, failed-path shortfall, first-decade
+return-vs-outcome deciles, replay manifest fields, goal-funding stats,
+guardrail activity, and LTC shock impact. Optional path-funded goals use opaque
+tokens only, and optional guardrails send numeric Guyton-Klinger settings. These
+are request/display consumers of nexus-core output; pwplan-core does not compute
+planning results.
+
 ### Cash Flow OS and Planning Bridge boundary
 
 The current product direction is **PW Cash Flow OS + PW Planning Lab + PW

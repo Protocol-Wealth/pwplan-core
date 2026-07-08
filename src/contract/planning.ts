@@ -98,6 +98,29 @@ export interface GuaranteedIncome {
   colaRate: number; // cost-of-living adjustment, decimal
 }
 
+export type MonteCarloGoalTier = "need" | "want" | "wish";
+
+export interface MonteCarloGoalInput {
+  /** Opaque goal token only; never a person, account, or household identifier. */
+  id: string;
+  targetAmount: number;
+  yearsToGoal: number;
+  fundingYears?: number;
+  inflationRate?: number;
+  tier?: MonteCarloGoalTier;
+  priority?: number;
+}
+
+export interface MonteCarloGuardrailsInput {
+  rule?: "guyton_klinger";
+  band?: number;
+  raise?: number;
+  cut?: number;
+  inflation?: number;
+  freezeAfterLoss?: boolean;
+  preservationFinalYears?: number;
+}
+
 /** Long-term-care cost stress. Public-safe by construction: ages and derived
  *  dollar assumptions only, with no diagnosis, provider, policy, or claim data. */
 export interface LongTermCareShockInput {
@@ -154,20 +177,109 @@ export interface MonteCarloRequest {
   /** Optional LTC healthcare-cost stress. S12 v1 engine behavior rejects this
    *  when combined with dynamic guardrails; run those as separate scenarios. */
   ltcShock?: LongTermCareShockInput;
+  /** Optional path-funded goals. IDs must be opaque tokens, not identity fields. */
+  goals?: MonteCarloGoalInput[];
+  /** Optional Guyton-Klinger guardrail run. Not combined with `ltcShock` in S12 v1. */
+  guardrails?: MonteCarloGuardrailsInput;
 }
 
 export interface MonteCarloResult {
   contractVersion: string;
   /** Probability the plan funds the full horizon (terminal value > 0). */
   successProbability: number;
+  /** Wilson score interval for report-quality success-probability framing. */
+  successProbabilityConfidenceInterval?: {
+    method: "wilson" | string;
+    confidenceLevel?: number;
+    successes?: number;
+    paths: number;
+    lower: number | null;
+    upper: number | null;
+    halfWidth: number | null;
+  };
   /** Per-percentile terminal portfolio value. Keys: "p10","p25","p50",... */
   terminalValues: Record<string, number>;
   /** Year-by-year median balance for charting. Length = horizonAge-currentAge. */
   medianBalanceByYear: number[];
+  /** Year-by-year balance percentile bands keyed as p10/p25/p50/p75/p90. */
+  balancePercentilesByYear?: Record<string, number[]>;
+  /** Sticky first-passage depletion diagnostics. */
+  depletionStats?: {
+    failedPathCount: number;
+    failedPathProbability: number;
+    depletionYearPercentiles: Record<string, number | null>;
+    depletionAgePercentiles?: Record<string, number | null>;
+  };
+  depletionCurve?: {
+    projectionYear: number;
+    depletionProbability: number;
+    age?: number;
+  }[];
+  conditionalShortfall?: {
+    basis: string;
+    failedPathCount: number;
+    p50: number | null;
+    p90: number | null;
+    mean: number;
+  };
+  firstDecadeReturnVsOutcome?: {
+    years: number;
+    successfulMedianAnnualReturn: number | null;
+    failedMedianAnnualReturn: number | null;
+    deciles: {
+      decile: number;
+      pathCount: number;
+      returnMin: number;
+      returnMax: number;
+      medianAnnualReturn: number;
+      successProbability: number;
+    }[];
+  };
   /** Worst-case sequence-of-returns path terminal value. */
   worstPathTerminal: number;
   regimePathSummary?: Regime[]; // populated for regime-aware models
   seedUsed: number;
+  runManifest?: {
+    manifestVersion: string;
+    engineVersion: string;
+    assumptionsHash: string;
+    returnModel: ReturnModel | string;
+    paths: number;
+    years: number;
+    seed: number;
+    regimeSeed?: number;
+    cmaVersion?: string;
+    tableVersions?: string[];
+    studentTDegreesOfFreedom?: number | null;
+    successProbabilityCiHalfWidth?: number | null;
+    successProbabilityCiMaxReportHalfWidth?: number;
+    successProbabilityCiWithinReportTolerance?: boolean;
+  };
+  withdrawalRule?: "guyton_klinger" | string;
+  spendingByYear?: Record<string, number[]>;
+  guardrailActivity?: {
+    pathsWithCut: number;
+    pathsWithRaise: number;
+    band: number;
+    cut: number;
+    raise: number;
+  };
+  guardrailStats?: {
+    cutCountPercentiles: Record<string, number>;
+    raiseCountPercentiles: Record<string, number>;
+    pathsWithMultipleCuts: number;
+    firstCutProjectionYearPercentiles: Record<string, number>;
+    firstCutAgePercentiles?: Record<string, number>;
+  };
+  goalFunding?: {
+    goals: {
+      id: string;
+      requestedAmount: number;
+      fullyFundedProbability: number;
+      averageFundedRatio: number;
+      fundedAmountPercentiles: Record<string, number>;
+    }[];
+  };
   ltcShock?: LongTermCareShockSummary;
   ltcShockImpact?: {
     basis: "same_seed_same_returns_with_vs_without_ltc_shock" | string;

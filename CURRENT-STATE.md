@@ -1,12 +1,12 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-07-07 (Inherited IRA tab on the 34-tool contract). Maintain it._
+_Last updated: 2026-07-07 (Monte Carlo report diagnostics on the 34-tool contract). Maintain it._
 
 ## Status
 
-Last local gate for the Inherited IRA / LTC contract reconciliation slice was
-green: typecheck clean, lint clean, 314 tests pass, build succeeds, and `git diff
---check` is clean.
+Last local gate for the Monte Carlo report diagnostics reconciliation slice was
+green: typecheck clean, lint clean, 322 tests pass, build succeeds,
+format-check clean, and `git diff --check` is clean.
 **This repo is now
 positioned as demo / case-study tooling**: it runs
 against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
@@ -22,7 +22,14 @@ assumptions" control. The Report tab can dispatch either custom de-identified
 sections or the `build_planning_report` `preset: "wealth_roadmap"` envelope with
 focused/full scope and replay metadata. Each UI tab is wired to its gateway method with
 client-side request-shape validation and hand-rolled SVG/CSS results (no chart
-library). Accounts/asset classes are a shared portfolio. Plan inputs save/load
+library). Monte Carlo results now surface Nexus report-quality diagnostics when
+returned: Wilson success-probability confidence intervals, depletion
+stats/curve, conditional shortfall, first-decade return-vs-outcome deciles, run
+manifest, goal-funding stats, guardrail activity stats, and LTC shock impact.
+Optional opaque path-funded goals and Guyton-Klinger guardrail settings are
+reachable from the typed Monte Carlo request/UI so the corresponding result
+families can be produced without bypassing the public contract.
+Accounts/asset classes are a shared portfolio. Plan inputs save/load
 as PII-free schema-v4 JSON and built-in case-study presets use
 the same full snapshot shape. Every first-party source file carries an SPDX
 Apache-2.0 header. The demo-reframe work shipped via PR #1 (CCO + CTO/CISO
@@ -96,14 +103,14 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/contract/planning.test.ts` — contract + PII-free/raw-ingestion-field enforcement.
 - `src/contract/roth-conversion.ts` — the **case contract** `PLANNING_CASE_CONTRACT_VERSION = 1.1.0` (a mirror of `@protocolwealthos/planning-contract` / the nexus-core JSON-Schema): `PlanningContract` + `RothConversionAnalysis` (+ nested) for the composite Roth/IRMAA analysis. Distinct from the v0.1.0 wire contract; PII-free. `roth-conversion.test.ts` enforces semver + the PII-free invariant.
 - `src/lib/planning-gateway.ts` — backend-agnostic transport; ContractMismatchError; subjectRef header; ACTIVE_BACKEND export; fail-fast backend env parsing; one `planning.*` method per wire tool (34) plus the compatibility `analyzeRothConversion(req)` helper, now routed through the shared registry. `education_funding` additionally rejects non-opaque student `subjectRef` values before dispatch.
-- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 34 tools, cash-flow bridge dispatch checks, education dispatch + `notes`→`referenceNotes` normalization, CMA drop-in round-trip, `pathCacheKey` passthrough, LTC shock passthrough on Monte Carlo/project-cash-flow requests, per-tool dispatch shape checks (incl. solve_goal, analyze_goals, project_cash_flow bucket fields, education_funding, education_vehicle_rules, income_layering, historical_blend, risk_profile_score, performance_analysis, inherited_ira_analysis, irmaa_headroom, analyze_roth_conversion, sequence_conversions, optimize_allocation, and build_planning_report / wealth_roadmap metadata), pw-api seam, and invalid-backend fail-fast behavior.
+- `src/lib/planning-gateway.test.ts` — offline integration test (fetch mocked): PiiTripwireError + ContractMismatchError paths, tool-id/path/header wiring for all 34 tools, cash-flow bridge dispatch checks, education dispatch + `notes`→`referenceNotes` normalization, CMA drop-in round-trip, `pathCacheKey` passthrough, Monte Carlo report diagnostics / goal / guardrail / LTC-shock passthrough, project-cash-flow LTC shock passthrough, per-tool dispatch shape checks (incl. solve_goal, analyze_goals, project_cash_flow bucket fields, education_funding, education_vehicle_rules, income_layering, historical_blend, risk_profile_score, performance_analysis, inherited_ira_analysis, irmaa_headroom, analyze_roth_conversion, sequence_conversions, optimize_allocation, and build_planning_report / wealth_roadmap metadata), pw-api seam, and invalid-backend fail-fast behavior.
 - `src/lib/compliance.ts` / `.test.ts` — always-on dep-free structural PII tripwire (`assertNoPII` + `findIdentityKey`) and a no-op `auditCall` seam; 9 tests. NOT the production compliance stack (that's private-fork + pwos-core).
 - `src/lib/historical-blend-defaults.ts` — public-safe default `historical_blend` form state shared by the store, parser, presets, and UI.
 - `src/lib/income-layering-defaults.ts` — public-safe default `income_layering` form state shared by the store, parser, presets, and UI.
 - `src/lib/performance-analysis-defaults.ts` — public-safe default `performance_analysis` form state shared by the store, parser, presets, and UI.
 - `src/lib/risk-profile-questionnaire.ts` — fixed public-safe `risk_profile_score` question/answer ids, labels, scores, and default answer set shared by the store, parser, validator, and UI. No free text or identity fields.
 - `src/store/scenario.ts` — Zustand store: active `tool` (26 UI tabs) + per-tool inputs (scenario / glidePath / tax / roth / rothIrmaa / sor / rmd / bracket / socialSecurity / regimeSwr / correlation / regimeGen / fire / riskMetrics / incomeLayering / historicalBlend / performanceAnalysis / inheritedIra / riskProfileScore / rebalance / optimizeAllocation / buildReport / educationFunding / cashflowBridge / compare) + result slots (incl. `xrayResult` / `fireResult` / `riskMetricsResult` / `incomeLayeringResult` / `historicalBlendResult` / `performanceAnalysisResult` / `inheritedIraResult` / `riskProfileScoreResult` / `rebalanceResult` / `optimizeAllocationResult` / `buildReportResult` / education results / cash-flow bridge results / compare results); the Portfolio X-ray, Rebalance, and Income Layers tabs reuse the shared scenario portfolio. Accounts/asset classes are one shared portfolio. Seeded valid defaults. `BuildPlanningReportInputs` now includes `preset`, `scope`, `assumptionVersion`, `cmaVersion`, `taxYear`, `seed`, and `engineReference` for Wealth Roadmap replay stamping. `InheritedIraInputs` carries only inherited-balance, ordinary-income, filing-status, year-only tax inputs, ages, beneficiary type, and rate assumptions; no names, account numbers, raw holdings, notes, workflow state, approvals, release state, persistence, or audit trail. `PerformanceAnalysisInputs` carries only numeric TWR periods, MWR flows, terminal value/time, fee/return series, benchmark return series, periods-per-year, and flow timing; no symbols, account names, holdings, transaction rows, notes, or identity fields. `HistoricalBlendInputs` carries only asset-class ids, weights, lookback, optional as-of date, rebalance frequency, and display initial value; no account names, holdings, or identity fields. `IncomeLayeringInputs` carries only ages/year-only birth year, numeric assumptions, state code, Social Security amounts, and pension/annuity rows; no account names or identity fields. `RiskProfileScoreInputs` carries only fixed answer ids keyed by canonical question id. `ScenarioSnapshot` captures every current tool input, and `loadSnapshot` clears every result slot plus an ephemeral `assumptions` slice (`{ asOf, correlations }` + `loadingAssumptions`) holding live engine capital-market assumptions. The compare queue holds 2-3 in-memory scenario snapshots and a replay seed only; it is not persisted and adds no wire type.
-- `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income; Run gated on validity. Includes the **"Load real market assumptions"** control (calls `capital_market_assumptions`, drops real returns/vols/λ onto the current portfolio + carries the engine correlation matrix into the run; provenance `asOf` line + the shared `MatrixTable`).
+- `src/components/ScenarioForm.tsx` — Monte Carlo editor: plan params (current / retirement / horizon age, spend, COLA, paths, filing status, return model), asset classes (id/label/return/vol/λ), accounts (type/balance/allocation), guaranteed income, optional opaque path-funded goals, and optional Guyton-Klinger guardrails; Run gated on validity. Includes the **"Load real market assumptions"** control (calls `capital_market_assumptions`, drops real returns/vols/λ onto the current portfolio + carries the engine correlation matrix into the run; provenance `asOf` line + the shared `MatrixTable`).
 - `src/components/MatrixTable.tsx` — generic read-only square-matrix renderer (ids × ids → numbers); shared by the CMA control, the Correlation tab, and the Regime-paths transition matrix.
 - `src/components/GlidePathTool.tsx` — glide-path form + equity-weight-by-age line chart (fixed 0–1 axis).
 - `src/components/TaxWithdrawalTool.tsx` — tax form over the shared portfolio + withdrawals-by-account table (total tax, effective rate, RMD indicator).
@@ -133,9 +140,16 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 - `src/components/scenario-io.ts` / `.test.ts` — pure, versioned, PII-free schema-v4 serialize/parse for all current tool inputs (fail-closed `assertNoPII` on save + on the raw input at load); no browser storage.
 - `src/components/scenario-presets.ts` / `.test.ts` — three built-in case-study snapshots (accumulator / near-retiree / crisis-stress), each validator-clean and round-trip-safe.
 - `src/components/ScenarioIO.tsx` — Save (Blob download) / Load (file input) / preset picker; uses the store's `loadSnapshot`.
-- `src/components/scenario-validation.ts` / `.test.ts` — pure scenario request-shape validation (allocation-sums-to-1, unique ids, known-id refs, age ordering `currentAge ≤ retirementAge < horizonAge`); 20 tests. No quant logic.
+- `src/components/scenario-validation.ts` / `.test.ts` — pure scenario request-shape validation (allocation-sums-to-1, unique ids, known-id refs, age ordering `currentAge ≤ retirementAge < horizonAge`, opaque path-funded goals, and Guyton-Klinger guardrail settings); 22 tests. No quant logic.
 - `src/components/tool-validation.ts` / `.test.ts` — pure request-shape validation for glide-path, tax, Roth, Roth/IRMAA, sequence-stress (`parseReturns`), RMD, bracket-headroom, Social Security, regime-SWR, correlation (`validateCorrelation` + `parseIdList`), regime-gen (`validateRegimeGen`), portfolio X-ray (`validatePortfolioXray`, reusing `isAllocationBalanced`), FIRE (`validateFire`), risk-metrics (`validateRiskMetrics`), income layering (`validateIncomeLayering`), historical blend (`validateHistoricalBlend`), performance analysis (`validatePerformanceAnalysis`), inherited IRA (`validateInheritedIra`), risk-profile fixed answers (`validateRiskProfileScore`), rebalance (`validateRebalance`), optimize-allocation (`validateOptimizeAllocation`: weight-bound min≤max in [0,1], distinct ≥2-id subset or full universe), build-planning-report (`validateBuildPlanningReport`: ≥1 section, each with a non-empty kind, and Wealth Roadmap replay metadata when that preset is selected), education funding (opaque subject refs, bounded student rows, non-negative money values), and the three cash-flow bridge validators (positive months, non-negative aggregates, valid month-day, no raw transaction-shaped keys). No quant logic.
-- `src/components/ResultsPanel.tsx` — Monte Carlo results: success probability + 3 hand-rolled charts (median-balance line/area, terminal percentile bars, regime strip when present). Inline SVG/CSS, no chart lib.
+- `src/components/ResultsPanel.tsx` — Monte Carlo results: success probability,
+  Wilson CI when returned, median-balance line/area, depletion curve, terminal
+  percentile bars, first-decade return-vs-outcome table, guardrail / goal /
+  LTC-shock panels, replay manifest summary, and regime strip when present.
+  Inline SVG/CSS, no chart lib.
+- `src/components/ResultsPanel.test.tsx` — server-render smoke coverage for the
+  optional Monte Carlo report-quality sections without adding a browser test
+  dependency.
 - `src/components/results-viz.ts` / `.test.ts` — pure geometry helpers (seriesGeometry incl. forcedMax, percentileBars, regimeRuns, ageWeightSeries); 20 tests. Presentation math only.
 - `src/components/format.ts`, `form-controls.tsx`, `charts.tsx`, `result-shell.tsx` — shared presentational primitives (formatters, form controls, generic LineChart, error/running/empty framing). No logic of substance.
 - `src/App.tsx` (26-tab bar + ScenarioIO), `src/main.tsx`, `src/index.css`, `index.html` — shell.
@@ -158,10 +172,9 @@ _(Every first-party source file below carries an SPDX Apache-2.0 header.)_
 
 ## Known gaps
 
-- Charts have no automated render test (no React Testing Library — adding one
-  would pull in a heavy dev dep, against repo rules). The pure geometry helpers
-  in `results-viz.ts` are unit-tested; `ResultsPanel` composition is verified by
-  eye / typecheck only.
+- No known gaps in the current 34-tool/26-tab OSS demo contract. Private
+  production workflow, approvals, audit trails, and release records remain out of
+  scope here by design.
 - Form validation is request-shape only (allocations sum to 1, known ids, etc.);
   it intentionally does not validate financial sanity (that is the engine's job).
 - The gateway dispatch path has offline integration coverage
