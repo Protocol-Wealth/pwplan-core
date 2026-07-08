@@ -60,6 +60,10 @@ import {
   PerformanceAnalysisResults,
 } from "./components/PerformanceAnalysisTool";
 import {
+  InheritedIraForm,
+  InheritedIraResults,
+} from "./components/InheritedIraTool";
+import {
   RiskProfileForm,
   RiskProfileResults,
 } from "./components/RiskProfileTool";
@@ -104,6 +108,7 @@ const TOOLS: { value: PlanningTool; label: string }[] = [
   { value: "income_layering", label: "Income layers" },
   { value: "historical_blend", label: "History" },
   { value: "performance_analysis", label: "Performance" },
+  { value: "inherited_ira", label: "Inherited IRA" },
   { value: "risk_profile", label: "Risk profile" },
   { value: "rebalance", label: "Rebalance" },
   { value: "optimize_allocation", label: "Optimize" },
@@ -256,6 +261,13 @@ function ActiveTool() {
         <>
           <PerformanceAnalysisForm />
           <PerformanceAnalysisResults />
+        </>
+      );
+    case "inherited_ira":
+      return (
+        <>
+          <InheritedIraForm />
+          <InheritedIraResults />
         </>
       );
     case "risk_profile":

@@ -9,6 +9,23 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Added
 
+- **S11 inherited IRA + S12 LTC contract reconciliation (2026-07-07).** Added
+  `inherited_ira_analysis` to the public-safe TypeScript contract, gateway, tool
+  registry, and UI as an Inherited IRA tab. Inputs are numeric/de-identified:
+  inherited balance, beneficiary ordinary-income aggregates, filing status, tax
+  year, remaining 10-year-window assumptions, return/taxable-ratio/target-rate
+  assumptions, beneficiary type, and ages only. Results render ranked 10-year
+  strategy comparisons, federal-tax deltas, beneficiary classification,
+  assumptions, and the engine disclaimer. Also added additive `ltcShock`
+  request/result fields on `monte_carlo_decumulation` and `project_cash_flow`
+  for healthcare-cost stress work, matching nexus-core S12 v1. Scenario JSON
+  remains schema-v4 and defaults older saved files with public-safe inherited
+  IRA assumptions. No names, account numbers, account nicknames, raw holdings,
+  raw transactions, diagnosis/provider/policy/claim data, notes, advisor
+  workflow state, approvals, release state, persistence, audit trail, or private
+  compliance workflow was added. The public wire contract now covers 34 tools;
+  the UI exposes 26 tabs.
+
 - **S4 performance-analysis UI slice (2026-07-07).** Added a Performance tab
   over `performance_analysis`, collecting only TWR value/flow rows, MWR
   time/amount flows, periods-per-year, terminal value/time, fee-drag return

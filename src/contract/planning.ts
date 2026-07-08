@@ -98,6 +98,29 @@ export interface GuaranteedIncome {
   colaRate: number; // cost-of-living adjustment, decimal
 }
 
+/** Long-term-care cost stress. Public-safe by construction: ages and derived
+ *  dollar assumptions only, with no diagnosis, provider, policy, or claim data. */
+export interface LongTermCareShockInput {
+  onsetAge: number;
+  annualCost: number;
+  durationYears: number;
+  costInflation?: number;
+}
+
+export interface LongTermCareShockSummary {
+  onsetAge: number;
+  annualCostToday: number;
+  durationYears: number;
+  costInflation: number;
+  annualCostConvention: string;
+  nominalTotalCost: number;
+  activeYears: {
+    projectionYear: number;
+    age: number;
+    cost: number;
+  }[];
+}
+
 // ---------------------------------------------------------------------------
 // Tool: monte_carlo_decumulation
 // ---------------------------------------------------------------------------
@@ -128,6 +151,9 @@ export interface MonteCarloRequest {
    *  generate fresh; a stale/unknown key is treated as a cache miss (regenerate,
    *  not an error). */
   pathCacheKey?: string;
+  /** Optional LTC healthcare-cost stress. S12 v1 engine behavior rejects this
+   *  when combined with dynamic guardrails; run those as separate scenarios. */
+  ltcShock?: LongTermCareShockInput;
 }
 
 export interface MonteCarloResult {
@@ -142,6 +168,16 @@ export interface MonteCarloResult {
   worstPathTerminal: number;
   regimePathSummary?: Regime[]; // populated for regime-aware models
   seedUsed: number;
+  ltcShock?: LongTermCareShockSummary;
+  ltcShockImpact?: {
+    basis: "same_seed_same_returns_with_vs_without_ltc_shock" | string;
+    baselineSuccessProbability: number;
+    withShockSuccessProbability: number;
+    successProbabilityDelta: number;
+    selfInsuredProbability: number;
+    baselineTerminalValues: Record<string, number>;
+    withShockTerminalValues: Record<string, number>;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -349,6 +385,9 @@ export interface ProjectCashFlowRequest {
   incomeGrowthRate?: number;
   expenseInflationRate?: number;
   expectedReturn?: number;
+  /** Optional dedicated healthcare inflation rate for `ltcShock`; defaults to
+   *  expenseInflationRate in the engine when omitted. */
+  healthcareInflationRate?: number;
   retirementIncome?: number;
   currentLiabilities?: number;
   baseYear?: number;
@@ -359,6 +398,7 @@ export interface ProjectCashFlowRequest {
   accountReturns?: AccountBalanceMap;
   earlyWithdrawalPenaltyAge?: number;
   earlyWithdrawalPenaltyRate?: number;
+  ltcShock?: LongTermCareShockInput;
 }
 
 export type CashFlowPhase = "accumulation" | "retirement";
@@ -372,6 +412,10 @@ export interface CashFlowYear {
   income: number;
   expenses: number;
   taxes: number;
+  /** Present only when an LTC shock is requested. */
+  baseExpenses?: number;
+  /** Present only when an LTC shock is requested. */
+  ltcShockExpense?: number;
   netCashFlow: number;
   portfolioBalance: number;
   liabilities: number;
@@ -1370,6 +1414,115 @@ export interface PerformanceAnalysisResult {
 }
 
 // ---------------------------------------------------------------------------
+// Tool: inherited_ira_analysis
+// ---------------------------------------------------------------------------
+
+export type InheritedIraBeneficiaryType =
+  | "spouse"
+  | "minor_child_of_decedent"
+  | "disabled"
+  | "chronically_ill"
+  | "not_more_than_10_years_younger"
+  | "other_designated_beneficiary"
+  | "non_designated_beneficiary";
+
+export type InheritedIraStrategyName =
+  | "lump_sum"
+  | "equal_annual"
+  | "bracket_smoothed";
+
+export interface InheritedIraAnalysisRequest {
+  contractVersion: typeof PLANNING_CONTRACT_VERSION;
+  inheritedBalance: number;
+  beneficiaryOrdinaryIncome: number;
+  beneficiaryOrdinaryIncomeByYear?: number[];
+  filingStatus: FilingStatus;
+  taxYear?: number;
+  yearsRemaining?: number;
+  annualReturn?: number;
+  taxableDistributionRatio?: number;
+  beneficiaryType?: InheritedIraBeneficiaryType;
+  beneficiaryAge?: number;
+  decedentAge?: number;
+  targetRate?: number;
+}
+
+export interface InheritedIraBeneficiaryClassification {
+  beneficiaryType: InheritedIraBeneficiaryType | string;
+  label: string;
+  eligibleDesignatedBeneficiary: boolean;
+}
+
+export interface InheritedIraCarveOut {
+  beneficiaryType: InheritedIraBeneficiaryType | string;
+  eligibleDesignatedBeneficiary: boolean;
+  summary: string;
+}
+
+export interface InheritedIraYearRow {
+  yearIndex: number;
+  beginningBalance: number;
+  growth: number;
+  distribution: number;
+  taxableDistribution: number;
+  endingBalance: number;
+  beneficiaryOrdinaryIncome: number;
+  ordinaryIncomeWithDistribution: number;
+  incrementalFederalTax: number;
+  marginalOrdinaryRate: number;
+  effectiveTaxRateOnDistribution: number | null;
+}
+
+export interface InheritedIraStrategyTotals {
+  totalDistributed: number;
+  totalTaxableDistributed: number;
+  totalGrowth: number;
+  totalIncrementalFederalTax: number;
+  netAfterTaxReceived: number;
+  endingBalance: number;
+  peakMarginalOrdinaryRate: number;
+}
+
+export interface InheritedIraStrategy {
+  strategy: InheritedIraStrategyName | string;
+  label: string;
+  years: InheritedIraYearRow[];
+  totals: InheritedIraStrategyTotals;
+  rank: number;
+}
+
+export interface InheritedIraStrategyRanking {
+  rank: number;
+  strategy: InheritedIraStrategyName | string;
+  netAfterTaxReceived: number;
+  totalIncrementalFederalTax: number;
+  peakMarginalOrdinaryRate: number;
+}
+
+export interface InheritedIraAssumptions {
+  annualReturn: number;
+  taxableDistributionRatio: number;
+  targetRate: number;
+  distributionTiming: string;
+  taxScope: string;
+  annualRmdScope: string;
+  sourceBasis: string;
+}
+
+export interface InheritedIraAnalysisResult {
+  contractVersion: string;
+  taxYear: number;
+  taxTableVersion: string;
+  yearsRemaining: number;
+  beneficiaryClassification: InheritedIraBeneficiaryClassification;
+  carveOuts: InheritedIraCarveOut[];
+  strategyRankings: InheritedIraStrategyRanking[];
+  strategies: InheritedIraStrategy[];
+  assumptions: InheritedIraAssumptions;
+  disclaimer: string;
+}
+
+// ---------------------------------------------------------------------------
 // Tool: rebalance (rebalance-to-target)
 // ---------------------------------------------------------------------------
 
@@ -1613,6 +1766,7 @@ export const PLANNING_TOOLS = {
   fire: "fire",
   riskMetrics: "risk_metrics",
   performanceAnalysis: "performance_analysis",
+  inheritedIraAnalysis: "inherited_ira_analysis",
   rebalance: "rebalance",
   optimizeAllocation: "optimize_allocation",
   riskProfileScore: "risk_profile_score",

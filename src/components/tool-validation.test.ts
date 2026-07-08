@@ -15,6 +15,7 @@ import {
   validateFire,
   validateGlidePath,
   validateHistoricalBlend,
+  validateInheritedIra,
   validateIncomeLayering,
   validateOptimizeAllocation,
   validatePerformanceAnalysis,
@@ -42,6 +43,7 @@ import type {
   FireInputs,
   GlidePathInputs,
   HistoricalBlendInputs,
+  InheritedIraInputs,
   IncomeLayeringInputs,
   OptimizeAllocationInputs,
   PerformanceAnalysisInputs,
@@ -1196,6 +1198,21 @@ const validEducation: EducationFundingInputs = {
   ],
 };
 
+const validInheritedIra: InheritedIraInputs = {
+  inheritedBalance: 500_000,
+  beneficiaryOrdinaryIncome: 120_000,
+  beneficiaryOrdinaryIncomeByYear: [],
+  filingStatus: "single",
+  taxYear: 2026,
+  yearsRemaining: 10,
+  annualReturn: 0.04,
+  taxableDistributionRatio: 1,
+  beneficiaryType: "other_designated_beneficiary",
+  beneficiaryAge: 55,
+  decedentAge: 82,
+  targetRate: 0.24,
+};
+
 describe("validateEducationFunding", () => {
   it("accepts a well-formed education funding request", () => {
     expect(validateEducationFunding(validEducation)).toEqual([]);
@@ -1253,6 +1270,38 @@ describe("validateEducationFunding", () => {
         "Tuition inflation must be greater than -1.",
         "Student 1 annual cost cannot be negative.",
       ]),
+    );
+  });
+});
+
+describe("validateInheritedIra", () => {
+  it("accepts a well-formed inherited IRA strategy request", () => {
+    expect(validateInheritedIra(validInheritedIra)).toEqual([]);
+  });
+
+  it("validates optional year-by-year ordinary income", () => {
+    expect(
+      validateInheritedIra({
+        ...validInheritedIra,
+        beneficiaryOrdinaryIncomeByYear: [120_000, -1],
+      }),
+    ).toContain("Year-by-year ordinary income cannot be negative.");
+    expect(
+      validateInheritedIra({
+        ...validInheritedIra,
+        beneficiaryOrdinaryIncomeByYear: Array.from({ length: 11 }, () => 1),
+      }),
+    ).toContain("Year-by-year ordinary income supports at most 10 years.");
+  });
+
+  it("blocks non-designated beneficiary ranking in S11 v1", () => {
+    expect(
+      validateInheritedIra({
+        ...validInheritedIra,
+        beneficiaryType: "non_designated_beneficiary",
+      }),
+    ).toContain(
+      "The S11 engine does not rank non-designated beneficiary cases; use carve-out context only.",
     );
   });
 });

@@ -144,6 +144,20 @@ const snapshot: ScenarioSnapshot = {
   incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
   historicalBlendInputs: DEFAULT_HISTORICAL_BLEND_INPUTS,
   performanceAnalysisInputs: DEFAULT_PERFORMANCE_ANALYSIS_INPUTS,
+  inheritedIraInputs: {
+    inheritedBalance: 500_000,
+    beneficiaryOrdinaryIncome: 120_000,
+    beneficiaryOrdinaryIncomeByYear: [120_000, 125_000],
+    filingStatus: "single",
+    taxYear: 2026,
+    yearsRemaining: 10,
+    annualReturn: 0.04,
+    taxableDistributionRatio: 1,
+    beneficiaryType: "other_designated_beneficiary",
+    beneficiaryAge: 55,
+    decedentAge: 82,
+    targetRate: 0.24,
+  },
   riskProfileScoreInputs: {
     answers: DEFAULT_RISK_PROFILE_ANSWERS,
   },
@@ -335,6 +349,64 @@ describe("round-trip", () => {
         DEFAULT_RISK_PROFILE_ANSWERS,
       );
     }
+  });
+
+  it("defaults inherited IRA inputs when loading an older scenario file", () => {
+    const env = serializeScenario(snapshot);
+    const result = parseScenario({
+      ...env,
+      inheritedIraInputs: undefined,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.inheritedIraInputs).toMatchObject({
+        inheritedBalance: 500_000,
+        beneficiaryOrdinaryIncome: 120_000,
+        beneficiaryType: "other_designated_beneficiary",
+        yearsRemaining: 10,
+      });
+    }
+  });
+
+  it("drops the retired inherited IRA text field when loading a hand-edited file", () => {
+    const env = serializeScenario(snapshot);
+    const inherited = { ...env.inheritedIraInputs };
+    delete (inherited as Partial<typeof inherited>)
+      .beneficiaryOrdinaryIncomeByYear;
+    const result = parseScenario({
+      ...env,
+      inheritedIraInputs: {
+        ...inherited,
+        beneficiaryOrdinaryIncomeByYearText: "not numeric free text",
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(
+        result.value.inheritedIraInputs.beneficiaryOrdinaryIncomeByYear,
+      ).toEqual([]);
+      expect(JSON.stringify(result.value)).not.toContain(
+        "not numeric free text",
+      );
+    }
+  });
+
+  it("rejects malformed inherited IRA income-year arrays", () => {
+    const env = serializeScenario(snapshot);
+    const result = parseScenario({
+      ...env,
+      inheritedIraInputs: {
+        ...env.inheritedIraInputs,
+        beneficiaryOrdinaryIncomeByYear: "120000, 125000",
+      },
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Malformed inherited-IRA inputs.",
+    });
   });
 
   it("defaults income-layering inputs when loading an older scenario file", () => {

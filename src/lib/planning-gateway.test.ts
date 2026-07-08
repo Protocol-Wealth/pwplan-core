@@ -49,6 +49,7 @@ import {
   type RiskMetricsRequest,
   type RiskProfileScoreRequest,
   type PerformanceAnalysisRequest,
+  type InheritedIraAnalysisRequest,
   type RebalanceRequest,
   type OptimizeAllocationRequest,
   type IrmaaHeadroomRequest,
@@ -71,6 +72,16 @@ const mcReq: Omit<MonteCarloRequest, "contractVersion"> = {
   filingStatus: "single",
   returnModel: "emf_regime",
   paths: 1000,
+};
+
+const mcLtcReq: Omit<MonteCarloRequest, "contractVersion"> = {
+  ...mcReq,
+  ltcShock: {
+    onsetAge: 84,
+    annualCost: 120_000,
+    durationYears: 4,
+    costInflation: 0.04,
+  },
 };
 
 const solveGoalReq: Omit<SolveGoalRequest, "contractVersion"> = {
@@ -108,6 +119,8 @@ const projectCashFlowReq: Omit<ProjectCashFlowRequest, "contractVersion"> = {
   currentLiabilities: 250_000,
   baseYear: 2026,
   taxYear: 2026,
+  healthcareInflationRate: 0.04,
+  ltcShock: { onsetAge: 80, annualCost: 100_000, durationYears: 3 },
   accountBalances: { taxable: 50_000, traditional: 500_000, roth: 50_000 },
   accountReturns: { taxable: 0.03, traditional: 0.05, roth: 0.06 },
   earlyWithdrawalPenaltyRate: 0.1,
@@ -308,6 +321,20 @@ const performanceReq: Omit<PerformanceAnalysisRequest, "contractVersion"> = {
   benchmarkReturns: [0.07, 0.055],
 };
 
+const inheritedIraReq: Omit<InheritedIraAnalysisRequest, "contractVersion"> = {
+  inheritedBalance: 500_000,
+  beneficiaryOrdinaryIncome: 120_000,
+  filingStatus: "single",
+  taxYear: 2026,
+  yearsRemaining: 10,
+  annualReturn: 0.04,
+  taxableDistributionRatio: 1,
+  beneficiaryType: "other_designated_beneficiary",
+  beneficiaryAge: 55,
+  decedentAge: 82,
+  targetRate: 0.24,
+};
+
 const rebalanceReq: Omit<RebalanceRequest, "contractVersion"> = {
   assetClasses: [
     {
@@ -460,6 +487,59 @@ describe("planning gateway dispatch", () => {
     expect(result.seedUsed).toBe(7);
   });
 
+  it("dispatches Monte Carlo LTC shock inputs and returns same-seed impact fields", async () => {
+    const fetchMock = stubFetch({
+      contractVersion: "0.1.0",
+      successProbability: 0.72,
+      terminalValues: { p50: 800_000 },
+      medianBalanceByYear: [1, 2, 3],
+      worstPathTerminal: 0,
+      seedUsed: 7,
+      ltcShock: {
+        onsetAge: 84,
+        annualCostToday: 120_000,
+        durationYears: 4,
+        costInflation: 0.04,
+        annualCostConvention:
+          "current_year_dollars_inflated_to_each_active_age",
+        nominalTotalCost: 510_000,
+        activeYears: [
+          { projectionYear: 40, age: 84, cost: 120_000 },
+          { projectionYear: 41, age: 85, cost: 124_800 },
+        ],
+      },
+      ltcShockImpact: {
+        basis: "same_seed_same_returns_with_vs_without_ltc_shock",
+        baselineSuccessProbability: 0.81,
+        withShockSuccessProbability: 0.72,
+        successProbabilityDelta: -0.09,
+        selfInsuredProbability: 0.88,
+        baselineTerminalValues: { p50: 1_000_000 },
+        withShockTerminalValues: { p50: 800_000 },
+      },
+    });
+
+    const result = await planning.monteCarlo(mcLtcReq);
+
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.ltcShock).toEqual({
+      onsetAge: 84,
+      annualCost: 120_000,
+      durationYears: 4,
+      costInflation: 0.04,
+    });
+    expect(result.ltcShock?.annualCostToday).toBe(120_000);
+    expect(result.ltcShock?.activeYears[0]).toMatchObject({
+      projectionYear: 40,
+      age: 84,
+    });
+    expect(result.ltcShock?.nominalTotalCost).toBe(510_000);
+    expect(result.ltcShockImpact?.basis).toBe(
+      "same_seed_same_returns_with_vs_without_ltc_shock",
+    );
+    expect(result.ltcShockImpact?.successProbabilityDelta).toBe(-0.09);
+  });
+
   it("omits the subject-ref header by default and includes it when provided", async () => {
     const noRef = stubFetch({ contractVersion: "0.1.0" });
     await planning.glidePath(gpReq);
@@ -564,6 +644,11 @@ describe("planning gateway dispatch", () => {
         planning.performanceAnalysis({
           ...performanceReq,
           ssn: "123-45-6789",
+        }),
+      () =>
+        planning.inheritedIraAnalysis({
+          ...inheritedIraReq,
+          email: "client@example.com",
         }),
       () =>
         planning.irmaaHeadroom({
@@ -709,6 +794,10 @@ describe("planning gateway dispatch", () => {
       {
         id: "performance_analysis",
         call: () => planning.performanceAnalysis(performanceReq),
+      },
+      {
+        id: "inherited_ira_analysis",
+        call: () => planning.inheritedIraAnalysis(inheritedIraReq),
       },
       { id: "rebalance", call: () => planning.rebalance(rebalanceReq) },
       {
@@ -1121,6 +1210,8 @@ describe("planning gateway dispatch", () => {
           income: 180_000,
           expenses: 90_000,
           taxes: 25_000,
+          baseExpenses: 90_000,
+          ltcShockExpense: 0,
           netCashFlow: 65_000,
           portfolioBalance: 665_000,
           liabilities: 250_000,
@@ -1135,13 +1226,26 @@ describe("planning gateway dispatch", () => {
         peakNetWorth: 415_000,
         depletionAge: null,
         fundedThroughTerminal: true,
+        lifetimeLtcShockCost: 0,
       },
       lifetimeTax: {
         totalIncome: 180_000,
         totalTaxesPaid: 25_000,
         effectiveRate: 0.1389,
       },
-      assumptions: { filingStatus: "married_joint" },
+      assumptions: {
+        filingStatus: "married_joint",
+        ltcShock: {
+          onsetAge: 80,
+          annualCostToday: 100_000,
+          durationYears: 3,
+          costInflation: 0.04,
+          annualCostConvention:
+            "current_year_dollars_inflated_to_each_active_age",
+          nominalTotalCost: 0,
+          activeYears: [],
+        },
+      },
     });
 
     const result = await planning.projectCashFlow(projectCashFlowReq);
@@ -1152,8 +1256,16 @@ describe("planning gateway dispatch", () => {
     const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(sent.currentAge).toBe(45);
     expect(sent.baseYear).toBe(2026);
+    expect(sent.healthcareInflationRate).toBe(0.04);
+    expect(sent.ltcShock).toEqual({
+      onsetAge: 80,
+      annualCost: 100_000,
+      durationYears: 3,
+    });
     expect(result.years[0].phase).toBe("accumulation");
+    expect(result.years[0].ltcShockExpense).toBe(0);
     expect(result.aggregate.startingNetWorth).toBe(350_000);
+    expect(result.aggregate.lifetimeLtcShockCost).toBe(0);
   });
 
   it("dispatches roth_conversion and returns the comparison fields", async () => {

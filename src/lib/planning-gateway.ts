@@ -82,6 +82,8 @@ import {
   type RiskProfileScoreResult,
   type PerformanceAnalysisRequest,
   type PerformanceAnalysisResult,
+  type InheritedIraAnalysisRequest,
+  type InheritedIraAnalysisResult,
   type RebalanceRequest,
   type RebalanceResult,
   type OptimizeAllocationRequest,
@@ -487,6 +489,16 @@ export const planning = {
   ) =>
     callTool<PerformanceAnalysisRequest, PerformanceAnalysisResult>(
       PLANNING_TOOLS.performanceAnalysis,
+      { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
+      opts,
+    ),
+
+  inheritedIraAnalysis: (
+    req: Omit<InheritedIraAnalysisRequest, "contractVersion">,
+    opts?: CallOptions,
+  ) =>
+    callTool<InheritedIraAnalysisRequest, InheritedIraAnalysisResult>(
+      PLANNING_TOOLS.inheritedIraAnalysis,
       { ...req, contractVersion: PLANNING_CONTRACT_VERSION },
       opts,
     ),

@@ -57,6 +57,8 @@ import type {
   HistoricalBlendRebalanceFrequency,
   TwrFlowTiming,
   PerformanceAnalysisResult,
+  InheritedIraAnalysisResult,
+  InheritedIraBeneficiaryType,
 } from "../contract/planning";
 import { DEFAULT_INCOME_LAYERING_INPUTS } from "../lib/income-layering-defaults";
 import { DEFAULT_HISTORICAL_BLEND_INPUTS } from "../lib/historical-blend-defaults";
@@ -88,6 +90,7 @@ export type PlanningTool =
   | "income_layering"
   | "historical_blend"
   | "performance_analysis"
+  | "inherited_ira"
   | "risk_profile"
   | "rebalance"
   | "optimize_allocation"
@@ -306,6 +309,22 @@ export interface PerformanceAnalysisInputs {
   benchmarkReturnsText: string;
 }
 
+export interface InheritedIraInputs {
+  inheritedBalance: number;
+  beneficiaryOrdinaryIncome: number;
+  /** Optional year-by-year ordinary-income aggregates. Numeric only; no free text. */
+  beneficiaryOrdinaryIncomeByYear: number[];
+  filingStatus: FilingStatus;
+  taxYear: number;
+  yearsRemaining: number;
+  annualReturn: number;
+  taxableDistributionRatio: number;
+  beneficiaryType: InheritedIraBeneficiaryType;
+  beneficiaryAge: number;
+  decedentAge: number;
+  targetRate: number;
+}
+
 export interface RiskProfileScoreInputs {
   /** Fixed questionnaire answer ids keyed by canonical question id. */
   answers: Record<string, string>;
@@ -427,6 +446,7 @@ export interface ScenarioSnapshot {
   incomeLayeringInputs: IncomeLayeringInputs;
   historicalBlendInputs: HistoricalBlendInputs;
   performanceAnalysisInputs: PerformanceAnalysisInputs;
+  inheritedIraInputs: InheritedIraInputs;
   riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
@@ -457,6 +477,7 @@ interface ScenarioState {
   incomeLayeringInputs: IncomeLayeringInputs;
   historicalBlendInputs: HistoricalBlendInputs;
   performanceAnalysisInputs: PerformanceAnalysisInputs;
+  inheritedIraInputs: InheritedIraInputs;
   riskProfileScoreInputs: RiskProfileScoreInputs;
   rebalanceInputs: RebalanceInputs;
   optimizeAllocationInputs: OptimizeAllocationInputs;
@@ -484,6 +505,7 @@ interface ScenarioState {
   incomeLayeringResult: IncomeLayeringResult | null;
   historicalBlendResult: HistoricalBlendResult | null;
   performanceAnalysisResult: PerformanceAnalysisResult | null;
+  inheritedIraResult: InheritedIraAnalysisResult | null;
   riskProfileScoreResult: RiskProfileScoreResult | null;
   rebalanceResult: RebalanceResult | null;
   optimizeAllocationResult: OptimizeAllocationResult | null;
@@ -527,6 +549,7 @@ interface ScenarioState {
   setPerformanceAnalysisInputs: (
     patch: Partial<PerformanceAnalysisInputs>,
   ) => void;
+  setInheritedIraInputs: (patch: Partial<InheritedIraInputs>) => void;
   setRiskProfileScoreInputs: (patch: Partial<RiskProfileScoreInputs>) => void;
   setRebalanceInputs: (patch: Partial<RebalanceInputs>) => void;
   setOptimizeAllocationInputs: (
@@ -561,6 +584,7 @@ interface ScenarioState {
   setIncomeLayeringResult: (r: IncomeLayeringResult | null) => void;
   setHistoricalBlendResult: (r: HistoricalBlendResult | null) => void;
   setPerformanceAnalysisResult: (r: PerformanceAnalysisResult | null) => void;
+  setInheritedIraResult: (r: InheritedIraAnalysisResult | null) => void;
   setRiskProfileScoreResult: (r: RiskProfileScoreResult | null) => void;
   setRebalanceResult: (r: RebalanceResult | null) => void;
   setOptimizeAllocationResult: (r: OptimizeAllocationResult | null) => void;
@@ -746,6 +770,21 @@ const DEFAULT_RISK_PROFILE_SCORE: RiskProfileScoreInputs = {
   answers: DEFAULT_RISK_PROFILE_ANSWERS,
 };
 
+const DEFAULT_INHERITED_IRA: InheritedIraInputs = {
+  inheritedBalance: 500_000,
+  beneficiaryOrdinaryIncome: 120_000,
+  beneficiaryOrdinaryIncomeByYear: [],
+  filingStatus: "single",
+  taxYear: 2026,
+  yearsRemaining: 10,
+  annualReturn: 0.04,
+  taxableDistributionRatio: 1,
+  beneficiaryType: "other_designated_beneficiary",
+  beneficiaryAge: 55,
+  decedentAge: 82,
+  targetRate: 0.24,
+};
+
 const DEFAULT_REBALANCE: RebalanceInputs = {
   // Keyed to the shared portfolio's default asset classes; the form renders one
   // editable target per current asset-class id (missing ids default to 0).
@@ -858,6 +897,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   incomeLayeringInputs: DEFAULT_INCOME_LAYERING_INPUTS,
   historicalBlendInputs: DEFAULT_HISTORICAL_BLEND_INPUTS,
   performanceAnalysisInputs: DEFAULT_PERFORMANCE_ANALYSIS_INPUTS,
+  inheritedIraInputs: DEFAULT_INHERITED_IRA,
   riskProfileScoreInputs: DEFAULT_RISK_PROFILE_SCORE,
   rebalanceInputs: DEFAULT_REBALANCE,
   optimizeAllocationInputs: DEFAULT_OPTIMIZE_ALLOCATION,
@@ -885,6 +925,7 @@ export const useScenario = create<ScenarioState>((set) => ({
   incomeLayeringResult: null,
   historicalBlendResult: null,
   performanceAnalysisResult: null,
+  inheritedIraResult: null,
   riskProfileScoreResult: null,
   rebalanceResult: null,
   optimizeAllocationResult: null,
@@ -927,6 +968,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       incomeLayeringInputs: snapshot.incomeLayeringInputs,
       historicalBlendInputs: snapshot.historicalBlendInputs,
       performanceAnalysisInputs: snapshot.performanceAnalysisInputs,
+      inheritedIraInputs: snapshot.inheritedIraInputs,
       riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
       rebalanceInputs: snapshot.rebalanceInputs,
       optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
@@ -953,6 +995,7 @@ export const useScenario = create<ScenarioState>((set) => ({
       incomeLayeringResult: null,
       historicalBlendResult: null,
       performanceAnalysisResult: null,
+      inheritedIraResult: null,
       riskProfileScoreResult: null,
       rebalanceResult: null,
       optimizeAllocationResult: null,
@@ -1034,6 +1077,10 @@ export const useScenario = create<ScenarioState>((set) => ({
         ...(patch.mwrFlows ? { mwrFlows: patch.mwrFlows } : {}),
       },
     })),
+  setInheritedIraInputs: (patch) =>
+    set((s) => ({
+      inheritedIraInputs: { ...s.inheritedIraInputs, ...patch },
+    })),
   setRiskProfileScoreInputs: (patch) =>
     set((s) => ({
       riskProfileScoreInputs: {
@@ -1104,6 +1151,7 @@ export const useScenario = create<ScenarioState>((set) => ({
     set({ historicalBlendResult }),
   setPerformanceAnalysisResult: (performanceAnalysisResult) =>
     set({ performanceAnalysisResult }),
+  setInheritedIraResult: (inheritedIraResult) => set({ inheritedIraResult }),
   setRiskProfileScoreResult: (riskProfileScoreResult) =>
     set({ riskProfileScoreResult }),
   setRebalanceResult: (rebalanceResult) => set({ rebalanceResult }),
