@@ -26,6 +26,7 @@ import type {
   FireInputs,
   GlidePathInputs,
   HistoricalBlendInputs,
+  InheritedIraInputs,
   IncomeLayeringInputs,
   OptimizeAllocationInputs,
   PerformanceAnalysisInputs,
@@ -48,6 +49,15 @@ const HISTORICAL_BLEND_REBALANCE_FREQUENCIES = new Set([
   "monthly",
   "annual",
   "none",
+]);
+const INHERITED_IRA_BENEFICIARY_TYPES = new Set([
+  "spouse",
+  "minor_child_of_decedent",
+  "disabled",
+  "chronically_ill",
+  "not_more_than_10_years_younger",
+  "other_designated_beneficiary",
+  "non_designated_beneficiary",
 ]);
 const ROADMAP_INPUT_KINDS = new Set([
   "snapshot",
@@ -1183,6 +1193,57 @@ export function validateEducationFunding(e: EducationFundingInputs): string[] {
     ) {
       issues.push(`Student ${row} monthly contribution cannot be negative.`);
     }
+  }
+  return issues;
+}
+
+/** Validate inherited-IRA analysis inputs. Structural only; engine does math. */
+export function validateInheritedIra(i: InheritedIraInputs): string[] {
+  const issues: string[] = [];
+  if (!isNonNegative(i.inheritedBalance)) {
+    issues.push("Inherited balance cannot be negative.");
+  }
+  if (!isNonNegative(i.beneficiaryOrdinaryIncome)) {
+    issues.push("Beneficiary ordinary income cannot be negative.");
+  }
+  if (i.beneficiaryOrdinaryIncomeByYear.length > 10) {
+    issues.push("Year-by-year ordinary income supports at most 10 years.");
+  }
+  if (i.beneficiaryOrdinaryIncomeByYear.some((value) => value < 0)) {
+    issues.push("Year-by-year ordinary income cannot be negative.");
+  }
+  if (!Number.isInteger(i.taxYear) || i.taxYear < 2000 || i.taxYear > 2100) {
+    issues.push("Tax year must be a plausible year.");
+  }
+  if (
+    !Number.isInteger(i.yearsRemaining) ||
+    i.yearsRemaining < 1 ||
+    i.yearsRemaining > 10
+  ) {
+    issues.push("Years remaining must be a whole number in [1, 10].");
+  }
+  if (i.annualReturn <= -1 || i.annualReturn > 1) {
+    issues.push("Annual return must be between -1 and 1.");
+  }
+  if (!isWeight(i.taxableDistributionRatio)) {
+    issues.push("Taxable distribution ratio must be between 0 and 1.");
+  }
+  if (!INHERITED_IRA_BENEFICIARY_TYPES.has(i.beneficiaryType)) {
+    issues.push("Beneficiary type is not supported.");
+  }
+  if (!isNonNegative(i.beneficiaryAge) || !Number.isInteger(i.beneficiaryAge)) {
+    issues.push("Beneficiary age must be a non-negative whole number.");
+  }
+  if (!isNonNegative(i.decedentAge) || !Number.isInteger(i.decedentAge)) {
+    issues.push("Decedent age must be a non-negative whole number.");
+  }
+  if (!isWeight(i.targetRate)) {
+    issues.push("Target marginal rate must be between 0 and 1.");
+  }
+  if (i.beneficiaryType === "non_designated_beneficiary") {
+    issues.push(
+      "The S11 engine does not rank non-designated beneficiary cases; use carve-out context only.",
+    );
   }
   return issues;
 }

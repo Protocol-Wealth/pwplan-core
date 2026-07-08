@@ -129,8 +129,8 @@ npm run dev
 pin. Breaking changes are a major bump and a coordinated release. The client
 throws `ContractMismatchError` on drift.
 
-The wire contract covers **33 planning tools**. The UI has 25 tabs:
-twenty-one one-tool tabs, the `capital_market_assumptions` control inside the
+The wire contract covers **34 planning tools**. The UI has 26 tabs:
+twenty-two one-tool tabs, the `capital_market_assumptions` control inside the
 Monte Carlo tab, one Education tab that houses the two education funding tools,
 one synthetic Cash Flow Bridge tab that houses the three cash-flow bridge tools,
 the Roth · IRMAA tab over the composite case contract, and a UI-only Scenario
@@ -145,7 +145,10 @@ household fields, notes, approvals, release state, or audit trail. Scenario
 Compare stores only in-memory de-identified snapshots and adds no public wire
 type. The Roth · IRMAA tab uses a separate case contract
 (`PLANNING_CASE_CONTRACT_VERSION`) because it mirrors the canonical
-Roth-conversion planning schema.
+Roth-conversion planning schema. `monte_carlo_decumulation` and
+`project_cash_flow` now carry additive `ltcShock` request fields for
+healthcare-cost stress work; the UI tab added in this slice is the S11 inherited
+IRA comparison.
 
 | Tool                         | Purpose                                               | UI         |
 | ---------------------------- | ----------------------------------------------------- | ---------- |
@@ -170,6 +173,7 @@ Roth-conversion planning schema.
 | `risk_metrics`               | Sharpe / Sortino / drawdown / VaR for a return series | tab        |
 | `risk_profile_score`         | Risk questionnaire → optimizer-compatible profile     | tab        |
 | `performance_analysis`       | TWR / MWR / fee drag / benchmark-relative math        | tab        |
+| `inherited_ira_analysis`     | Inherited IRA 10-year strategy comparison             | tab        |
 | `rebalance`                  | Drift + self-financing trades to target weights       | tab        |
 | `optimize_allocation`        | Mean-variance allocation over engine-sourced data     | tab        |
 | `irmaa_headroom`             | Room before next projected Medicare IRMAA cliff       | gateway    |

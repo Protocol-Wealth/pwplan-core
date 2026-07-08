@@ -26,8 +26,8 @@ describe("planning contract", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("exposes the current 33 public-safe wire tools", () => {
-    expect(Object.values(PLANNING_TOOLS)).toHaveLength(33);
+  it("exposes the current 34 public-safe wire tools", () => {
+    expect(Object.values(PLANNING_TOOLS)).toHaveLength(34);
     expect(PLANNING_TOOLS.solveGoal).toBe("solve_goal");
     expect(PLANNING_TOOLS.analyzeGoals).toBe("analyze_goals");
     expect(PLANNING_TOOLS.projectCashFlow).toBe("project_cash_flow");
@@ -46,6 +46,7 @@ describe("planning contract", () => {
     expect(PLANNING_TOOLS.historicalBlend).toBe("historical_blend");
     expect(PLANNING_TOOLS.riskProfileScore).toBe("risk_profile_score");
     expect(PLANNING_TOOLS.performanceAnalysis).toBe("performance_analysis");
+    expect(PLANNING_TOOLS.inheritedIraAnalysis).toBe("inherited_ira_analysis");
     expect(PLANNING_TOOLS.irmaaHeadroom).toBe("irmaa_headroom");
     expect(PLANNING_TOOLS.analyzeRothConversion).toBe(
       "analyze_roth_conversion",

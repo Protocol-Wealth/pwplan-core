@@ -191,6 +191,18 @@ on completion and note the version in CHANGELOG.md._
       identity, account names, holdings, raw transactions, notes, advisor
       workflow state, approvals, release state, persistence, audit trail, or
       private compliance workflow. 33 wire-contract tools, 25 UI tabs.)_
+- [x] S11 inherited IRA + S12 LTC contract reconciliation.
+      _(done 2026-07-07: added `inherited_ira_analysis` contract/gateway
+      coverage and an `InheritedIraTool` tab using only numeric/de-identified
+      inherited balance, income, filing-status, tax-year, age, beneficiary-type,
+      and rate assumptions. Also added additive `ltcShock` contract fields for
+      `monte_carlo_decumulation` and `project_cash_flow`, matching nexus-core
+      S12 v1 where LTC stress is modeled separately from dynamic guardrails.
+      Scenario JSON remains schema-v4 and defaults older snapshots. No names,
+      account numbers, raw holdings, diagnosis/provider/policy/claim data,
+      notes, advisor workflow state, approvals, release state, persistence,
+      audit trail, or private compliance workflow. 34 wire-contract tools, 26 UI
+      tabs.)_
 
 ## Dependency on other repos (track, do not build here)
 

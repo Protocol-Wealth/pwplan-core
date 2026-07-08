@@ -29,6 +29,7 @@ import type {
   FilingStatus,
   GuaranteedIncome,
   HistoricalBlendRebalanceFrequency,
+  InheritedIraBeneficiaryType,
   PlanningReportPreset,
   ReturnModel,
   TwrFlowTiming,
@@ -55,6 +56,7 @@ import type {
   GlidePathInputs,
   GlidePathShape,
   HistoricalBlendInputs,
+  InheritedIraInputs,
   IncomeLayeringInputs,
   IncomeLayeringStreamDraft,
   OptimizeAllocationInputs,
@@ -123,6 +125,7 @@ export function serializeScenario(
     incomeLayeringInputs: snapshot.incomeLayeringInputs,
     historicalBlendInputs: snapshot.historicalBlendInputs,
     performanceAnalysisInputs: snapshot.performanceAnalysisInputs,
+    inheritedIraInputs: snapshot.inheritedIraInputs,
     riskProfileScoreInputs: snapshot.riskProfileScoreInputs,
     rebalanceInputs: snapshot.rebalanceInputs,
     optimizeAllocationInputs: snapshot.optimizeAllocationInputs,
@@ -205,6 +208,15 @@ const HISTORICAL_BLEND_REBALANCE_FREQUENCIES = [
   "none",
 ] as const;
 const TWR_FLOW_TIMINGS = ["start", "end"] as const;
+const INHERITED_IRA_BENEFICIARY_TYPES = [
+  "spouse",
+  "minor_child_of_decedent",
+  "disabled",
+  "chronically_ill",
+  "not_more_than_10_years_younger",
+  "other_designated_beneficiary",
+  "non_designated_beneficiary",
+] as const;
 const INCOME_STREAM_KINDS = ["pension", "annuity"] as const;
 const SPENDING_VOLATILITY = ["low", "medium", "high"] as const;
 const PLANNING_TOOLS: PlanningTool[] = [
@@ -226,6 +238,7 @@ const PLANNING_TOOLS: PlanningTool[] = [
   "income_layering",
   "historical_blend",
   "performance_analysis",
+  "inherited_ira",
   "risk_profile",
   "rebalance",
   "optimize_allocation",
@@ -790,6 +803,71 @@ function parsePerformanceAnalysis(
   };
 }
 
+function defaultInheritedIra(): InheritedIraInputs {
+  return {
+    inheritedBalance: 500_000,
+    beneficiaryOrdinaryIncome: 120_000,
+    beneficiaryOrdinaryIncomeByYear: [],
+    filingStatus: "single",
+    taxYear: 2026,
+    yearsRemaining: 10,
+    annualReturn: 0.04,
+    taxableDistributionRatio: 1,
+    beneficiaryType: "other_designated_beneficiary",
+    beneficiaryAge: 55,
+    decedentAge: 82,
+    targetRate: 0.24,
+  };
+}
+
+function parseInheritedIra(v: unknown): InheritedIraInputs | null {
+  if (v === undefined) return defaultInheritedIra();
+  const beneficiaryOrdinaryIncomeByYear =
+    v !== null &&
+    typeof v === "object" &&
+    "beneficiaryOrdinaryIncomeByYear" in v
+      ? parseArray(
+          (v as Record<string, unknown>).beneficiaryOrdinaryIncomeByYear,
+          (x) => (isNum(x) ? x : null),
+        )
+      : [];
+  if (
+    !isObject(v) ||
+    !isNum(v.inheritedBalance) ||
+    !isNum(v.beneficiaryOrdinaryIncome) ||
+    beneficiaryOrdinaryIncomeByYear === null ||
+    !isStr(v.filingStatus) ||
+    !FILING_STATUSES.includes(v.filingStatus as FilingStatus) ||
+    !isNum(v.taxYear) ||
+    !isNum(v.yearsRemaining) ||
+    !isNum(v.annualReturn) ||
+    !isNum(v.taxableDistributionRatio) ||
+    !isStr(v.beneficiaryType) ||
+    !(INHERITED_IRA_BENEFICIARY_TYPES as readonly string[]).includes(
+      v.beneficiaryType,
+    ) ||
+    !isNum(v.beneficiaryAge) ||
+    !isNum(v.decedentAge) ||
+    !isNum(v.targetRate)
+  ) {
+    return null;
+  }
+  return {
+    inheritedBalance: v.inheritedBalance,
+    beneficiaryOrdinaryIncome: v.beneficiaryOrdinaryIncome,
+    beneficiaryOrdinaryIncomeByYear,
+    filingStatus: v.filingStatus as FilingStatus,
+    taxYear: v.taxYear,
+    yearsRemaining: v.yearsRemaining,
+    annualReturn: v.annualReturn,
+    taxableDistributionRatio: v.taxableDistributionRatio,
+    beneficiaryType: v.beneficiaryType as InheritedIraBeneficiaryType,
+    beneficiaryAge: v.beneficiaryAge,
+    decedentAge: v.decedentAge,
+    targetRate: v.targetRate,
+  };
+}
+
 function parseRiskProfileScore(v: unknown): RiskProfileScoreInputs | null {
   if (v === undefined) {
     return { answers: { ...DEFAULT_RISK_PROFILE_ANSWERS } };
@@ -1159,6 +1237,10 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
       error: "Malformed or missing performance-analysis inputs.",
     };
   }
+  const inheritedIraInputs = parseInheritedIra(raw.inheritedIraInputs);
+  if (inheritedIraInputs === null) {
+    return { ok: false, error: "Malformed inherited-IRA inputs." };
+  }
   const riskProfileScoreInputs = parseRiskProfileScore(
     raw.riskProfileScoreInputs,
   );
@@ -1238,6 +1320,7 @@ export function parseScenario(raw: unknown): ScenarioParseResult {
     incomeLayeringInputs,
     historicalBlendInputs,
     performanceAnalysisInputs,
+    inheritedIraInputs,
     riskProfileScoreInputs,
     rebalanceInputs,
     optimizeAllocationInputs,

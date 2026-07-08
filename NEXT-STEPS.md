@@ -6,14 +6,15 @@ model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
 [`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
 current.
 
-_Last updated: 2026-07-07. 33 wire-contract tools, 25 UI tabs (21 one-tool wire
+_Last updated: 2026-07-07. 34 wire-contract tools, 26 UI tabs (22 one-tool wire
 tabs + Education + Cash Flow Bridge + Roth · IRMAA + Scenario Compare), the
 Report tab can dispatch the PW Wealth Roadmap preset with replay metadata, the
 Risk Profile tab can load scored profiles into Optimize Allocation, the Income
 Layers tab surfaces retirement-income layering, the History tab surfaces
 historical index blends, the Performance tab surfaces TWR/MWR/fee-drag/
-benchmark-relative math, scenario files remain schema v4, and live Nexus was
-not re-smoked during the latest UI pass._
+benchmark-relative math, the Inherited IRA tab surfaces 10-year strategy
+comparisons, scenario files remain schema v4, and live Nexus was deployed and
+smoked after S11/S12._
 
 ## Orient yourself in 5 minutes
 
@@ -54,11 +55,12 @@ public privacy / compliance posture, which goes via a review PR + CCO sign-off
 
 ## Prioritized next tasks (from ROADMAP)
 
-1. **Live follow-up** — the synthetic Cash Flow Bridge and Education tabs are
-   built against source-truth contracts. Re-check
-   `https://nexusmcp.site/mcp/tools` before any live smoke because deployed
-   Nexus can lag source. Keep tests mocked/offline. Tracked in
-   [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15).
+1. **Live follow-up** — keep tests mocked/offline, but smoke live
+   `https://nexusmcp.site/health`, `/health/db`, and public docs when a slice
+   needs runtime certainty. After S11/S12, nexus-core was redeployed; public
+   `llms.txt` lists 34 planning tools and restricted REST still returns 401
+   without the service key. An authenticated planning-tool handshake was not run
+   from this repo.
 2. **Theming** to the `-core` family visual language — held for a design reference;
    ask the maintainer for it before starting. Tracked in
    [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16).
