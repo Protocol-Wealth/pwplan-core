@@ -1,12 +1,13 @@
 # CURRENT-STATE.md
 
-_Last updated: 2026-07-07 (Monte Carlo report diagnostics on the 34-tool contract). Maintain it._
+_Last updated: 2026-07-26 (dependency advisory remediation on the 34-tool contract). Maintain it._
 
 ## Status
 
-Last local gate for the Monte Carlo report diagnostics reconciliation slice was
-green: typecheck clean, lint clean, 322 tests pass, build succeeds,
-format-check clean, and `git diff --check` is clean.
+Last local gate, including the 2026-07-26 development dependency advisory
+remediation, was green: `npm audit` reports zero vulnerabilities, typecheck
+clean, lint clean, 322 tests pass, build succeeds, format-check clean, and
+`git diff --check` is clean.
 **This repo is now
 positioned as demo / case-study tooling**: it runs
 against the public nexus-core MCP engine (`https://nexusmcp.site` by default, no
