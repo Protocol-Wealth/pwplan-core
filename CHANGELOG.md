@@ -7,6 +7,13 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Security
+
+- **Development dependency advisory remediation (2026-07-26).** Added
+  lockfile overrides for patched brace-expansion 5.0.8, minimatch 10.2.5,
+  js-yaml 5.2.2, and PostCSS 8.5.18. This removes all current npm audit
+  findings without changing the public planning contract or runtime behavior.
+
 ### Added
 
 - **Monte Carlo report diagnostics reconciliation (2026-07-07).** Added
