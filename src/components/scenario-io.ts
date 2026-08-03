@@ -99,8 +99,7 @@ export interface SerializedScenario extends ScenarioSnapshot {
 }
 
 export type ScenarioParseResult =
-  | { ok: true; value: ScenarioSnapshot }
-  | { ok: false; error: string };
+  { ok: true; value: ScenarioSnapshot } | { ok: false; error: string };
 
 /** Wrap the current plan inputs in a versioned, PII-free envelope. */
 export function serializeScenario(
