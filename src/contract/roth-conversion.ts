@@ -158,12 +158,7 @@ export interface ConversionOption {
 }
 
 export type BindingConstraint =
-  | "bracket"
-  | "irmaa"
-  | "liquidity"
-  | "trad_balance"
-  | "fixed_amount"
-  | "none";
+  "bracket" | "irmaa" | "liquidity" | "trad_balance" | "fixed_amount" | "none";
 
 /** ACA premium-tax-credit erosion from the conversion (contract v1.1.0); null on
  *  `YearAnalysis.aca` unless an ACA situation is injected + someone is under 65 +
