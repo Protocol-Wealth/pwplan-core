@@ -42,10 +42,7 @@ export type Currency = "USD";
 export type AccountType = "taxable" | "traditional" | "roth";
 
 export type FilingStatus =
-  | "single"
-  | "married_joint"
-  | "married_separate"
-  | "head_of_household";
+  "single" | "married_joint" | "married_separate" | "head_of_household";
 
 export type AccountBalanceMap = Partial<Record<AccountType, number>>;
 
@@ -57,11 +54,7 @@ export interface ResidencyChange {
 
 /** EMF regime classification emitted by nexus-core. Mirrors the regime engine. */
 export type Regime =
-  | "expansion"
-  | "inflationary"
-  | "deflationary"
-  | "stagflation"
-  | "crisis";
+  "expansion" | "inflationary" | "deflationary" | "stagflation" | "crisis";
 
 /** Return-generation model. `emf_regime` is the differentiated path: it drives
  *  the simulation off nexus-core's live EMF regime classification + per-asset
@@ -942,10 +935,7 @@ export interface CashflowPlanningBridgeResult {
 }
 
 export type CashReserveStatus =
-  | "underfunded"
-  | "on_track"
-  | "funded"
-  | "overfunded";
+  "underfunded" | "on_track" | "funded" | "overfunded";
 
 export interface CashReserveAnalysisRequest {
   contractVersion: typeof PLANNING_CONTRACT_VERSION;
@@ -1539,9 +1529,7 @@ export type InheritedIraBeneficiaryType =
   | "non_designated_beneficiary";
 
 export type InheritedIraStrategyName =
-  | "lump_sum"
-  | "equal_annual"
-  | "bracket_smoothed";
+  "lump_sum" | "equal_annual" | "bracket_smoothed";
 
 export interface InheritedIraAnalysisRequest {
   contractVersion: typeof PLANNING_CONTRACT_VERSION;
