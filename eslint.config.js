@@ -26,6 +26,19 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      // Honour the conventional leading underscore for a binding that exists
+      // only to be discarded. The PII strip in src/synthetic/planning-input.ts
+      // destructures `id` and `displayName` out precisely so they cannot reach
+      // the planning contract; naming them is what makes the omission explicit
+      // and reviewable.
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
     },
   },
 );
