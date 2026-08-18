@@ -33,6 +33,16 @@ const FORBIDDEN_IDENTITY_KEYS = new Set([
   "phonenumber",
   "address",
   "streetaddress",
+  // Added 2026-08-18. `displayName` is the likeliest identity field to leak from
+  // a client profile -- it is what a CRM, a planning tool, and a synthetic
+  // profile all call the human-readable label -- and the exact-match set did not
+  // hold it. Found by a stricter schema-level check ported in with the synthetic
+  // profile generator (#45), which caught what this always-on tripwire did not.
+  "displayname",
+  "preferredname",
+  "nickname",
+  "middlename",
+  "maidenname",
 ]);
 
 function normalizeKey(key: string): string {

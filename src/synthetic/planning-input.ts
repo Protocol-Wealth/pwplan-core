@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertNoPII } from "../lib/compliance";
 import {
   GoalSchema,
   type ClientProfile,
@@ -59,6 +60,12 @@ export type PlanningInput = z.infer<typeof PlanningInputSchema>;
  */
 export function toPlanningInput(profile: ClientProfile): PlanningInput {
   const { id: _id, displayName: _displayName, ...rest } = profile;
+  // The tripwire runs BEFORE the parse, deliberately. Zod strips unknown keys,
+  // so a guard placed after it can never see a PII field and can never fail --
+  // it would read as protection while measuring nothing. Here it verifies that
+  // the destructure above actually removed everything identity-shaped, and it
+  // will fail if the profile schema later gains a field the destructure misses.
+  assertNoPII(rest);
   return PlanningInputSchema.parse(rest);
 }
 

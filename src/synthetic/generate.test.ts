@@ -19,9 +19,11 @@ describe("generate", () => {
     expect(generate({ seed: 7 }).displayName).toMatch(/synthetic/i);
   });
 
-  it("derives the tax bracket from filing status, not income alone", () => {
-    // hardAssetHedger is $220k of income filing marriedJoint. On single-filer
-    // thresholds that lands in 32%, which contradicts the profile it came from.
+  it("takes the tax bracket from the profile pin, not from income", () => {
+    // hardAssetHedger is $220k filing marriedJoint. Deriving from income on
+    // single-filer thresholds produced 32%, contradicting the profile. The
+    // bracket is now pinned in the spec -- deriving it would be tax logic, which
+    // belongs in nexus-core (CLAUDE.md invariant 1).
     const p = generate({ seed: 11, profile: "hardAssetHedger" });
     expect(p.filingStatus).toBe("marriedJoint");
     expect(p.annualIncome).toBe(220_000);

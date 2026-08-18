@@ -2,7 +2,6 @@ import seedrandom from "seedrandom";
 import {
   ClientProfileSchema,
   type ClientProfile,
-  type FilingStatus,
   type Goal,
 } from "./schema.js";
 import { PROFILES, type ProfileName, type ProfileSpec } from "./profiles.js";
@@ -83,7 +82,7 @@ const FILING_STATUSES = [
   "marriedSeparate",
   "headOfHousehold",
 ] as const;
-type TaxBracket = "10" | "12" | "22" | "24" | "32" | "35" | "37";
+const FEDERAL_BRACKETS = ["10", "12", "22", "24", "32", "35", "37"] as const;
 
 export type GenerateOpts = {
   seed: number | string;
@@ -105,38 +104,6 @@ function randFloat(rng: () => number, min: number, max: number): number {
 
 function snap(n: number, step: number): number {
   return Math.round(n / step) * step;
-}
-
-/**
- * Approximate marginal bracket for a synthetic profile.
- *
- * The thresholds are single-filer figures; joint and head-of-household filers
- * widen them. Without this a $220k married-joint profile was assigned the 32%
- * bracket on single-filer thresholds, making the exported planning input
- * internally inconsistent with the profile that produced it.
- *
- * This is a plausibility heuristic for SYNTHETIC profile generation, not a tax
- * computation. This repo ships planning demos and states plainly in NOTICE that
- * it is not tax advice; a real bracket needs a tax year, deductions, and
- * jurisdiction, none of which a synthetic generator has.
- */
-function bracketFromIncome(
-  income: number,
-  filingStatus: FilingStatus,
-): TaxBracket {
-  const widen =
-    filingStatus === "marriedJoint"
-      ? 2
-      : filingStatus === "headOfHousehold"
-        ? 1.4
-        : 1;
-  if (income < 11_000 * widen) return "10";
-  if (income < 44_725 * widen) return "12";
-  if (income < 95_375 * widen) return "22";
-  if (income < 201_050 * widen) return "24";
-  if (income < 383_900 * widen) return "32";
-  if (income < 578_125 * widen) return "35";
-  return "37";
 }
 
 /** Split a total across the four investment buckets, honouring an optional
@@ -226,7 +193,11 @@ export function generate(opts: GenerateOpts): ClientProfile {
     spec.timeHorizonYears ?? Math.max(1, retirementAge - age);
 
   const filingStatus = spec.filingStatus ?? pick(rng, FILING_STATUSES);
-  const federalMarginalBracket = bracketFromIncome(annualIncome, filingStatus);
+  // Pinned per profile rather than derived: deriving a bracket from income is
+  // tax logic, which belongs in nexus-core (CLAUDE.md invariant 1). Unnamed
+  // profiles take a deterministic draw, which is attribute generation, not tax.
+  const federalMarginalBracket =
+    spec.federalMarginalBracket ?? pick(rng, FEDERAL_BRACKETS);
 
   const lifeInsuranceCoverageAmount =
     rng() > 0.4 ? snap(annualIncome * randFloat(rng, 5, 20), 10_000) : 0;

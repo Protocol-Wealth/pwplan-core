@@ -62,4 +62,5 @@ export type ClientProfile = z.infer<typeof ClientProfileSchema>;
 // Convenience aliases for the closed sets, reused by profiles + planning input.
 export type RiskTolerance = ClientProfile["riskTolerance"];
 export type FilingStatus = ClientProfile["filingStatus"];
+export type FederalMarginalBracket = ClientProfile["federalMarginalBracket"];
 export type GoalType = Goal["type"];
