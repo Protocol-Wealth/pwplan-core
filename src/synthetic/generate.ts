@@ -2,6 +2,7 @@ import seedrandom from "seedrandom";
 import {
   ClientProfileSchema,
   type ClientProfile,
+  type FilingStatus,
   type Goal,
 } from "./schema.js";
 import { PROFILES, type ProfileName, type ProfileSpec } from "./profiles.js";
@@ -106,13 +107,35 @@ function snap(n: number, step: number): number {
   return Math.round(n / step) * step;
 }
 
-function bracketFromIncome(income: number): TaxBracket {
-  if (income < 11_000) return "10";
-  if (income < 44_725) return "12";
-  if (income < 95_375) return "22";
-  if (income < 201_050) return "24";
-  if (income < 383_900) return "32";
-  if (income < 578_125) return "35";
+/**
+ * Approximate marginal bracket for a synthetic profile.
+ *
+ * The thresholds are single-filer figures; joint and head-of-household filers
+ * widen them. Without this a $220k married-joint profile was assigned the 32%
+ * bracket on single-filer thresholds, making the exported planning input
+ * internally inconsistent with the profile that produced it.
+ *
+ * This is a plausibility heuristic for SYNTHETIC profile generation, not a tax
+ * computation. This repo ships planning demos and states plainly in NOTICE that
+ * it is not tax advice; a real bracket needs a tax year, deductions, and
+ * jurisdiction, none of which a synthetic generator has.
+ */
+function bracketFromIncome(
+  income: number,
+  filingStatus: FilingStatus,
+): TaxBracket {
+  const widen =
+    filingStatus === "marriedJoint"
+      ? 2
+      : filingStatus === "headOfHousehold"
+        ? 1.4
+        : 1;
+  if (income < 11_000 * widen) return "10";
+  if (income < 44_725 * widen) return "12";
+  if (income < 95_375 * widen) return "22";
+  if (income < 201_050 * widen) return "24";
+  if (income < 383_900 * widen) return "32";
+  if (income < 578_125 * widen) return "35";
   return "37";
 }
 
@@ -203,7 +226,7 @@ export function generate(opts: GenerateOpts): ClientProfile {
     spec.timeHorizonYears ?? Math.max(1, retirementAge - age);
 
   const filingStatus = spec.filingStatus ?? pick(rng, FILING_STATUSES);
-  const federalMarginalBracket = bracketFromIncome(annualIncome);
+  const federalMarginalBracket = bracketFromIncome(annualIncome, filingStatus);
 
   const lifeInsuranceCoverageAmount =
     rng() > 0.4 ? snap(annualIncome * randFloat(rng, 5, 20), 10_000) : 0;

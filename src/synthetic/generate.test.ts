@@ -19,6 +19,15 @@ describe("generate", () => {
     expect(generate({ seed: 7 }).displayName).toMatch(/synthetic/i);
   });
 
+  it("derives the tax bracket from filing status, not income alone", () => {
+    // hardAssetHedger is $220k of income filing marriedJoint. On single-filer
+    // thresholds that lands in 32%, which contradicts the profile it came from.
+    const p = generate({ seed: 11, profile: "hardAssetHedger" });
+    expect(p.filingStatus).toBe("marriedJoint");
+    expect(p.annualIncome).toBe(220_000);
+    expect(p.federalMarginalBracket).toBe("24");
+  });
+
   it("validates against the schema across a fuzz range of seeds", () => {
     for (let seed = 0; seed < 200; seed++) {
       expect(() => generate({ seed })).not.toThrow();

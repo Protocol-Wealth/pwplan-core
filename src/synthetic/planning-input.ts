@@ -94,11 +94,16 @@ export function toGlidePathParams(input: PlanningInput): {
 } {
   const startEquityWeight = START_EQUITY[input.riskTolerance];
   const currentAge = input.age;
+  // glide_path enforces currentAge <= retirementAge < horizonAge. The schema puts
+  // no upper bound on retirementAge, so a valid profile can retire at 95 — and a
+  // horizon derived only from currentAge (max(90, age+1) = 90) would then sit
+  // BELOW it and the payload would be rejected. Derive the horizon from the
+  // clamped retirement age so the ordering holds for every schema-valid input.
+  const retirementAge = Math.max(input.retirementAge, currentAge);
   return {
     currentAge,
-    // glide_path requires retirementAge >= currentAge and a horizonAge (plan-to age).
-    retirementAge: Math.max(input.retirementAge, currentAge),
-    horizonAge: Math.max(90, currentAge + 1),
+    retirementAge,
+    horizonAge: Math.max(90, retirementAge + 1),
     startEquityWeight,
     endEquityWeight: Math.max(0.2, startEquityWeight - 0.4),
     shape: "linear",

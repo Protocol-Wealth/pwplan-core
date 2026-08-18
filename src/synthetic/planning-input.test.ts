@@ -95,4 +95,20 @@ describe("PlanningInput (continued)", () => {
     expect(params.retirementAge).toBeGreaterThanOrEqual(params.currentAge);
     expect(Object.keys(params)).not.toContain("displayName");
   });
+
+  it("keeps the horizon above a late retirement age", () => {
+    // The schema puts no upper bound on retirementAge, so this profile is valid.
+    // Deriving horizonAge from currentAge alone gave max(90, 71) = 90, which sits
+    // BELOW a retirement age of 95 and breaks the contract's required ordering
+    // currentAge <= retirementAge < horizonAge.
+    const base = toPlanningInput(generate({ seed: 3 }));
+    const params = toGlidePathParams({
+      ...base,
+      age: 70,
+      retirementAge: 95,
+    });
+    expect(params.currentAge).toBe(70);
+    expect(params.retirementAge).toBe(95);
+    expect(params.horizonAge).toBeGreaterThan(params.retirementAge);
+  });
 });
