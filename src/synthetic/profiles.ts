@@ -1,4 +1,9 @@
-import type { FilingStatus, Goal, RiskTolerance } from "./schema.js";
+import type {
+  FederalMarginalBracket,
+  FilingStatus,
+  Goal,
+  RiskTolerance,
+} from "./schema.js";
 
 /**
  * Named case-study profiles (INTERN-EXPLORATION.md §6). Each spec pins the
@@ -32,6 +37,15 @@ export type ProfileSpec = {
   state?: string;
   annualIncome?: number;
   filingStatus?: FilingStatus;
+  /**
+   * Marginal federal bracket, pinned per profile.
+   *
+   * Deriving this from income would put tax-threshold logic in this repo, which
+   * invariant 1 in CLAUDE.md forbids -- quant belongs in nexus-core. Pinning it
+   * also keeps each named profile internally consistent: a $220k marriedJoint
+   * profile no longer picks up a single-filer bracket.
+   */
+  federalMarginalBracket?: FederalMarginalBracket;
   riskTolerance?: RiskTolerance;
   /** 1–10 numeric risk score. When set, overrides riskTolerance via riskScoreToTolerance(). */
   riskScore?: number;
@@ -54,6 +68,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 0,
     annualIncome: 90_000,
     filingStatus: "marriedJoint",
+    federalMarginalBracket: "22",
     riskTolerance: "conservative",
     riskScore: 2,
     targetAssets: 1_800_000,
@@ -75,6 +90,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 0,
     annualIncome: 145_000,
     filingStatus: "single",
+    federalMarginalBracket: "24",
     riskTolerance: "aggressive",
     riskScore: 9,
     targetAssets: 180_000,
@@ -101,6 +117,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 3,
     annualIncome: 1_200_000,
     filingStatus: "marriedJoint",
+    federalMarginalBracket: "37",
     riskTolerance: "moderate",
     riskScore: 6,
     targetAssets: 25_000_000,
@@ -133,6 +150,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 2,
     annualIncome: 220_000,
     filingStatus: "marriedJoint",
+    federalMarginalBracket: "24",
     riskTolerance: "moderate",
     riskScore: 5,
     targetAssets: 1_200_000,
@@ -154,6 +172,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 3,
     annualIncome: 260_000,
     filingStatus: "marriedJoint",
+    federalMarginalBracket: "24",
     riskTolerance: "moderate",
     riskScore: 4,
     targetAssets: 850_000,
@@ -192,6 +211,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 1,
     annualIncome: 110_000,
     filingStatus: "single",
+    federalMarginalBracket: "24",
     riskTolerance: "conservative",
     riskScore: 3,
     targetAssets: 620_000,
@@ -218,6 +238,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 0,
     annualIncome: 175_000,
     filingStatus: "single",
+    federalMarginalBracket: "24",
     riskTolerance: "aggressive",
     riskScore: 10,
     targetAssets: 900_000,
@@ -245,6 +266,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 1,
     annualIncome: 182_000,
     filingStatus: "marriedJoint",
+    federalMarginalBracket: "22",
     riskTolerance: "moderate",
     riskScore: 5,
     targetAssets: 310_000,
@@ -277,6 +299,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 2,
     annualIncome: 285_000,
     filingStatus: "marriedJoint",
+    federalMarginalBracket: "24",
     riskTolerance: "moderate",
     riskScore: 6,
     targetAssets: 1_050_000,
@@ -303,6 +326,7 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     dependents: 0,
     annualIncome: 92_000,
     filingStatus: "single",
+    federalMarginalBracket: "22",
     riskTolerance: "conservative",
     riskScore: 2,
     targetAssets: 2_400_000,
