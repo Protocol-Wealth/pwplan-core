@@ -18,9 +18,12 @@ describe("named case-study profiles", () => {
     expect(client.displayName).toMatch(/synthetic/i);
 
     if (spec.age !== undefined) expect(client.age).toBe(spec.age);
-    if (spec.riskTolerance) expect(client.riskTolerance).toBe(spec.riskTolerance);
-    if (spec.hasTrust !== undefined) expect(client.hasTrust).toBe(spec.hasTrust);
-    if (spec.retirementAge !== undefined) expect(client.retirementAge).toBe(spec.retirementAge);
+    if (spec.riskTolerance)
+      expect(client.riskTolerance).toBe(spec.riskTolerance);
+    if (spec.hasTrust !== undefined)
+      expect(client.hasTrust).toBe(spec.hasTrust);
+    if (spec.retirementAge !== undefined)
+      expect(client.retirementAge).toBe(spec.retirementAge);
 
     if (spec.targetAssets !== undefined) {
       const total =
@@ -52,11 +55,16 @@ describe("named case-study profiles", () => {
 
   it("case studies are deterministic", () => {
     expect(caseStudies.familyOfficeUHNW).toEqual(
-      generate({ seed: CASE_SEEDS.familyOfficeUHNW, profile: "familyOfficeUHNW" }),
+      generate({
+        seed: CASE_SEEDS.familyOfficeUHNW,
+        profile: "familyOfficeUHNW",
+      }),
     );
   });
 
   it("the family office uses an obviously-synthetic label", () => {
-    expect(caseStudies.familyOfficeUHNW.displayName).toBe("Test Family Office (Alpha) — synthetic");
+    expect(caseStudies.familyOfficeUHNW.displayName).toBe(
+      "Test Family Office (Alpha) — synthetic",
+    );
   });
 });

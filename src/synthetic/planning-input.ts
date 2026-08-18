@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { GoalSchema, type ClientProfile, type RiskTolerance } from "./schema.js";
+import {
+  GoalSchema,
+  type ClientProfile,
+  type RiskTolerance,
+} from "./schema.js";
 
 /**
  * PII-FREE BY CONSTRUCTION.
@@ -33,7 +37,12 @@ export const PlanningInputSchema = z.object({
   targetRetirementIncome: z.number().nonnegative(),
   riskTolerance: z.enum(["conservative", "moderate", "aggressive"]),
   timeHorizonYears: z.number().int().positive(),
-  filingStatus: z.enum(["single", "marriedJoint", "marriedSeparate", "headOfHousehold"]),
+  filingStatus: z.enum([
+    "single",
+    "marriedJoint",
+    "marriedSeparate",
+    "headOfHousehold",
+  ]),
   federalMarginalBracket: z.enum(["10", "12", "22", "24", "32", "35", "37"]),
   lifeInsuranceCoverageAmount: z.number().nonnegative(),
   hasDisabilityInsurance: z.boolean(),

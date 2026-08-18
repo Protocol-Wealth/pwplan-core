@@ -4,7 +4,9 @@ import { ClientProfileSchema } from "./schema.js";
 
 describe("ClientProfileSchema", () => {
   it("accepts a generated profile", () => {
-    expect(() => ClientProfileSchema.parse(generate({ seed: 1 }))).not.toThrow();
+    expect(() =>
+      ClientProfileSchema.parse(generate({ seed: 1 })),
+    ).not.toThrow();
   });
 
   it("rejects an out-of-range age", () => {

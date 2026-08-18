@@ -8,7 +8,10 @@ import type { ClientProfile } from "./schema.js";
  * checkpoint and rendered in apps/web.
  */
 export const caseStudies = Object.fromEntries(
-  PROFILE_NAMES.map((name) => [name, generate({ seed: CASE_SEEDS[name], profile: name })]),
+  PROFILE_NAMES.map((name) => [
+    name,
+    generate({ seed: CASE_SEEDS[name], profile: name }),
+  ]),
 ) as Record<ProfileName, ClientProfile>;
 
 export const conservativeRetiree = caseStudies.conservativeRetiree;

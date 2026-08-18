@@ -60,7 +60,14 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 65,
     timeHorizonYears: 23,
     hasTrust: true,
-    goals: [{ type: "retirement", targetAmount: 1_800_000, yearsAway: 0, label: "Retirement income" }],
+    goals: [
+      {
+        type: "retirement",
+        targetAmount: 1_800_000,
+        yearsAway: 0,
+        label: "Retirement income",
+      },
+    ],
   },
   aggressiveBuilder: {
     label: "Demo Builder (Aggressive) — synthetic",
@@ -74,8 +81,18 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 60,
     hasTrust: false,
     goals: [
-      { type: "retirement", targetAmount: 3_000_000, yearsAway: 28, label: "Retirement income" },
-      { type: "home", targetAmount: 150_000, yearsAway: 5, label: "Home purchase" },
+      {
+        type: "retirement",
+        targetAmount: 3_000_000,
+        yearsAway: 28,
+        label: "Retirement income",
+      },
+      {
+        type: "home",
+        targetAmount: 150_000,
+        yearsAway: 5,
+        label: "Home purchase",
+      },
     ],
   },
   familyOfficeUHNW: {
@@ -90,9 +107,24 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 62,
     hasTrust: true,
     goals: [
-      { type: "charitable", targetAmount: 5_000_000, yearsAway: 10, label: "Charitable giving" },
-      { type: "retirement", targetAmount: 10_000_000, yearsAway: 10, label: "Retirement income" },
-      { type: "college", targetAmount: 900_000, yearsAway: 6, label: "College funding" },
+      {
+        type: "charitable",
+        targetAmount: 5_000_000,
+        yearsAway: 10,
+        label: "Charitable giving",
+      },
+      {
+        type: "retirement",
+        targetAmount: 10_000_000,
+        yearsAway: 10,
+        label: "Retirement income",
+      },
+      {
+        type: "college",
+        targetAmount: 900_000,
+        yearsAway: 6,
+        label: "College funding",
+      },
     ],
   },
   hardAssetHedger: {
@@ -108,7 +140,12 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 58,
     hasTrust: false,
     goals: [
-      { type: "retirement", targetAmount: 2_500_000, yearsAway: 10, label: "Inflation-protected retirement" },
+      {
+        type: "retirement",
+        targetAmount: 2_500_000,
+        yearsAway: 10,
+        label: "Inflation-protected retirement",
+      },
     ],
   },
   crowdedDecade: {
@@ -123,10 +160,30 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 65,
     hasTrust: false,
     goals: [
-      { type: "college", targetAmount: 240_000, yearsAway: 8, label: "College funding (child 1)" },
-      { type: "college", targetAmount: 240_000, yearsAway: 11, label: "College funding (child 2)" },
-      { type: "college", targetAmount: 240_000, yearsAway: 15, label: "College funding (child 3)" },
-      { type: "home", targetAmount: 200_000, yearsAway: 4, label: "Home upgrade" },
+      {
+        type: "college",
+        targetAmount: 240_000,
+        yearsAway: 8,
+        label: "College funding (child 1)",
+      },
+      {
+        type: "college",
+        targetAmount: 240_000,
+        yearsAway: 11,
+        label: "College funding (child 2)",
+      },
+      {
+        type: "college",
+        targetAmount: 240_000,
+        yearsAway: 15,
+        label: "College funding (child 3)",
+      },
+      {
+        type: "home",
+        targetAmount: 200_000,
+        yearsAway: 4,
+        label: "Home upgrade",
+      },
     ],
   },
   recentDivorcee: {
@@ -141,8 +198,18 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 66,
     hasTrust: false,
     goals: [
-      { type: "retirement", targetAmount: 1_400_000, yearsAway: 17, label: "Retirement income (reset)" },
-      { type: "other", targetAmount: 60_000, yearsAway: 1, label: "Emergency reserve rebuild" },
+      {
+        type: "retirement",
+        targetAmount: 1_400_000,
+        yearsAway: 17,
+        label: "Retirement income (reset)",
+      },
+      {
+        type: "other",
+        targetAmount: 60_000,
+        yearsAway: 1,
+        label: "Emergency reserve rebuild",
+      },
     ],
   },
   cryptoConcentrated: {
@@ -158,8 +225,18 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 55,
     hasTrust: false,
     goals: [
-      { type: "other", targetAmount: 500_000, yearsAway: 5, label: "Diversification out of crypto" },
-      { type: "retirement", targetAmount: 4_000_000, yearsAway: 20, label: "Retirement income" },
+      {
+        type: "other",
+        targetAmount: 500_000,
+        yearsAway: 5,
+        label: "Diversification out of crypto",
+      },
+      {
+        type: "retirement",
+        targetAmount: 4_000_000,
+        yearsAway: 20,
+        label: "Retirement income",
+      },
     ],
   },
   youngDualIncome: {
@@ -174,9 +251,24 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 62,
     hasTrust: false,
     goals: [
-      { type: "home", targetAmount: 120_000, yearsAway: 3, label: "Down payment" },
-      { type: "college", targetAmount: 200_000, yearsAway: 17, label: "College funding" },
-      { type: "retirement", targetAmount: 3_500_000, yearsAway: 31, label: "Retirement income" },
+      {
+        type: "home",
+        targetAmount: 120_000,
+        yearsAway: 3,
+        label: "Down payment",
+      },
+      {
+        type: "college",
+        targetAmount: 200_000,
+        yearsAway: 17,
+        label: "College funding",
+      },
+      {
+        type: "retirement",
+        targetAmount: 3_500_000,
+        yearsAway: 31,
+        label: "Retirement income",
+      },
     ],
   },
   smallBusinessOwner: {
@@ -191,8 +283,18 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 60,
     hasTrust: true,
     goals: [
-      { type: "retirement", targetAmount: 4_000_000, yearsAway: 15, label: "Business-exit retirement" },
-      { type: "other", targetAmount: 150_000, yearsAway: 2, label: "Business succession reserve" },
+      {
+        type: "retirement",
+        targetAmount: 4_000_000,
+        yearsAway: 15,
+        label: "Business-exit retirement",
+      },
+      {
+        type: "other",
+        targetAmount: 150_000,
+        yearsAway: 2,
+        label: "Business succession reserve",
+      },
     ],
   },
   windfallInheritor: {
@@ -207,8 +309,18 @@ export const PROFILES: Record<ProfileName, ProfileSpec> = {
     retirementAge: 58,
     hasTrust: false,
     goals: [
-      { type: "retirement", targetAmount: 3_200_000, yearsAway: 20, label: "Preserve + retire early" },
-      { type: "charitable", targetAmount: 500_000, yearsAway: 10, label: "Charitable foundation seed" },
+      {
+        type: "retirement",
+        targetAmount: 3_200_000,
+        yearsAway: 20,
+        label: "Preserve + retire early",
+      },
+      {
+        type: "charitable",
+        targetAmount: 500_000,
+        yearsAway: 10,
+        label: "Charitable foundation seed",
+      },
     ],
   },
 };

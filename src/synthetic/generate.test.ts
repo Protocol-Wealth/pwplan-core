@@ -22,7 +22,9 @@ describe("generate", () => {
   it("validates against the schema across a fuzz range of seeds", () => {
     for (let seed = 0; seed < 200; seed++) {
       expect(() => generate({ seed })).not.toThrow();
-      expect(ClientProfileSchema.safeParse(generate({ seed })).success).toBe(true);
+      expect(ClientProfileSchema.safeParse(generate({ seed })).success).toBe(
+        true,
+      );
     }
   });
 });

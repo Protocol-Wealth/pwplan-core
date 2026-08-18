@@ -42,7 +42,12 @@ export const ClientProfileSchema = z.object({
   timeHorizonYears: z.number().int().positive(),
 
   // Tax
-  filingStatus: z.enum(["single", "marriedJoint", "marriedSeparate", "headOfHousehold"]),
+  filingStatus: z.enum([
+    "single",
+    "marriedJoint",
+    "marriedSeparate",
+    "headOfHousehold",
+  ]),
   federalMarginalBracket: z.enum(["10", "12", "22", "24", "32", "35", "37"]),
 
   // Insurance + estate

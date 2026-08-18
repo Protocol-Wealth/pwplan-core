@@ -23,11 +23,16 @@ const FORBIDDEN_SUBSTRINGS = [
 
 describe("PII-free planning contract", () => {
   it("contains no identity-shaped fields", () => {
-    const keys = Object.keys(PlanningInputSchema.shape).map((k) => k.toLowerCase());
+    const keys = Object.keys(PlanningInputSchema.shape).map((k) =>
+      k.toLowerCase(),
+    );
     for (const key of keys) {
       expect(key === "id", `bare identity field "id" is forbidden`).toBe(false);
       for (const bad of FORBIDDEN_SUBSTRINGS) {
-        expect(key.includes(bad), `field "${key}" looks like PII ("${bad}")`).toBe(false);
+        expect(
+          key.includes(bad),
+          `field "${key}" looks like PII ("${bad}")`,
+        ).toBe(false);
       }
     }
   });
@@ -39,7 +44,10 @@ describe("PII-free planning contract", () => {
   });
 
   it("produces output that validates against the contract", () => {
-    expect(PlanningInputSchema.safeParse(toPlanningInput(generate({ seed: 9 }))).success).toBe(true);
+    expect(
+      PlanningInputSchema.safeParse(toPlanningInput(generate({ seed: 9 })))
+        .success,
+    ).toBe(true);
   });
 
   it("drops riskScore from the de-identified payload", () => {
