@@ -7,6 +7,23 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Added
+
+- **Synthetic client profile generator (`src/synthetic/`).** A deterministic,
+  seeded generator for synthetic financial profiles, with ten named case-study
+  profiles, a Zod-validated schema, and a PII-free planning contract that a test
+  enforces — adding an identity-shaped field to `PlanningInputSchema` fails the
+  build by name. 38 tests.
+
+  Contributed by **William Gantt** ([@WillGantt](https://github.com/WillGantt))
+  — the deterministic PRNG generator and the case-study profiles — and
+  **Justin Nguyen** ([@jnguyen-design](https://github.com/jnguyen-design)) — the
+  profile schema and the PII-free planning contract. Both wrote this as Software
+  Engineering Contractors at Protocol Wealth during summer 2026. See
+  `CONTRIBUTORS.md`.
+
+  Adds `zod` and `seedrandom` as runtime dependencies.
+
 ### Security
 
 - **Development dependency advisory remediation (2026-07-26).** Added
