@@ -3,7 +3,7 @@
 
 /**
  * planning-gateway tests — exercise the full dispatch path over a mocked
- * `fetch`, with no network. This is the integration test the ROADMAP calls for:
+ * `fetch`, with no network. This is the integration test issue #15 calls for:
  * it covers the PiiTripwireError (fail-closed before dispatch) and
  * ContractMismatchError (version drift) paths, plus header/body/tool-path
  * wiring and the pw-api backend seam.
