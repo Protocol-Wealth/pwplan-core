@@ -204,12 +204,11 @@ on GCP Cloud Run; Cloudflare at the edge.
 ## Working with Claude Code
 
 This repo is built primarily by Claude Code. Governance lives in
-[`CLAUDE.md`](CLAUDE.md) (operating rules and invariants) and three memory files
-the agent maintains as it works: [`CURRENT-STATE.md`](CURRENT-STATE.md) (what
-exists now), [`CHANGELOG.md`](CHANGELOG.md) (history), and
-[`ROADMAP.md`](ROADMAP.md) (what is next). These are committed on purpose; they
-are how a stateless CLI keeps continuity across sessions. Start a session by
-reading CLAUDE.md.
+[`CLAUDE.md`](CLAUDE.md) (operating rules and invariants), with history in
+[`CHANGELOG.md`](CHANGELOG.md). Live and planned design work is recorded at
+pwos.app/build, what shipped at pwos.app/changelog, and open work in this
+repo's GitHub issues — those are re-queried each session rather than mirrored
+into a committed file. Start a session by reading CLAUDE.md.
 
 ## Current Tracking
 

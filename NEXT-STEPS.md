@@ -2,8 +2,8 @@
 
 A hand-off for new contributors (interns). Read with [`CLAUDE.md`](CLAUDE.md)
 (operating rules + invariants), [`README.md`](README.md) (the two-deployment
-model), [`CURRENT-STATE.md`](CURRENT-STATE.md) (as-built inventory), and
-[`ROADMAP.md`](ROADMAP.md). This file is the **prioritized to-do list**; keep it
+model), and this repo's open GitHub issues. Live and planned design work is at
+pwos.app/build. This file is the **prioritized to-do list**; keep it
 current.
 
 _Last updated: 2026-07-07. 34 wire-contract tools, 26 UI tabs (22 one-tool wire
@@ -56,7 +56,7 @@ directly to `main`** (no feature branches) — the exception is any change to th
 public privacy / compliance posture, which goes via a review PR + CCO sign-off
 (HITL Tier 2; see CLAUDE.md § Compliance).
 
-## Prioritized next tasks (from ROADMAP)
+## Prioritized next tasks
 
 1. **Live follow-up** — keep tests mocked/offline, but smoke live
    `https://nexusmcp.site/health`, `/health/db`, and public docs when a slice

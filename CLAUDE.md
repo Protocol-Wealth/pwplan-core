@@ -1,8 +1,8 @@
 # CLAUDE.md — pwplan-core
 
 Operating instructions for Claude Code in this repository. Read this in full at
-the start of every session, then read `CURRENT-STATE.md` and `ROADMAP.md` before
-touching anything.
+the start of every session, then check the live design record at
+pwos.app/build and this repo's open GitHub issues before touching anything.
 
 ## What this repo is
 
@@ -60,27 +60,27 @@ the conflict rather than working around it.
 - No heavy dependencies; this repo stays light. Numerical deps belong in
   nexus-core, not here.
 
-## Memory discipline (REQUIRED)
+## Continuity discipline (REQUIRED)
 
-You are stateless across sessions. These three files are your memory; keep them
-current or the next session starts blind.
+You are stateless across sessions. Continuity does not live in this repo's
+markdown — every file that claimed to hold live state went stale. Read the
+surfaces instead: the design record live and planned at pwos.app/build, what
+shipped at pwos.app/changelog, and issues / PRs / CI on GitHub, which is
+authoritative and should be re-queried rather than remembered.
 
-- **CURRENT-STATE.md** — snapshot of what exists right now (as-built
-  architecture, file inventory, wired vs stubbed, known gaps). Read first;
-  maintain it after meaningful progress.
 - **CHANGELOG.md** — append-only history, Keep a Changelog format. Add an entry
   under `[Unreleased]` for every notable change; move to a version on release.
-- **ROADMAP.md** — ordered next steps. Pull the next task from here; check items
-  off and re-order as priorities shift.
+- **GitHub issues** — ordered next steps. Pull the next task from the open
+  issues and re-query them; do not keep a parallel list in a committed file.
 
 GitHub issues track outstanding and future work. Current open lanes are #15
 (Nexus/PWOS planning-surface alignment), #16 (`-core` visual theming), and #17
-(optional public-safe calculators). Keep ROADMAP/NEXT-STEPS and issue state in
-sync when opening, completing, or deferring work.
+(optional public-safe calculators). GitHub is the authoritative record of
+open, completed and deferred work — re-query it rather than mirroring it.
 
-Session protocol: (1) read CURRENT-STATE.md + ROADMAP.md and check open GitHub
-issues; (2) do the work; (3) run the full check suite; (4) update CHANGELOG.md
-and, if state changed, CURRENT-STATE.md plus issue references; (5) commit.
+Session protocol: (1) read pwos.app/build and this repo's open GitHub issues;
+(2) do the work; (3) run the full check suite; (4) update CHANGELOG.md and the
+relevant issue; (5) commit.
 
 ## Before every commit
 
@@ -114,5 +114,5 @@ public patent posture is HITL Tier 2 (CCO review before publication).
 
 - Architecture and the two-deployment model: `README.md`
 - Cross-repo contract rules: `CONTRIBUTING.md`
-- What exists now: `CURRENT-STATE.md`
-- What is next: `ROADMAP.md`
+- Design record, live and planned: pwos.app/build
+- What shipped: pwos.app/changelog · issues, PRs, CI: GitHub (authoritative)
