@@ -59,8 +59,10 @@ npm run typecheck && npm run lint && npm run format:check && npm test && npm run
 
 Run `npm run format` before committing. Conventional commits. **This repo commits
 directly to `main`** (no feature branches) — the exception is any change to the
-public privacy / compliance posture, which goes via a review PR + CCO sign-off
-(HITL Tier 2; see CLAUDE.md § Compliance).
+public privacy / compliance posture, which goes via a review PR (HITL Tier 2;
+see CLAUDE.md § Compliance). The PR is where the authority for the wording gets
+stated and read; it is not waiting on a sign-off. This said "review PR + CCO
+sign-off" until 2026-08-25.
 
 ## Task areas as of 2026-07-07 (orientation only — see GitHub issues for what is actually next)
 
