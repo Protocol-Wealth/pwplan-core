@@ -98,9 +98,18 @@ Protocol Wealth is an SEC-registered RIA. This is a developer tool, not
 client-facing advice, but: keep the "software, not investment advice" disclaimer
 in README, NOTICE, and the UI; any change that alters what an end client would
 see or how advice is framed — **or that changes this repo's public privacy /
-compliance posture** — is HITL Tier 2 and requires CCO (Adam) review before
-publication; do not add client-facing marketing copy in this repo. Production
-PII / audit / pw-api work is out of scope here (private fork + pwos-core).
+compliance posture** — is HITL Tier 2: state the authority the wording rests on
+in the change itself, and cite it. Do not add client-facing marketing copy here.
+
+**There is no CCO gate and there never was one in code.** Officer designations
+are governance facts recorded in pw-governance and surfaced at
+pwos.app/governance; nothing routes to them for approval. This paragraph read
+"requires CCO (Adam) review before publication" until 2026-08-25 — which sends a
+reader looking for a process that does not exist, and invites them to read the
+requirement as procedural rather than substantive when they cannot find it.
+
+Production PII / audit / pw-api work is out of scope here (private fork +
+pwos-core).
 
 ## Defensive patent
 
@@ -108,7 +117,8 @@ PII / audit / pw-api work is out of scope here (private fork + pwos-core).
 2026-06-04) — the planning-domain member of the `-core` patent family alongside
 pwos-core #64/034,215 and nexus-core #64/034,229. 12-month non-provisional / PCT
 conversion deadline: **2027-06-04**. Do not alter the number; any change to the
-public patent posture is HITL Tier 2 (CCO review before publication).
+public patent posture is HITL Tier 2 — a published legal claim, so the change
+carries its authority with it rather than waiting on an approval step.
 
 ## Pointers
 

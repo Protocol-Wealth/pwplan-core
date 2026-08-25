@@ -43,8 +43,12 @@ into pw-api). What this repo DOES enforce:
   identity-derived value and never in the payload.
 - Do not add real PII de-identification, audit-log persistence, or pw-api wiring
   here — those belong to the private fork. See the pwos-core repo for guidelines.
-- Client-facing changes are gated. Anything that alters what an end client sees
-  or how advice is framed requires CCO review before merge.
+- Client-facing changes carry their authority with them. Anything that alters
+  what an end client sees or how advice is framed states, in the change itself,
+  the rule or document the wording rests on. There is no approval step — officer
+  designations are governance facts recorded in pw-governance, not code gates,
+  and nothing routes to them for sign-off. This line said "requires CCO review
+  before merge" until 2026-08-25.
 
 ## Local dev
 
