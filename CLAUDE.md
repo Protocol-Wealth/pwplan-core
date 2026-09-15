@@ -73,10 +73,15 @@ authoritative and should be re-queried rather than remembered.
 - **GitHub issues** — ordered next steps. Pull the next task from the open
   issues and re-query them; do not keep a parallel list in a committed file.
 
-GitHub issues track outstanding and future work. Current open lanes are #15
-(Nexus/PWOS planning-surface alignment), #16 (`-core` visual theming), and #17
-(optional public-safe calculators). GitHub is the authoritative record of
-open, completed and deferred work — re-query it rather than mirroring it.
+GitHub is the authoritative record of open, completed and deferred work:
+re-query it rather than mirroring it here. This paragraph carried a list of
+"current open lanes" until 2026-09-15, and one of the three it named (#15) had
+closed on 2026-09-06 — so the file pointed a new session at finished work while
+instructing it, in the same sentence, not to trust a mirrored list. Ask GitHub:
+
+```bash
+gh issue list -R Protocol-Wealth/pwplan-core --state open
+```
 
 Session protocol: (1) read pwos.app/build and this repo's open GitHub issues;
 (2) do the work; (3) run the full check suite; (4) update CHANGELOG.md and the

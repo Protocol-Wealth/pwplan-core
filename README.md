@@ -212,15 +212,15 @@ into a committed file. Start a session by reading CLAUDE.md.
 
 ## Current Tracking
 
-Open build and alignment work is tracked in GitHub issues:
+Open build and alignment work is tracked in GitHub issues, which are the
+authoritative record — this file deliberately does not mirror them, because a
+list copied into a committed file goes stale silently. Browse them at
+[github.com/Protocol-Wealth/pwplan-core/issues](https://github.com/Protocol-Wealth/pwplan-core/issues),
+or ask:
 
-- [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) — Nexus/PWOS
-  planning surface alignment, including any public-safe Cash Flow OS / Planning
-  Bridge contract extraction decisions.
-- [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16) — `-core`
-  family visual theming.
-- [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17) — optional
-  public-safe planning calculators.
+```bash
+gh issue list -R Protocol-Wealth/pwplan-core --state open
+```
 
 ## Patent & IP
 
