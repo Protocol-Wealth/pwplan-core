@@ -7,6 +7,10 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Changed
+
+- **Repository agent instructions (2026-09-21).** Repository agent instructions now live in `AGENTS.md`. Root `CLAUDE.md` was removed after its still-current facts moved.
+
 ### Added
 
 - **Synthetic client profile generator (`src/synthetic/`).** A deterministic,
