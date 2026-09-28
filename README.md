@@ -212,15 +212,13 @@ into a committed file. Start a session by reading AGENTS.md.
 
 ## Current Tracking
 
-Open build and alignment work is tracked in GitHub issues:
+Open build and alignment work is tracked in
+[GitHub issues](https://github.com/Protocol-Wealth/pwplan-core/issues), which are
+the authoritative record. To see the current list:
 
-- [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) — Nexus/PWOS
-  planning surface alignment, including any public-safe Cash Flow OS / Planning
-  Bridge contract extraction decisions.
-- [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16) — `-core`
-  family visual theming.
-- [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17) — optional
-  public-safe planning calculators.
+```bash
+gh issue list -R Protocol-Wealth/pwplan-core --state open
+```
 
 ## Patent & IP
 
