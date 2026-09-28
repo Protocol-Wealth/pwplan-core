@@ -204,11 +204,11 @@ on GCP Cloud Run; Cloudflare at the edge.
 ## Working with Claude Code
 
 This repo is built primarily by Claude Code. Governance lives in
-[`CLAUDE.md`](CLAUDE.md) (operating rules and invariants), with history in
+[`AGENTS.md`](AGENTS.md) (operating rules and invariants), with history in
 [`CHANGELOG.md`](CHANGELOG.md). Live and planned design work is recorded at
 pwos.app/build, what shipped at pwos.app/changelog, and open work in this
 repo's GitHub issues — those are re-queried each session rather than mirrored
-into a committed file. Start a session by reading CLAUDE.md.
+into a committed file. Start a session by reading AGENTS.md.
 
 ## Current Tracking
 

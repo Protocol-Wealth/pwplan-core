@@ -8,7 +8,7 @@
 > is **not** maintained as a parallel priority list. Where the material below
 > disagrees with the issues, the issues win.
 
-A hand-off for new contributors (interns). Read with [`CLAUDE.md`](CLAUDE.md)
+A hand-off for new contributors (interns). Read with [`AGENTS.md`](AGENTS.md)
 (operating rules + invariants) and [`README.md`](README.md) (the two-deployment
 model).
 
@@ -60,7 +60,7 @@ npm run typecheck && npm run lint && npm run format:check && npm test && npm run
 Run `npm run format` before committing. Conventional commits. **This repo commits
 directly to `main`** (no feature branches) — the exception is any change to the
 public privacy / compliance posture, which goes via a review PR (HITL Tier 2;
-see CLAUDE.md § Compliance). The PR is where the authority for the wording gets
+see AGENTS.md, Compliance / RIA guardrails). The PR is where the authority for the wording gets
 stated and read; it is not waiting on a sign-off. This said "review PR + CCO
 sign-off" until 2026-08-25.
 
@@ -84,7 +84,7 @@ sign-off" until 2026-08-25.
 4. **`NOTICE` patent application number** — DONE: filed 2026-06-04 as USPTO
    #64/082,241 (PW-PROV-003 provisional; conversion deadline 2027-06-04).
 
-## Non-negotiable invariants (do not violate — see CLAUDE.md)
+## Non-negotiable invariants (do not violate — see AGENTS.md)
 
 Thin shell (no quant/compliance logic here) · PII-free contract · backend-agnostic
 gateway (`nexus-mcp` / `pw-api` via `VITE_PLANNING_BACKEND`) · the always-on
