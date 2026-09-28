@@ -9,6 +9,10 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ### Changed
 
+- **Development tooling (2026-09-28).** Upgrade ESLint and `@eslint/js` together
+  to version 10; refresh the npm lockfile, including the patched transitive
+  `nanoid` release.
+
 - **Repository agent instructions (2026-09-21).** Repository agent instructions now live in `AGENTS.md`. Root `CLAUDE.md` was removed after its still-current facts moved.
 
 ### Added
