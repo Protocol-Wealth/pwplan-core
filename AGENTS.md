@@ -7,8 +7,8 @@ is specific to this repository. It does not describe what is live.
 ## What this repo is
 
 pwplan-core is the open-source, regime-adaptive financial planning **thin UI**;
-the third member of the `-core` family with pwos-core and nexus-core. Apache-2.0
-with a defensive patent posture. It ships **zero quantitative logic of its own**,
+the third member of the `-core` family with pwos-core and nexus-core. MIT-0 OR
+Apache-2.0 with a defensive patent posture. It ships **zero quantitative logic of its own**,
 and only a lightweight structural PII tripwire — no production compliance stack.
 
 It is **demo / case-study tooling**: pointed at the public nexus-core engine with

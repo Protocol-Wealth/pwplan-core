@@ -70,6 +70,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: verify license + notice present
         run: |
-          test -f LICENSE && test -f NOTICE
-          grep -q "Apache License" LICENSE
+          test -f LICENSE-MIT-0 && test -f LICENSE-APACHE && test -f NOTICE
+          grep -q "MIT No Attribution" LICENSE-MIT-0
+          grep -q "Apache License" LICENSE-APACHE
           grep -q "Protocol Wealth" NOTICE

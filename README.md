@@ -1,6 +1,6 @@
 # pwplan-core
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License: MIT-0 OR Apache-2.0](https://img.shields.io/badge/License-MIT--0%20OR%20Apache--2.0-blue.svg)](#license)
 [![Patent Pending](https://img.shields.io/badge/Patent-Pending-orange.svg)](https://patentcenter.uspto.gov/applications/64082241)
 [![OIN Member](https://img.shields.io/badge/OIN-Member-green.svg)](https://openinventionnetwork.com)
 [![GitHub stars](https://img.shields.io/github/stars/Protocol-Wealth/pwplan-core?style=social)](https://github.com/Protocol-Wealth/pwplan-core/stargazers)
@@ -237,10 +237,10 @@ The architecture relied on by this project — a privacy-by-construction
 financial-planning system in which the planning compute plane never receives PII
 by construction (opaque subject references and non-identifying derived
 attributes), with regime-adaptive projection, separating a public PII-free
-compute plane from a firm-side production plane — is filed **defensively** under
-Apache-2.0. The Apache-2.0 patent grant (Section 3) confers an automatic,
-perpetual, royalty-free patent license to all users, with a retaliation clause
-that terminates that grant for any party initiating patent litigation over the
+compute plane from a firm-side production plane — is filed **defensively**. Under the
+Apache-2.0 option, the Apache-2.0 patent grant (Section 3) confers an automatic,
+perpetual, royalty-free patent license, with a retaliation clause that
+terminates that grant for any party initiating patent litigation over the
 Work.
 
 **Open Invention Network (OIN) Member** — Protocol Wealth LLC is a member of the
@@ -248,6 +248,12 @@ Open Invention Network (OIN). See [NOTICE](NOTICE) for the full posture.
 
 ## License
 
-Apache-2.0 with a defensive patent posture. See [LICENSE](LICENSE) and
-[NOTICE](NOTICE). Protocol Wealth LLC is a member of the Open Invention Network
+Licensed under either MIT-0 or Apache-2.0, at your option.
+
+- MIT No Attribution: [LICENSE-MIT-0](LICENSE-MIT-0)
+- Apache License 2.0: [LICENSE-APACHE](LICENSE-APACHE)
+
+SPDX-License-Identifier: `MIT-0 OR Apache-2.0`
+
+Defensive patent posture: see [NOTICE](NOTICE) and [PATENTS](PATENTS). Protocol Wealth LLC is a member of the Open Invention Network
 (OIN). Leverage it freely alongside pwos-core and nexus-core.
