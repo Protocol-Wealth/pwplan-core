@@ -4,7 +4,7 @@ Copyright 2026 Protocol Wealth, LLC
 This product includes software developed by Protocol Wealth, LLC
 (https://github.com/Protocol-Wealth).
 
-Licensed under the Apache License, Version 2.0 (the "License").
+Licensed under either MIT-0 or Apache-2.0, at your option.
 
 Portions of this product (src/synthetic/) were contributed by:
   William Gantt   (https://github.com/WillGantt)
@@ -21,7 +21,7 @@ the planning compute plane never receives PII by construction (opaque subject
 references and non-identifying derived attributes), with regime-adaptive
 projection, separating a public PII-free compute plane from a firm-side
 production plane — is the subject of a United States patent application and is
-published here as Apache-2.0 prior art.
+published here as open-source prior art.
 
   USPTO Application No.: 64/082,241  (Provisional; Attorney Docket PW-PROV-003)
 

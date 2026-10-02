@@ -1,6 +1,6 @@
 # Contributors
 
-pwplan-core is maintained by Protocol Wealth, LLC and licensed under Apache 2.0.
+pwplan-core is maintained by Protocol Wealth, LLC and licensed under MIT-0 OR Apache-2.0.
 Contributions are credited here by name and GitHub handle.
 
 ## Maintainers

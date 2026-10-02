@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT-0 OR Apache-2.0
 // Copyright 2026 Protocol Wealth, LLC
 
 import { ScenarioForm } from "./components/ScenarioForm";
@@ -349,7 +349,7 @@ export default function App() {
         <p className="font-mono text-[0.65rem] leading-relaxed text-stone-500">
           Software, not investment advice. Outputs are projections, not
           guarantees. Not affiliated with, and does not endorse, any third-party
-          tool. Apache-2.0 · defensive patent.
+          tool. MIT-0 OR Apache-2.0 · defensive patent.
         </p>
       </footer>
     </main>
