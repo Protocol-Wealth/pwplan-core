@@ -82,7 +82,8 @@ Stack and conventions (match pwos-core / nexus-core):
   quotes, `trailingComma: "all"` (`.prettierrc`).
 - Module boundaries: `src/contract/` (wire types, no logic) · `src/lib/`
   (gateway + PII tripwire) · `src/store/` (Zustand) · `src/components/` (UI +
-  pure validation / presentation helpers). Keep them clean.
+  pure validation / presentation helpers) · `src/synthetic/` (deterministic
+  synthetic profiles; no quant or tax logic). Keep them clean.
 - No browser `localStorage` / `sessionStorage` in app code.
 - No heavy dependencies; this repo stays light. Numerical deps belong in
   nexus-core, not here.
@@ -95,13 +96,6 @@ in `README.md`, `NOTICE`, and the UI; any change that alters what an end client
 would see or how advice is framed — **or that changes this repo's public privacy /
 compliance posture** — must state the authority the wording rests on in the change
 itself, and cite it. Do not add client-facing marketing copy here.
-
-**There is no CCO gate and there never was one in code.** Officer designations
-are governance facts recorded in pw-governance and surfaced at
-pwos.app/governance; nothing routes to them for approval.
-
-Production PII / audit / pw-api work is out of scope here (private fork +
-pwos-core).
 
 ### Defensive patent
 
