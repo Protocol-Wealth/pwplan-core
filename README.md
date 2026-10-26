@@ -65,7 +65,7 @@ OPEN REFERENCE (anyone)                   PW PRODUCTION (private)
 Client↔run correlation uses an opaque `subjectRef` carried as a transport
 header, never derived from identity and never in the math payload. In the open
 demo it is just an optional token; in the private fork, pw-api maps it back to a
-client behind auth (for Reg S-P / Rule 17a-4 books-and-records). pwplan-core and
+client behind auth (for Reg S-P / Rule 204-2 books-and-records). pwplan-core and
 nexus only ever see the token, never an identity.
 
 ## Compliance scope (read this)
@@ -205,9 +205,9 @@ on GCP Cloud Run; Cloudflare at the edge.
 
 This repo is built primarily by Claude Code. Governance lives in
 [`AGENTS.md`](AGENTS.md) (operating rules and invariants), with history in
-[`CHANGELOG.md`](CHANGELOG.md). Live and planned design work is recorded at
-pwos.app/build, what shipped at pwos.app/changelog, and open work in this
-repo's GitHub issues — those are re-queried each session rather than mirrored
+[`CHANGELOG.md`](CHANGELOG.md). Live and planned design work is recorded in the firm's
+internal design record, what shipped in [`CHANGELOG.md`](CHANGELOG.md), and open
+work in this repo's GitHub issues — those are re-queried each session rather than mirrored
 into a committed file. Start a session by reading AGENTS.md.
 
 ## Current Tracking
