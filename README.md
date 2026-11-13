@@ -204,11 +204,11 @@ on GCP Cloud Run; Cloudflare at the edge.
 ## Working with Claude Code
 
 This repo is built primarily by Claude Code. Governance lives in
-[`AGENTS.md`](AGENTS.md) (operating rules and invariants), with history in
-[`CHANGELOG.md`](CHANGELOG.md). Live and planned design work is recorded in the firm's
-internal design record, what shipped in [`CHANGELOG.md`](CHANGELOG.md), and open
-work in this repo's GitHub issues — those are re-queried each session rather than mirrored
-into a committed file. Start a session by reading AGENTS.md.
+[`AGENTS.md`](AGENTS.md) (operating rules and invariants); what shipped is
+recorded in [`CHANGELOG.md`](CHANGELOG.md), live and planned design work in the
+firm's internal design record, and open work in this repo's GitHub issues —
+those are re-queried each session rather than mirrored into a committed file.
+Start a session by reading AGENTS.md.
 
 ## Current Tracking
 
