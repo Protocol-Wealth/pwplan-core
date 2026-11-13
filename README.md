@@ -201,26 +201,18 @@ IRA comparison.
 React 19 · Vite 8 · Tailwind v4 · TypeScript · Zustand. nexus gateway / pw-api
 on GCP Cloud Run; Cloudflare at the edge.
 
-## Working with Claude Code
+## Working with coding agents
 
-This repo is built primarily by Claude Code. Governance lives in
-[`AGENTS.md`](AGENTS.md) (operating rules and invariants), with history in
+Repository guidance lives in [`AGENTS.md`](AGENTS.md) (operating rules and invariants), with history in
 [`CHANGELOG.md`](CHANGELOG.md). Live and planned design work is recorded at
 pwos.app/build, what shipped at pwos.app/changelog, and open work in this
 repo's GitHub issues — those are re-queried each session rather than mirrored
 into a committed file. Start a session by reading AGENTS.md.
 
-## Current Tracking
+## Current tracking
 
-Open build and alignment work is tracked in GitHub issues:
-
-- [#15](https://github.com/Protocol-Wealth/pwplan-core/issues/15) — Nexus/PWOS
-  planning surface alignment, including any public-safe Cash Flow OS / Planning
-  Bridge contract extraction decisions.
-- [#16](https://github.com/Protocol-Wealth/pwplan-core/issues/16) — `-core`
-  family visual theming.
-- [#17](https://github.com/Protocol-Wealth/pwplan-core/issues/17) — optional
-  public-safe planning calculators.
+Open build and alignment work is tracked in
+[GitHub issues](https://github.com/Protocol-Wealth/pwplan-core/issues).
 
 ## Patent & IP
 

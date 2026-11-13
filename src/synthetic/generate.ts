@@ -194,7 +194,7 @@ export function generate(opts: GenerateOpts): ClientProfile {
 
   const filingStatus = spec.filingStatus ?? pick(rng, FILING_STATUSES);
   // Pinned per profile rather than derived: deriving a bracket from income is
-  // tax logic, which belongs in nexus-core (CLAUDE.md invariant 1). Unnamed
+  // tax logic, which belongs in nexus-core (AGENTS.md invariant 1). Unnamed
   // profiles take a deterministic draw, which is attribute generation, not tax.
   const federalMarginalBracket =
     spec.federalMarginalBracket ?? pick(rng, FEDERAL_BRACKETS);

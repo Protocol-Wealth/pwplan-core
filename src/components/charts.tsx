@@ -4,7 +4,7 @@
 /**
  * charts — shared, dependency-free chart components built on the pure geometry
  * helpers in results-viz.ts. Presentation only; no quant logic. Hand-rolled SVG
- * keeps the bundle lean (no chart library), per CLAUDE.md.
+ * keeps the bundle lean (no chart library), per AGENTS.md.
  */
 
 import { seriesGeometry } from "./results-viz";

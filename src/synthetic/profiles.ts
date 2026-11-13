@@ -41,7 +41,7 @@ export type ProfileSpec = {
    * Marginal federal bracket, pinned per profile.
    *
    * Deriving this from income would put tax-threshold logic in this repo, which
-   * invariant 1 in CLAUDE.md forbids -- quant belongs in nexus-core. Pinning it
+   * invariant 1 in AGENTS.md forbids -- quant belongs in nexus-core. Pinning it
    * also keeps each named profile internally consistent: a $220k marriedJoint
    * profile no longer picks up a single-filer bracket.
    */

@@ -6,7 +6,7 @@
  *
  * Scenarios are saved and loaded as a small, versioned JSON envelope so demos
  * and case-study variations can be shared as files. This is NOT persistence to
- * the browser (no localStorage / sessionStorage — see CLAUDE.md); the UI turns
+ * the browser (no localStorage / sessionStorage — see AGENTS.md); the UI turns
  * the serialized object into a download and reads it back from a file input.
  *
  * Two safety properties:

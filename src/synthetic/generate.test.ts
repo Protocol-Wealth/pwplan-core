@@ -23,7 +23,7 @@ describe("generate", () => {
     // hardAssetHedger is $220k filing marriedJoint. Deriving from income on
     // single-filer thresholds produced 32%, contradicting the profile. The
     // bracket is now pinned in the spec -- deriving it would be tax logic, which
-    // belongs in nexus-core (CLAUDE.md invariant 1).
+    // belongs in nexus-core (AGENTS.md invariant 1).
     const p = generate({ seed: 11, profile: "hardAssetHedger" });
     expect(p.filingStatus).toBe("marriedJoint");
     expect(p.annualIncome).toBe(220_000);

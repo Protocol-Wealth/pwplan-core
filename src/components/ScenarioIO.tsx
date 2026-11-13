@@ -5,7 +5,7 @@
  * ScenarioIO — save / load / preset controls for the current plan inputs.
  *
  * Save downloads the current inputs as a PII-free JSON file (via a Blob object
- * URL — no browser storage, per CLAUDE.md). Load reads a file back through the
+ * URL — no browser storage, per AGENTS.md). Load reads a file back through the
  * versioned, fail-closed parser and replaces the store's inputs. Presets load a
  * built-in case-study scenario. All three funnel through the store's
  * loadSnapshot so results/errors are cleared consistently.
