@@ -7,6 +7,15 @@ Semantic Versioning. The planning wire contract is versioned separately as
 
 ## [Unreleased]
 
+### Fixed
+
+- **Planning gateway requires a matching contract version on 200 responses
+  (issue #70).** A successful engine response that omitted `contractVersion`,
+  or sent `null`, an empty string, or a non-string value, was previously
+  accepted. The gateway now throws `ContractMismatchError` unless the field is
+  present, a string, and equal to `PLANNING_CONTRACT_VERSION`. Existing
+  mismatch coverage for a different version is unchanged.
+
 ### Changed
 
 - **Development tooling (2026-09-28).** Upgrade ESLint and `@eslint/js` together
