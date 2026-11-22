@@ -709,9 +709,49 @@ describe("planning gateway dispatch", () => {
     );
   });
 
-  it("does not throw when the response omits a contract version", async () => {
+  it("throws ContractMismatchError when the response omits a contract version", async () => {
     stubFetch({ equityWeightByAge: { "45": 0.7 } });
+    await expect(planning.glidePath(gpReq)).rejects.toSatisfy((err) => {
+      expect(err).toBeInstanceOf(ContractMismatchError);
+      expect((err as Error).message).toContain("<missing>");
+      return true;
+    });
+  });
+
+  it("throws ContractMismatchError when the response contract version is null", async () => {
+    stubFetch({ contractVersion: null, equityWeightByAge: { "45": 0.7 } });
+    await expect(planning.glidePath(gpReq)).rejects.toSatisfy((err) => {
+      expect(err).toBeInstanceOf(ContractMismatchError);
+      expect((err as Error).message).toContain("null");
+      return true;
+    });
+  });
+
+  it("throws ContractMismatchError when the response contract version is empty", async () => {
+    stubFetch({ contractVersion: "", equityWeightByAge: { "45": 0.7 } });
+    await expect(planning.glidePath(gpReq)).rejects.toSatisfy((err) => {
+      expect(err).toBeInstanceOf(ContractMismatchError);
+      expect((err as Error).message).toContain("<empty>");
+      return true;
+    });
+  });
+
+  it("throws ContractMismatchError when the response contract version is the wrong type", async () => {
+    stubFetch({ contractVersion: 0.1, equityWeightByAge: { "45": 0.7 } });
+    await expect(planning.glidePath(gpReq)).rejects.toSatisfy((err) => {
+      expect(err).toBeInstanceOf(ContractMismatchError);
+      expect((err as Error).message).toContain("<number>");
+      return true;
+    });
+  });
+
+  it("accepts a 200 response whose contract version matches the client pin", async () => {
+    stubFetch({
+      contractVersion: PLANNING_CONTRACT_VERSION,
+      equityWeightByAge: { "45": 0.7 },
+    });
     await expect(planning.glidePath(gpReq)).resolves.toMatchObject({
+      contractVersion: PLANNING_CONTRACT_VERSION,
       equityWeightByAge: { "45": 0.7 },
     });
   });

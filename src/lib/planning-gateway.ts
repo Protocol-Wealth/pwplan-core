@@ -170,6 +170,27 @@ export class ContractMismatchError extends Error {
   }
 }
 
+/** Label the contractVersion on a 200 response for mismatch errors. */
+function observedContractVersion(data: unknown): string {
+  if (data === null || typeof data !== "object") {
+    return "<missing>";
+  }
+  if (!("contractVersion" in data)) {
+    return "<missing>";
+  }
+  const value = (data as { contractVersion: unknown }).contractVersion;
+  if (value === undefined) {
+    return "<missing>";
+  }
+  if (typeof value === "string") {
+    return value === "" ? "<empty>" : value;
+  }
+  if (value === null) {
+    return "null";
+  }
+  return `<${typeof value}>`;
+}
+
 async function callTool<TReq extends { contractVersion: string }, TRes>(
   tool: PlanningToolName,
   payload: TReq,
@@ -202,15 +223,10 @@ async function callTool<TReq extends { contractVersion: string }, TRes>(
     throw new Error(`planning gateway ${res.status}: ${await res.text()}`);
   }
 
-  const data = (await res.json()) as TRes & { contractVersion?: string };
-  if (
-    data.contractVersion &&
-    data.contractVersion !== PLANNING_CONTRACT_VERSION
-  ) {
-    throw new ContractMismatchError(
-      PLANNING_CONTRACT_VERSION,
-      data.contractVersion,
-    );
+  const data = (await res.json()) as TRes & { contractVersion?: unknown };
+  const observed = observedContractVersion(data);
+  if (observed !== PLANNING_CONTRACT_VERSION) {
+    throw new ContractMismatchError(PLANNING_CONTRACT_VERSION, observed);
   }
   return data;
 }
